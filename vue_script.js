@@ -22,6 +22,7 @@ const app = new Vue({
                     robotWidthCm: 18,
                     robotHeightCm: 15,
                     traceColor: "blue",
+                    offsetY: 1.8,
                     actions: [
                         { type: "move", value: 35 },
                         { type: "rotate", value: -45 },
@@ -62,6 +63,7 @@ const app = new Vue({
             const svgRoot = document.getElementById("mission-field");
             this.scaleX = svgRoot.viewBox.baseVal.width / 200;
             this.scaleY = this.scaleX;
+            this.scaleOffsetY = -mission.offsetY * this.scaleY
 
             this.currentX = mission.startX * this.scaleX + mission.robotWidthCm * this.scaleX / 2;
             this.currentY = svgRoot.viewBox.baseVal.height - mission.startY * this.scaleY - mission.robotHeightCm * this.scaleY / 2;
@@ -148,11 +150,11 @@ const app = new Vue({
             requestAnimationFrame(animate);
         },
         rotateRobotStatic(angle) {
-            const offsetY = -14 * this.scaleY;
+            
         
             const angleRadians = ((this.currentAngle-angle-90) * Math.PI) / 180;
-            const adjustedX = this.currentX - offsetY * Math.sin(angleRadians);
-            const adjustedY = this.currentY - offsetY * Math.cos(angleRadians);
+            const adjustedX = this.currentX - this.scaleOffsetY * Math.sin(angleRadians);
+            const adjustedY = this.currentY - this.scaleOffsetY * Math.cos(angleRadians);
              this.currentAngle += angle;
 
             console.log("=== Diagnostic Info ===");
