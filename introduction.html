@@ -63,23 +63,25 @@
         <p>The tool requires missions to be provided in a specific JSON format. Below is an example:</p>
 
         <pre>
-{
-    "name": "Mission 1",
-    "startX": 0,
-    "startY": 0,
-    "startAngle": 90,
-    "robotWidthCm": 30,
-    "robotHeightCm": 13,
-    "traceColor": "green",
-    "actions": [
-        { "type": "move", "value": 17 },
-        { "type": "rotate", "value": -24 },
-        { "type": "move", "value": 30 },
-        { "type": "move", "value": -30 },
-        { "type": "rotate", "value": 24 },
-        { "type": "move", "value": -17 }
-    ]
-}
+[
+    {
+        "name": "Mission 1",
+        "startX": 0,
+        "startY": 0,
+        "startAngle": 90,
+        "robotWidthCm": 30,
+        "robotHeightCm": 13,
+        "traceColor": "green",
+        "actions": [
+            { "type": "move", "value": 17 },
+            { "type": "rotate", "value": -24 },
+            { "type": "move", "value": 30 },
+            { "type": "move", "value": -30 },
+            { "type": "rotate", "value": 24 },
+            { "type": "move", "value": -17 }
+        ]
+    }
+]
         </pre>
 
         <p>Good luck, and have fun plotting your robot’s paths!</p>
