@@ -54,6 +54,10 @@
         background-color: #4CAF50; /* Green */
     }
 
+    .clear-button {
+        background-color:orange;
+    }
+
     .start-button:hover {
         background-color: #45A049; /* Darker green */
     }
@@ -125,7 +129,7 @@
             <!-- Start Button -->
             <button @click="startMission" :disabled="!selectedMission" class = "start-button">Start Mission</button>
             <!-- Clear Field Button -->
-            <button class="clear-button" @click="clearField" class = "start-button">Clear Field</button>
+            <button class="clear-button" @click="clearField" class = "clear-button">Clear Field</button>
         </div>
 
         <div id="field-container">
