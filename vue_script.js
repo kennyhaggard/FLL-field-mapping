@@ -115,7 +115,7 @@ const app = new Vue({
             if (action.type === "move") {
                 this.moveForward(action.value, () => this.executeActions(actions));
             } else if (action.type === "rotate") {
-                this.rotateRobot(action.value, () => this.executeActions(actions));
+                this.rotateRobotStatic(action.value, () => this.executeActions(actions));
             }
         },
                         moveForward(distance, callback) {
@@ -158,10 +158,36 @@ const app = new Vue({
                     };
                     requestAnimationFrame(animate);
                 },
+	    rotateRobotStatic(angle,callback) {
+    const offsetY = -1.8 * this.scaleY; // Offset towards the rear in SVG units
+
+    // Update the current angle
+    this.currentAngle += angle;
+
+    // Calculate the new rotation center based on the current angle
+    const angleRadians = (this.currentAngle * Math.PI) / 180;
+    const adjustedX = this.currentX - offsetY * Math.sin(angleRadians);
+    const adjustedY = this.currentY - offsetY * Math.cos(angleRadians);
+
+    // Diagnostic logs
+    console.log("=== Diagnostic Info ===");
+    console.log(`Angle (Degrees): ${this.currentAngle}`);
+    console.log(`Angle (Radians): ${angleRadians}`);
+    console.log(`Original Position: (${this.currentX.toFixed(2)}, ${this.currentY.toFixed(2)})`);
+    console.log(`Offset Adjusted Position: (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)})`);
+    console.log("=======================");
+
+    // Apply the updated position and rotation
+    this.robot.setAttribute(
+        "transform",
+        `translate(${adjustedX}, ${adjustedY}) rotate(${90 - this.currentAngle})`
+    );
+    
+    callback();
+},
+
         rotateRobot(angle, callback) {
     const svgRoot = document.getElementById("mission-field");
-    const offsetCm = 1.8; // Offset in cm towards the rear
-    const offsetSvg = offsetCm * this.scaleY; // Convert to SVG units
 
     const fromAngle = this.currentAngle;
     const toAngle = fromAngle + angle;
@@ -173,13 +199,9 @@ const app = new Vue({
         const progress = Math.min(elapsedTime / duration, 1);
         const interpolatedAngle = fromAngle + progress * (toAngle - fromAngle);
 
-        // Calculate the offset in global coordinates based on the current angle
-        const offsetX = offsetSvg * Math.cos((fromAngle * Math.PI) / 180);
-        const offsetY = offsetSvg * Math.sin((fromAngle * Math.PI) / 180);
-
         // Adjust the rotation center
-        const rotateX = this.currentX - offsetX;
-        const rotateY = this.currentY + offsetY;
+        const rotateX = this.currentX;
+        const rotateY = this.currentY;
 
         // Apply the transformation
         this.robot.setAttribute(
