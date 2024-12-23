@@ -148,12 +148,12 @@ const app = new Vue({
             requestAnimationFrame(animate);
         },
         rotateRobotStatic(angle) {
-            const offsetY = -1.8 * this.scaleY;
-
-            this.currentAngle += angle;
-            const angleRadians = (this.currentAngle * Math.PI) / 180;
+            const offsetY = -14 * this.scaleY;
+        
+            const angleRadians = ((this.currentAngle-angle-90) * Math.PI) / 180;
             const adjustedX = this.currentX - offsetY * Math.sin(angleRadians);
             const adjustedY = this.currentY - offsetY * Math.cos(angleRadians);
+             this.currentAngle += angle;
 
             console.log("=== Diagnostic Info ===");
             console.log(`Angle (Degrees): ${this.currentAngle}`);
