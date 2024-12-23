@@ -59,7 +59,6 @@ const app = new Vue({
 	    dynamicElements.forEach((element) => svgRoot.removeChild(element));
 	
 	    this.robot = null;
-	    alert("Field cleared!");
 	},
         // Initialize mission
         initializeMission(mission) {
