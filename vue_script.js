@@ -13,6 +13,26 @@ const app = new Vue({
 	tracePath: true	
     },
     methods: {
+	                loadDemoMission() {
+                    this.missions = [
+                        {
+                            name: "Demo Mission",
+                            startX: 20,
+                            startY: 0,
+                            startAngle: 90,
+                            robotWidthCm: 18,
+                            robotHeightCm: 15,
+                            traceColor: "blue",
+                            actions: [
+                                { type: "move", value: 20 },
+                                { type: "rotate", value: -45 },
+                                { type: "move", value: 30 },
+                                { type: "rotate", value: -45 },
+                                { type: "move", value: 10 }
+                            ]
+                        }
+                    ];
+                },
 
         // Load JSON file dynamically
         loadMissions(event) {
