@@ -50,6 +50,14 @@ const app = new Vue({
                 reader.readAsText(file);
             }
         },
+	                    clearField() {
+                    const svgRoot = document.getElementById("mission-field");
+                    while (svgRoot.lastChild) {
+                        svgRoot.removeChild(svgRoot.lastChild);
+                    }
+                    this.robot = null;
+                    alert("Field cleared!");
+                },
         // Initialize mission
         initializeMission(mission) {
             this.selectedMission = mission;
