@@ -50,14 +50,17 @@ const app = new Vue({
                 reader.readAsText(file);
             }
         },
-	                    clearField() {
-                    const svgRoot = document.getElementById("mission-field");
-                    while (svgRoot.lastChild) {
-                        svgRoot.removeChild(svgRoot.lastChild);
-                    }
-                    this.robot = null;
-                    alert("Field cleared!");
-                },
+	clearField() {
+	    const svgRoot = document.getElementById("mission-field");
+	    // Remove all dynamic elements except the base SVG content
+	    const dynamicElements = Array.from(svgRoot.children).filter(
+	        (child) => !child.hasAttribute("static")
+	    );
+	    dynamicElements.forEach((element) => svgRoot.removeChild(element));
+	
+	    this.robot = null;
+	    alert("Field cleared!");
+	},
         // Initialize mission
         initializeMission(mission) {
             this.selectedMission = mission;
