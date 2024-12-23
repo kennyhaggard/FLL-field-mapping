@@ -27,7 +27,10 @@
         "actions": [
             { "type": "move", "value": 55 },
             { "type": "rotate", "value": -90 },
-            { "type": "move", "value": 20 }
+            { "type": "move", "value": 20 },
+	    { "type": "move", "value": -20 },
+	    { "type": "rotate", "value": 90 },
+	    { "type": "move", "value": -55 }
         ]
     },
     {
