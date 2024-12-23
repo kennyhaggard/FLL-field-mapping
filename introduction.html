@@ -50,11 +50,12 @@
         <p>Welcome! This tool is designed to help First Lego League teams plan their movement across the field.</p>
 
         <h2>Overview</h2>
-        <p>This is a simple script that relies on providing a JSON text file with a set of missions. The tool helps visualize and trace the robot's movement on the field based on the mission data.</p>
+        <p>This is a simple script that relies on providing a JSON text file with a set of missions. The tool helps visualize and trace the robot's movement on the field based on the mission data. Importantly, it is intended to be used by students to help assist coding. I intentioanally don't want to make it overly complicated so students can drive the development!</p>
 
         <h3>Assumptions</h3>
         <ul>
             <li><strong>Zero Point Turns</strong>: The robot's turns are centered at its midpoint. This may not always be accurate as wheelbases are typically offset.</li>
+		<li> I have included the ability to define the offset. A positive offset pushes the center of rotation towards the back of the robot.</li>
             <li><strong>Movement Timing</strong>: Timing is not representative of the robot's actual speed; it only reflects the robot's path.</li>
             <li><strong>Accurate Turns</strong>: The robot must turn accurately for the tool to be effective. This is best achieved by using the hub's yaw sensor. Implementation can be done in Python or block code.</li>
         </ul>
@@ -72,6 +73,7 @@
         "robotWidthCm": 17,
         "robotHeightCm": 15,
 	"traceColor": "green",
+	"offsetY":1.8,
         "actions": [
             { "type": "move", "value": 17},
             { "type": "rotate", "value": -24 },
@@ -89,6 +91,7 @@
         "robotWidthCm": 17,
         "robotHeightCm": 15,
 	"traceColor":"red",
+	"offsetY":1.8,
         "actions": [
             { "type": "move", "value": 55 },
             { "type": "rotate", "value": -90 },
@@ -106,6 +109,7 @@
         "robotWidthCm": 17,
         "robotHeightCm": 15,
 	"traceColor": "yellow",
+	"offsetY":1.8,
         "actions": [
             { "type": "move", "value": 40 },
             { "type": "rotate", "value": 90 },
