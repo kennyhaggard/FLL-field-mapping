@@ -61,7 +61,7 @@ const app = new Vue({
             this.resetRobot();
 
             const svgRoot = document.getElementById("mission-field");
-            this.scaleX = svgRoot.viewBox.baseVal.width / 200;
+            this.scaleX = svgRoot.viewBox.baseVal.width / 201.6;
             this.scaleY = this.scaleX;
             this.scaleOffsetY = -mission.offsetY * this.scaleY
 
