@@ -156,6 +156,7 @@ const app = new Vue({
              this.currentAngle += angle;
 
             console.log("=== Diagnostic Info ===");
+            console.log(`Offset set to -14`);
             console.log(`Angle (Degrees): ${this.currentAngle}`);
             console.log(`Angle (Radians): ${angleRadians}`);
             console.log(`Original Position: (${this.currentX.toFixed(2)}, ${this.currentY.toFixed(2)})`);
