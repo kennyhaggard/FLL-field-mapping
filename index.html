@@ -44,6 +44,11 @@
             background-color: #ccc;
             cursor: not-allowed;
         }
+
+        .mission-button {
+            background-color:orange;
+        }
+    
         #control-container button:hover:not(:disabled) {
             background-color: #45a049;
         }
@@ -96,7 +101,7 @@
             <!-- Mission Buttons -->
             <div v-if="missions.length > 0">
                 <h2>Select a Mission</h2>
-                <button v-for="(mission, index) in missions" :key="index" @click="initializeMission(mission)">
+                <button v-for="(mission, index) in missions" :key="index" @click="initializeMission(mission)" class="mission-button">
                     Mission {{ index + 1 }}: {{ mission.name }}
                 </button>
             </div>
