@@ -13,10 +13,7 @@ const app = new Vue({
 	tracePath: true	
     },
     methods: {
-        // Trigger the file input dialog
-        triggerFileUpload() {
-            document.getElementById("file-upload").click();
-        },
+
         // Load JSON file dynamically
         loadMissions(event) {
             const file = event.target.files[0];
