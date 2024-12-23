@@ -106,6 +106,7 @@
         <div id="control-container">
             <h1>Load Mission JSON and Control Field</h1>
             <p>Check the <a href= 'https://kennyhaggard.github.io/FLL-field-mapping/introduction.html'>README file</a> for instructions.</p>
+            <button class="mission-button" id = "demo-button" @click="loadDemoMission">Load Demo Mission</button>
 
             <!-- Upload JSON File -->
             <input type="file" id="file-upload" @change="loadMissions" accept=".json">
