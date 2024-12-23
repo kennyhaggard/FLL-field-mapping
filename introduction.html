@@ -65,20 +65,59 @@
         <pre>
 [
     {
-        "name": "Mission 1",
-        "startX": 0,
+        "name": "Coral Sweep",
+        "startX": 11.5,
         "startY": 0,
         "startAngle": 90,
-        "robotWidthCm": 30,
-        "robotHeightCm": 13,
-        "traceColor": "green",
+        "robotWidthCm": 17,
+        "robotHeightCm": 15,
+	"traceColor": "green",
         "actions": [
-            { "type": "move", "value": 17 },
+            { "type": "move", "value": 17},
             { "type": "rotate", "value": -24 },
-            { "type": "move", "value": 30 },
-            { "type": "move", "value": -30 },
+            { "type": "move", "value": 50 },
+            { "type": "move", "value": -50 },
             { "type": "rotate", "value": 24 },
-            { "type": "move", "value": -17 }
+	    { "type": "move", "value": -17}
+        ]
+    },
+    {
+        "name": "Raise the Mast",
+        "startX": 25,
+        "startY": 0,
+        "startAngle": 90,
+        "robotWidthCm": 17,
+        "robotHeightCm": 15,
+	"traceColor":"red",
+        "actions": [
+            { "type": "move", "value": 55 },
+            { "type": "rotate", "value": -90 },
+            { "type": "move", "value": 20 },
+	    { "type": "move", "value": -20 },
+	    { "type": "rotate", "value": 90 },
+	    { "type": "move", "value": -55 }
+        ]
+    },
+    {
+        "name": "Coral Nursery/Shark Release",
+        "startX": 0,
+        "startY": 24,
+        "startAngle": 0,
+        "robotWidthCm": 17,
+        "robotHeightCm": 15,
+	"traceColor": "yellow",
+        "actions": [
+            { "type": "move", "value": 40 },
+            { "type": "rotate", "value": 90 },
+            { "type": "move", "value": 43.5 },
+	    { "type": "rotate", "value": 90 },
+	    { "type": "move", "value": 20},
+	    { "type": "move", "value": -20},
+	    { "type": "rotate", "value": -36.5},
+            { "type": "move", "value": 29},
+	    { "type": "move", "value": -29},
+	    { "type": "rotate", "value": 90},
+	    { "type": "move", "value": 60}
         ]
     }
 ]
