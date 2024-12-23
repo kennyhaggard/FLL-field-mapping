@@ -159,31 +159,45 @@ const app = new Vue({
                     requestAnimationFrame(animate);
                 },
         rotateRobot(angle, callback) {
-            const fromAngle = this.currentAngle;
-            const toAngle = fromAngle + angle;
+    const svgRoot = document.getElementById("mission-field");
+    const offsetCm = 1.8; // Offset in cm towards the rear
+    const offsetSvg = offsetCm * this.scaleY; // Convert to SVG units
 
-            const duration = 1000;
-            const startTime = performance.now();
+    const fromAngle = this.currentAngle;
+    const toAngle = fromAngle + angle;
+    const duration = 1000; // 1-second rotation
+    const startTime = performance.now();
 
-            const animate = (currentTime) => {
-                const elapsedTime = currentTime - startTime;
-                const progress = Math.min(elapsedTime / duration, 1);
-                const interpolatedAngle = fromAngle + progress * (toAngle - fromAngle);
+    const animate = (currentTime) => {
+        const elapsedTime = currentTime - startTime;
+        const progress = Math.min(elapsedTime / duration, 1);
+        const interpolatedAngle = fromAngle + progress * (toAngle - fromAngle);
 
-                this.robot.setAttribute(
-                    "transform",
-                    `translate(${this.currentX}, ${this.currentY}) rotate(${90 - interpolatedAngle})`
-                );
+        // Calculate the offset in global coordinates based on the current angle
+        const offsetX = offsetSvg * Math.cos((fromAngle * Math.PI) / 180);
+        const offsetY = offsetSvg * Math.sin((fromAngle * Math.PI) / 180);
 
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    this.currentAngle = toAngle;
-                    callback();
-                }
-            };
+        // Adjust the rotation center
+        const rotateX = this.currentX - offsetX;
+        const rotateY = this.currentY + offsetY;
 
+        // Apply the transformation
+        this.robot.setAttribute(
+            "transform",
+            `translate(${rotateX}, ${rotateY}) rotate(${90 - interpolatedAngle}) translate(${-rotateX}, ${-rotateY})`
+        );
+
+        if (progress < 1) {
             requestAnimationFrame(animate);
+        } else {
+            // Update current state after the animation
+            this.currentAngle = toAngle;
+            callback();
         }
+    };
+
+    requestAnimationFrame(animate);
+}
+
     }
 });
