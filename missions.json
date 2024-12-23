@@ -1,0 +1,76 @@
+[
+    {
+        "name": "Mission 1",
+        "startX": 0,
+        "startY": 0,
+        "startAngle": 90,
+        "robotWidthCm": 30,
+        "robotHeightCm": 13,
+	"traceColor": "green",
+        "actions": [
+            { "type": "move", "value": 17},
+            { "type": "rotate", "value": -24 },
+            { "type": "move", "value": 30 },
+            { "type": "move", "value": -30 },
+            { "type": "rotate", "value": 24 },
+	    { "type": "move", "value": -17}
+        ]
+    },
+    {
+        "name": "Mission 2",
+        "startX": 0,
+        "startY": 30,
+        "startAngle": 0,
+        "robotWidthCm": 30,
+        "robotHeightCm": 12,
+	"traceColor":"red",
+        "actions": [
+            { "type": "move", "value": 50 },
+            { "type": "rotate", "value": 90 },
+            { "type": "move", "value": 10 }
+        ]
+    },
+    {
+        "name": "Mission 3",
+        "startX": 150,
+        "startY": 30,
+        "startAngle": 180,
+        "robotWidthCm": 10,
+        "robotHeightCm": 12,
+	"traceColor": "yellow",
+        "actions": [
+            { "type": "move", "value": 50 },
+            { "type": "rotate", "value": -90 },
+            { "type": "move", "value": 10 }
+        ]
+    },
+    {
+        "name": "Mission 4",
+        "startX": 150,
+        "startY": 30,
+        "startAngle": 180,
+        "robotWidthCm": 10,
+        "robotHeightCm": 12,
+	"traceColor":"blue",
+        "actions": [
+            { "type": "move", "value": 50 },
+            { "type": "rotate", "value": -90 },
+            { "type": "move", "value": 10 }
+	]
+        
+    },
+    {
+        "name": "Mission 5",
+        "startX": 150,
+        "startY": 30,
+        "startAngle": 180,
+        "robotWidthCm": 10,
+        "robotHeightCm": 12,
+	"traceColor":"purple",
+        "actions": [
+            { "type": "move", "value": 50 },
+            { "type": "rotate", "value": -90 },
+            { "type": "move", "value": 10 }
+	]        
+    }
+]
