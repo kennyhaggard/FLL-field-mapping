@@ -155,7 +155,7 @@ const app = new Vue({
             const angleRadians = ((this.currentAngle-angle-90) * Math.PI) / 180;
             const adjustedX = this.currentX - this.scaleOffsetY * Math.sin(angleRadians);
             const adjustedY = this.currentY - this.scaleOffsetY * Math.cos(angleRadians);
-             this.currentAngle += angle;
+            this.currentAngle += angle;
 
             console.log("=== Diagnostic Info ===");
             console.log(`Offset set to -14`);
@@ -169,6 +169,9 @@ const app = new Vue({
                 "transform",
                 `translate(${adjustedX}, ${adjustedY}) rotate(${90 - this.currentAngle})`
             );
+
+            this.currentX = adjustedX.toFixed(2);
+            this.currentY = adjustedY.toFixed(2);
             callback();
         }
     }
