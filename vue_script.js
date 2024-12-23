@@ -159,7 +159,7 @@ const app = new Vue({
                     requestAnimationFrame(animate);
                 },
 	    rotateRobotStatic(angle,callback) {
-    const offsetY = -1.8 * this.scaleY; // Offset towards the rear in SVG units
+    const offsetY = -14 * this.scaleY; // Offset towards the rear in SVG units
 
     // Update the current angle
     this.currentAngle += angle;
