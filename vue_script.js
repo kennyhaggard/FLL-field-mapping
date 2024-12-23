@@ -170,8 +170,8 @@ const app = new Vue({
                 `translate(${adjustedX}, ${adjustedY}) rotate(${90 - this.currentAngle})`
             );
 
-            this.currentX = adjustedX.toFixed(2);
-            this.currentY = adjustedY.toFixed(2);
+            this.currentX = adjustedX;
+            this.currentY = adjustedY;
             callback();
         }
     }
