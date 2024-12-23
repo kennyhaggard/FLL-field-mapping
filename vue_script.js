@@ -149,7 +149,7 @@ const app = new Vue({
             };
             requestAnimationFrame(animate);
         },
-        rotateRobotStatic(angle) {
+        rotateRobotStatic(angle,callback) {
             
         
             const angleRadians = ((this.currentAngle-angle-90) * Math.PI) / 180;
@@ -169,6 +169,7 @@ const app = new Vue({
                 "transform",
                 `translate(${adjustedX}, ${adjustedY}) rotate(${90 - this.currentAngle})`
             );
+            callback();
         }
     }
 });
