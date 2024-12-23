@@ -106,7 +106,7 @@ const app = new Vue({
             if (action.type === "move") {
                 this.moveForward(action.value, () => this.executeActions(actions));
             } else if (action.type === "rotate") {
-                this.rotateRobotStatic(action.value);
+                this.rotateRobotStatic(action.value,() => this.executeActions(actions));
             }
         },
         moveForward(distance, callback) {
