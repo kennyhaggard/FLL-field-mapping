@@ -155,9 +155,5 @@ const app = new Vue({
 
             requestAnimationFrame(animate);
         }
-    },
-    mounted() {
-        // Trigger file upload automatically when the app loads
-        this.triggerFileUpload();
     }
 });
