@@ -44,33 +44,21 @@
         .edit-button {
             background-color: #007bff;
         }
-        .modal {
+        .load-button {
+            background-color: #f39c12;
+        }
+        .mission-list {
+            margin-top: 20px;
+        }
+        .mission-button {
+            background-color: #6c757d;
+            margin-bottom: 5px;
+        }
+        .editor-container {
+            margin-top: 20px;
             display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 50%;
-            background-color: white;
-            border: 2px solid #000;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
         }
-        .modal.active {
-            display: block;
-        }
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-        .overlay.active {
+        .editor-container.active {
             display: block;
         }
         textarea {
@@ -80,37 +68,53 @@
             font-size: 14px;
             margin: 10px 0;
         }
+        #field-container {
+            display: table-cell;
+            width: 75%;
+            vertical-align: top;
+            background-color: #fff;
+            padding: 20px;
+            border-left: 2px solid #000;
+            box-sizing: border-box;
+        }
+        #mission-field {
+            width: 100%;
+            max-width: 1000px;
+            height: auto;
+            border: 2.5px solid black;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>
     <div id="app">
         <div id="control-container">
-            <h1>Load Mission JSON and Control Field</h1>
-            <p>Check the <a href= 'https://kennyhaggard.github.io/FLL-field-mapping/introduction.html'>README file</a> for instructions.</p>
-            <button class="mission-button" id = "demo-button" @click="loadDemoMission">Load Demo Mission</button>
+            <button class="start-button" @click="startMission" :disabled="!selectedMission">Start Movement</button>
+            <button class="clear-button" @click="clearField">Clear Field</button>
+            <button class="edit-button" @click="openMissionEditor" :disabled="!selectedMission">Edit Mission</button>
+            <input type="file" id="file-upload" @change="loadMissions" accept=".json" class="load-button">
 
-            <!-- Upload JSON File -->
-            <input type="file" id="file-upload" @change="loadMissions" accept=".json">
-
-            <!-- Mission Buttons -->
-            <div v-if="missions.length > 0">
-                <h2>Select a Mission</h2>
-                <button v-for="(mission, index) in missions" :key="index" @click="initializeMission(mission)" class="mission-button">
-                    Mission {{ index + 1 }}: {{ mission.name }}
+            <!-- Mission List -->
+            <div class="mission-list" v-if="missions.length > 0">
+                <h3>Loaded Missions</h3>
+                <button 
+                    v-for="(mission, index) in missions" 
+                    :key="index" 
+                    class="mission-button" 
+                    @click="initializeMission(mission)">
+                    {{ mission.name || `Mission ${index + 1}` }}
                 </button>
             </div>
-            <div v-else>
-                <p>No missions loaded. Please upload a JSON file.</p>
+
+            <!-- Mission Editor Sidebar -->
+            <div class="editor-container" :class="{ active: isEditing }">
+                <h2>Edit Mission</h2>
+                <textarea v-model="missionEditorContent"></textarea>
+                <p v-if="editorError" style="color: red;">{{ editorError }}</p>
+                <button @click="saveMissionEdits">Save Changes</button>
+                <button @click="cancelMissionEdit">Cancel</button>
             </div>
-
-            <!-- Start Button -->
-            <button @click="startMission" :disabled="!selectedMission" class = "start-button">Start Mission</button>
-            <!-- Clear Field Button -->
-            <button class="clear-button" @click="clearField" class = "clear-button">Clear Field</button>
-            <button class="edit-button" @click="openMissionEditor" :disabled="!selectedMission">Edit Mission</button>
-
         </div>
-
         <div id="field-container">
             <!-- SVG Field -->
             <svg id="mission-field" viewBox="0 0 226.28 128.5" preserveAspectRatio="none">
