@@ -42,7 +42,7 @@
         .clear-button {
             background-color: orange;
         }
-        .edit-button {
+        .demo-button {
             background-color: #007bff;
         }
         .load-button {
@@ -92,7 +92,7 @@
         <div id="control-container">
             <h1>First Lego League Field Mapping Tool</h1>
             <p>Check the <a href= 'https://kennyhaggard.github.io/FLL-field-mapping/introduction.html'>README file</a> for instructions.</p>
-            <button class="mission-button" id = "demo-button" @click="loadDemoMission">Load Demo Mission</button>
+            <button class="demo-button" id = "demo-button" @click="loadDemoMission">Load Demo Mission</button>
             <input type="file" id="file-upload" @change="loadMissions" accept=".json" class="load-button">
 
             <!-- Mission List -->
