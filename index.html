@@ -100,7 +100,7 @@
                     v-for="(mission, index) in missions" 
                     :key="index" 
                     class="mission-button" 
-                    @click="openMissionEditor;initializeMission(mission)">
+                    @click="initializeMission(mission);openMissionEditor">
                     {{ mission.name || `Mission ${index + 1}` }}
                 </button>
             </div>
