@@ -91,7 +91,6 @@
         <div id="control-container">
             <button class="start-button" @click="startMission" :disabled="!selectedMission">Start Movement</button>
             <button class="clear-button" @click="clearField">Clear Field</button>
-            <button class="edit-button" @click="openMissionEditor" :disabled="!selectedMission">Edit Mission</button>
             <input type="file" id="file-upload" @change="loadMissions" accept=".json" class="load-button">
 
             <!-- Mission List -->
@@ -111,8 +110,8 @@
                 <h2>Edit Mission</h2>
                 <textarea v-model="missionEditorContent"></textarea>
                 <p v-if="editorError" style="color: red;">{{ editorError }}</p>
-                <button @click="saveMissionEdits; initializeMission(selectedMission)">Save Changes</button>
-                <button @click="cancelMissionEdit">Cancel</button>
+                <button class='clear-button' @click="saveMissionEdits; initializeMission(selectedMission)">Save Changes</button>
+                <button class='clear-button' @click="cancelMissionEdit">Cancel</button>
             </div>
         </div>
         <div id="field-container">
