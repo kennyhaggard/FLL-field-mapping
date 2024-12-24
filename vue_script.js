@@ -15,6 +15,10 @@ const app = new Vue({
         editorError: null // Holds validation error messages
     },
     methods: {
+        selectAndEditMission(mission) {
+        this.initializeMission(mission); // Initialize the mission
+        this.missionEditorContent = JSON.stringify(mission, null, 4); // Pre-fill the editor
+    },
         loadDemoMission() {
             this.missions = [
                 {
