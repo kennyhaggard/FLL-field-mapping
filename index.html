@@ -107,6 +107,8 @@
             <button @click="startMission" :disabled="!selectedMission" class = "start-button">Start Mission</button>
             <!-- Clear Field Button -->
             <button class="clear-button" @click="clearField" class = "clear-button">Clear Field</button>
+            <button class="edit-button" @click="openMissionEditor" :disabled="!selectedMission">Edit Mission</button>
+
         </div>
 
         <div id="field-container">
