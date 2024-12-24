@@ -40,6 +40,16 @@ const app = new Vue({
                 }
             ];
         },
+        saveMissionAndInitialize() {
+        try {
+            const updatedMission = JSON.parse(this.missionEditorContent);
+            this.selectedMission = updatedMission;
+            this.initializeMission(updatedMission);
+            this.editorError = null;
+        } catch (error) {
+            this.editorError = `Invalid JSON: ${error.message}`;
+        }
+    },
         openMissionEditor() {
             if (!this.selectedMission) {
                 alert("Please select a mission first");
