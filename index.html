@@ -110,7 +110,7 @@
                 <h2>Edit Mission</h2>
                 <textarea v-model="missionEditorContent"></textarea>
                 <p v-if="editorError" style="color: red;">{{ editorError }}</p>
-                <button class='clear-button' @click="saveMissionEdits; initializeMission(selectedMission)">Save Changes</button>
+                <button class='clear-button' @click="saveMissionAndInitialize">Save Changes</button>
                 <button class='clear-button' @click="cancelMissionEdit">Cancel</button>
             </div>
         </div>
