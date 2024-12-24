@@ -33,6 +33,29 @@ const app = new Vue({
                 }
             ];
         },
+        openMissionEditor() {
+            if (!this.selectedMission) {
+                alert("Please select a mission first");
+                return;
+            }
+            this.isEditing = true;
+            this.missionEditorContent = JSON.stringify(this.selectedMission, null, 4); // Pre-fill editor with current mission
+            this.editorError = null; // Reset error state
+        },
+        saveMissionEdits() {
+            try {
+                const updatedMission = JSON.parse(this.missionEditorContent);
+                this.selectedMission = updatedMission; // Overwrite selected mission
+                this.isEditing = false; // Close the editor
+                alert("Mission updated successfully!");
+            } catch (error) {
+                this.editorError = "Invalid JSON: " + error.message; // Display error
+            }
+        },
+        cancelMissionEdit() {
+            this.isEditing = false; // Close the editor without saving
+            this.editorError = null;
+        },
         loadMissions(event) {
             const file = event.target.files[0];
             if (file) {
