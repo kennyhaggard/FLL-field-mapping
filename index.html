@@ -130,15 +130,6 @@
   </g>
         </svg>
     </div>
-        <!-- Mission Editor Modal -->
-        <div class="overlay" :class="{ active: isEditing }" @click="cancelMissionEdit"></div>
-        <div class="modal" :class="{ active: isEditing }">
-            <h2>Edit Mission</h2>
-            <textarea v-model="missionEditorContent"></textarea>
-            <p v-if="editorError" style="color: red;">{{ editorError }}</p>
-            <button @click="saveMissionEdits">Save Changes</button>
-            <button @click="cancelMissionEdit">Cancel</button>
-        </div>
 </div>
     <script src="vue_script.js"></script>
 </body>
