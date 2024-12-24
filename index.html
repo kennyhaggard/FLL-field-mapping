@@ -107,11 +107,11 @@
             </div>
 
             <!-- Mission Editor Sidebar -->
-            <div class="editor-container" :class="{ active: isEditing }">
+            <div class="editor-container active">
                 <h2>Edit Mission</h2>
                 <textarea v-model="missionEditorContent"></textarea>
                 <p v-if="editorError" style="color: red;">{{ editorError }}</p>
-                <button @click="saveMissionEdits">Save Changes</button>
+                <button @click="saveMissionEdits; initializeMission(selectedMission)">Save Changes</button>
                 <button @click="cancelMissionEdit">Cancel</button>
             </div>
         </div>
