@@ -10,7 +10,7 @@ const app = new Vue({
         currentY: null,
         currentAngle: null,
         tracePath: true,
-        isEditing: false, // New state to track mission editor visibility
+        isEditing: true, // New state to track mission editor visibility
         missionEditorContent: '', // Holds the JSON text for editing
         editorError: null // Holds validation error messages
     },
