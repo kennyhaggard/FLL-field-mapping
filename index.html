@@ -89,8 +89,7 @@
 <body>
     <div id="app">
         <div id="control-container">
-            <button class="start-button" @click="startMission" :disabled="!selectedMission">Start Movement</button>
-            <button class="clear-button" @click="clearField">Clear Field</button>
+            <h1>First Lego League Field Mapping Tool</h1>
             <input type="file" id="file-upload" @change="loadMissions" accept=".json" class="load-button">
 
             <!-- Mission List -->
@@ -111,7 +110,8 @@
                 <textarea v-model="missionEditorContent"></textarea>
                 <p v-if="editorError" style="color: red;">{{ editorError }}</p>
                 <button class='clear-button' @click="saveMissionAndInitialize">Save Changes</button>
-                <button class='clear-button' @click="cancelMissionEdit">Cancel</button>
+                <button class="start-button" @click="startMission" :disabled="!selectedMission">Start Movement</button>
+            <button class="clear-button" @click="clearField">Clear Field</button>
             </div>
         </div>
         <div id="field-container">
