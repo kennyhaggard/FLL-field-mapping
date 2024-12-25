@@ -171,7 +171,7 @@ const app = new Vue({
 
         const offsetAngleRadians = (this.currentAngle) * (Math.PI / 180); // Adjust for robot's orientation
         const offsetX = this.selectedMission.offsetY * this.scaleY * Math.cos(offsetAngleRadians);
-        const offsetY = this.selectedMission.offsetY * this.scaleY * Math.sin(offsetAngleRadians);
+        const offsetY = -this.selectedMission.offsetY * this.scaleY * Math.sin(offsetAngleRadians);
 
         const traceX = this.currentX + offsetX;
         const traceY = this.currentY + offsetY;
