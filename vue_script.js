@@ -173,7 +173,7 @@ const app = new Vue({
         const offsetX = this.selectedMission.offsetY * this.scaleY * Math.cos(offsetAngleRadians);
         const offsetY = this.selectedMission.offsetY * this.scaleY * Math.sin(offsetAngleRadians);
 
-        const traceX = this.currentX + offsetX;
+        const traceX = this.currentX - offsetX;
         const traceY = this.currentY - offsetY;
 
         this.robot.setAttribute("transform", `translate(${this.currentX}, ${this.currentY}) rotate(${90 - this.currentAngle})`);
