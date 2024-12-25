@@ -200,8 +200,10 @@ const app = new Vue({
             
         
             const angleRadians = ((this.currentAngle-angle) * Math.PI) / 180;
-            const adjustedX = this.currentX - this.scaleOffsetY * Math.cos(angleRadians);
-            const adjustedY = this.currentY + this.scaleOffsetY * Math.sin(angleRadians);
+            const RoffsetX = this.selectedMission.offsetY * this.scaleY * Math.cos(this.currentAngle);
+            const RoffsetY = -this.selectedMission.offsetY * this.scaleY * Math.sin(this.currentAngle);
+            const adjustedX = this.currentX - RoffsetX;
+            const adjustedY = this.currentY - RoffsetY;
             this.currentAngle += angle;
 
             console.log("=== Diagnostic Info ===");
