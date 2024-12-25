@@ -214,10 +214,23 @@ const app = new Vue({
             console.log(`Offset Adjusted Position: (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)})`);
             console.log("=======================");
             this.currentAngle += angle;
+
+            const angleRadians2 = (this.currentAngle) * (Math.PI / 180);
+            const RoffsetX2 = this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
+            const RoffsetY2 = -this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
+       
             
             this.robot.setAttribute(
                 "transform",
                 `translate(${adjustedX}, ${adjustedY}) rotate(${90 - this.currentAngle})`
+            );
+
+            const adjustedX2 = this.currentX + RoffsetX;
+            const adjustedY2 = this.currentY + RoffsetY; 
+
+            this.robot.setAttribute(
+                "transform",
+                `translate(${adjustedX2}, ${adjustedY2})`
             );
 
             callback();
