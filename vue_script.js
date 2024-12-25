@@ -216,8 +216,8 @@ const app = new Vue({
             this.currentAngle += angle;
 
             const angleRadians2 = (this.currentAngle) * (Math.PI / 180);
-            const RoffsetX2 = this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
-            const RoffsetY2 = -this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
+            const RoffsetX2 = -this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
+            const RoffsetY2 = this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
        
             
             this.robot.setAttribute(
