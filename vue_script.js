@@ -199,9 +199,9 @@ const app = new Vue({
         rotateRobotStatic(angle,callback) {
             
         
-            const angleRadians = ((this.currentAngle-angle-90) * Math.PI) / 180;
-            const adjustedX = this.currentX - this.scaleOffsetY * Math.sin(angleRadians);
-            const adjustedY = this.currentY - this.scaleOffsetY * Math.cos(angleRadians);
+            const angleRadians = ((this.currentAngle-angle) * Math.PI) / 180;
+            const adjustedX = this.currentX - this.scaleOffsetY * Math.cos(angleRadians);
+            const adjustedY = this.currentY + this.scaleOffsetY * Math.sin(angleRadians);
             this.currentAngle += angle;
 
             console.log("=== Diagnostic Info ===");
