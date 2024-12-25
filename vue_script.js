@@ -216,8 +216,8 @@ const app = new Vue({
             this.currentAngle += angle;
 
             const angleRadians2 = (this.currentAngle) * (Math.PI / 180);
-            const RoffsetX2 = -this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
-            const RoffsetY2 = this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
+            const RoffsetX2 = this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
+            const RoffsetY2 = -this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
        
             
             this.robot.setAttribute(
@@ -225,8 +225,8 @@ const app = new Vue({
                 `translate(${adjustedX}, ${adjustedY}) rotate(${90 - this.currentAngle})`
             );
 
-            const adjustedX2 = this.currentX + RoffsetX;
-            const adjustedY2 = this.currentY + RoffsetY; 
+            const adjustedX2 = this.currentX + RoffsetX2;
+            const adjustedY2 = this.currentY + RoffsetY2; 
 
             this.robot.setAttribute(
                 "transform",
