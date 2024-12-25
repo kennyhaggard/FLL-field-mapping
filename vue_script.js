@@ -196,44 +196,52 @@ const app = new Vue({
     };
     requestAnimationFrame(animate);
 },
-        rotateRobotStatic(angle,callback) {
-            
-        
-            const angleRadians = (this.currentAngle) * (Math.PI / 180);
-            const RoffsetX = this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
-            const RoffsetY = -this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
-            const adjustedX = this.currentX - RoffsetX;
-            const adjustedY = this.currentY - RoffsetY;
-            
+        rotateRobotStatic(angle, callback) {
+    const startAngle = this.currentAngle;
+    const targetAngle = startAngle + angle;
+    const duration = 1000; // Animation duration in milliseconds (adjustable)
+    const startTime = performance.now();
 
-            console.log("=== Diagnostic Info ===");
-            console.log(`Offset set to ${this.selectedMission.offsetY}`);
-            console.log(`Angle (Degrees): ${this.currentAngle}`);
-            console.log(`Angle (Radians): ${angleRadians}`);
-            console.log(`Original Position: (${this.currentX.toFixed(2)}, ${this.currentY.toFixed(2)})`);
-            console.log(`Offset Adjusted Position: (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)})`);
-            console.log("=======================");
-            this.currentAngle += angle;
+    const angleRadians = startAngle * (Math.PI / 180);
+    const RoffsetX = this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
+    const RoffsetY = -this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
+    const adjustedX = this.currentX - RoffsetX;
+    const adjustedY = this.currentY - RoffsetY;
 
-            const angleRadians2 = (this.currentAngle) * (Math.PI / 180);
-            const RoffsetX2 = this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians2);
-            const RoffsetY2 = -this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians2);
-       
-            
-            this.robot.setAttribute(
-                "transform",
-                `translate(${adjustedX}, ${adjustedY}) rotate(${90 - this.currentAngle})`
-            );
+    const animate = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1); // Clamp progress to [0, 1]
 
-            const adjustedX2 = this.currentX + RoffsetX2;
-            const adjustedY2 = this.currentY + RoffsetY2; 
+        // Interpolate the angle based on progress
+        const currentAngle = startAngle + (targetAngle - startAngle) * progress;
+        const currentAngleRadians = currentAngle * (Math.PI / 180);
 
-            this.robot.setAttribute(
-                "transform",
-                `translate(${adjustedX2}, ${adjustedY2})`
-            );
+        // Calculate the offset at the current interpolated angle
+        const RoffsetX2 = this.selectedMission.offsetY * this.scaleY * Math.cos(currentAngleRadians);
+        const RoffsetY2 = -this.selectedMission.offsetY * this.scaleY * Math.sin(currentAngleRadians);
 
+        const animatedX = adjustedX + RoffsetX2;
+        const animatedY = adjustedY + RoffsetY2;
+
+        // Update the transform with the interpolated values
+        this.robot.setAttribute(
+            "transform",
+            `translate(${animatedX.toFixed(2)}, ${animatedY.toFixed(2)}) rotate(${90 - currentAngle})`
+        );
+
+        if (progress < 1) {
+            // Continue animation if not finished
+            requestAnimationFrame(animate);
+        } else {
+            // Finalize the state and invoke the callback
+            this.currentAngle = targetAngle;
             callback();
         }
+    };
+
+    // Start the animation
+    requestAnimationFrame(animate);
+}
+
     }
 });
