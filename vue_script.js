@@ -150,45 +150,52 @@ const app = new Vue({
             }
         },
         moveForward(distance, callback) {
-            const distanceSvg = distance * this.scaleY;
-            const angleRadians = (this.currentAngle * Math.PI) / 180;
-            const deltaX = distanceSvg * Math.cos(angleRadians);
-            const deltaY = -distanceSvg * Math.sin(angleRadians);
+    const distanceSvg = distance * this.scaleY;
+    const angleRadians = (this.currentAngle * Math.PI) / 180;
+    const deltaX = distanceSvg * Math.cos(angleRadians);
+    const deltaY = -distanceSvg * Math.sin(angleRadians);
 
-            const startX = this.currentX;
-            const startY = this.currentY;
-            const endX = startX + deltaX;
-            const endY = startY + deltaY;
+    const startX = this.currentX;
+    const startY = this.currentY;
+    const endX = startX + deltaX;
+    const endY = startY + deltaY;
 
-            const duration = 2000;
-            const startTime = performance.now();
+    const duration = 2000;
+    const startTime = performance.now();
 
-            const animate = (currentTime) => {
-                const elapsedTime = currentTime - startTime;
-                const progress = Math.min(elapsedTime / duration, 1);
-                this.currentX = startX + progress * (endX - startX);
-                this.currentY = startY + progress * (endY - startY);
+    const animate = (currentTime) => {
+        const elapsedTime = currentTime - startTime;
+        const progress = Math.min(elapsedTime / duration, 1);
+        this.currentX = startX + progress * (endX - startX);
+        this.currentY = startY + progress * (endY - startY);
 
-                this.robot.setAttribute("transform", `translate(${this.currentX}, ${this.currentY}) rotate(${90 - this.currentAngle})`);
+        const offsetAngleRadians = (this.currentAngle - 90) * (Math.PI / 180); // Adjust for robot's orientation
+        const offsetX = this.selectedMission.offsetY * this.scaleY * Math.cos(offsetAngleRadians);
+        const offsetY = this.selectedMission.offsetY * this.scaleY * Math.sin(offsetAngleRadians);
 
-                if (this.tracePath) {
-                    const trace = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    trace.setAttribute("cx", this.currentX);
-                    trace.setAttribute("cy", this.currentY);
-                    trace.setAttribute("r", 0.8);
-                    trace.setAttribute("fill", this.traceColor);
-                    const svgRoot = document.getElementById("mission-field");
-                    svgRoot.appendChild(trace);
-                }
+        const traceX = this.currentX + offsetX;
+        const traceY = this.currentY - offsetY;
 
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    callback();
-                }
-            };
+        this.robot.setAttribute("transform", `translate(${this.currentX}, ${this.currentY}) rotate(${90 - this.currentAngle})`);
+
+        if (this.tracePath) {
+            const trace = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            trace.setAttribute("cx", traceX);
+            trace.setAttribute("cy", traceY);
+            trace.setAttribute("r", 0.8);
+            trace.setAttribute("fill", this.traceColor);
+            const svgRoot = document.getElementById("mission-field");
+            svgRoot.appendChild(trace);
+        }
+
+        if (progress < 1) {
             requestAnimationFrame(animate);
-        },
+        } else {
+            callback();
+        }
+    };
+    requestAnimationFrame(animate);
+},
         rotateRobotStatic(angle,callback) {
             
         
