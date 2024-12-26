@@ -272,8 +272,8 @@ moveForward(distance, callback) {
                     traceEndR.setAttribute("fill", 'green');
                     svgRoot.appendChild(traceEndR);
         
-                const RoffsetX3 = this.selectedMission.offsetY * this.scaleY * Math.cos(AngleRadians);
-                const RoffsetY3 = -this.selectedMission.offsetY * this.scaleY * Math.sin(AngleRadians);
+                const RoffsetX3 = this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
+                const RoffsetY3 = -this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
         
                 this.currentX += -RoffsetX3;
                 this.currentY += -RoffsetY3;
