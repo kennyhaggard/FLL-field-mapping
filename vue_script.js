@@ -149,7 +149,7 @@ const app = new Vue({
                 this.rotateRobotStatic(action.value,() => this.executeActions(actions));
             }
         },
-        moveForward(distance, callback) {
+moveForward(distance, callback) {
     const distanceSvg = distance * this.scaleY;
     const angleRadians = (this.currentAngle * Math.PI) / 180;
     const deltaX = distanceSvg * Math.cos(angleRadians);
@@ -160,28 +160,36 @@ const app = new Vue({
     const endX = startX + deltaX;
     const endY = startY + deltaY;
 
-    const duration = 2000;
+    const duration = 2000; // Duration for the movement animation
     const startTime = performance.now();
 
     const animate = (currentTime) => {
         const elapsedTime = currentTime - startTime;
         const progress = Math.min(elapsedTime / duration, 1);
+
+        // Update the robot's position incrementally
         this.currentX = startX + progress * (endX - startX);
         this.currentY = startY + progress * (endY - startY);
 
-        const offsetAngleRadians = (this.currentAngle) * (Math.PI / 180); // Adjust for robot's orientation
+        // Adjust for the robot's orientation and offset
+        const offsetAngleRadians = this.currentAngle * (Math.PI / 180);
         const offsetX = this.selectedMission.offsetY * this.scaleY * Math.cos(offsetAngleRadians);
         const offsetY = -this.selectedMission.offsetY * this.scaleY * Math.sin(offsetAngleRadians);
 
         const traceX = this.currentX - offsetX;
         const traceY = this.currentY - offsetY;
 
-        this.robot.setAttribute("transform", `translate(${this.currentX}, ${this.currentY}) rotate(${90 - this.currentAngle})`);
+        // Update the robot's position and rotation in the SVG
+        this.robot.setAttribute(
+            "transform",
+            `translate(${this.currentX}, ${this.currentY}) rotate(${90 - this.currentAngle})`
+        );
 
+        // Add a trace point at the adjusted position
         if (this.tracePath) {
             const trace = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            trace.setAttribute("cx", traceX);
-            trace.setAttribute("cy", traceY);
+            trace.setAttribute("cx", traceX.toFixed(2));
+            trace.setAttribute("cy", traceY.toFixed(2));
             trace.setAttribute("r", 0.8);
             trace.setAttribute("fill", this.traceColor);
             const svgRoot = document.getElementById("mission-field");
@@ -189,11 +197,13 @@ const app = new Vue({
         }
 
         if (progress < 1) {
-            requestAnimationFrame(animate);
+            requestAnimationFrame(animate); // Continue animation
         } else {
-            callback();
+            callback(); // Invoke callback when animation completes
         }
     };
+
+    // Start the animation
     requestAnimationFrame(animate);
 },
         rotateRobotStatic(angle, callback) {
