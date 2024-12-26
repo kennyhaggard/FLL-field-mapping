@@ -225,6 +225,7 @@ moveForward(distance, callback) {
     requestAnimationFrame(animate);
 },
         rotateRobotStatic(angle, callback) {
+    const svgRoot = document.getElementById("mission-field");
     const startAngle = this.currentAngle;
     const targetAngle = startAngle + angle;
     const duration = 1000; // Animation duration in milliseconds (adjustable)
