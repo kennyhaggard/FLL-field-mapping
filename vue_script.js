@@ -161,21 +161,7 @@ moveForward(distance, callback) {
     const startY = this.currentY;
     const endX = startX + deltaX;
     const endY = startY + deltaY;
-
-    const traceStart = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            traceStart.setAttribute("cx", startX.toFixed(2));
-            traceStart.setAttribute("cy", startY.toFixed(2));
-            traceStart.setAttribute("r", 0.8);
-            traceStart.setAttribute("fill", 'red');
-            svgRoot.appendChild(traceStart);
-
-    const traceEnd = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        traceEnd.setAttribute("cx", endX.toFixed(2));
-        traceEnd.setAttribute("cy", endY.toFixed(2));
-        traceEnd.setAttribute("r", 0.8);
-        traceEnd.setAttribute("fill", 'red');
-        svgRoot.appendChild(traceEnd);
-
+    
     const duration = 2000; // Duration for the movement animation
     const startTime = performance.now();
 
@@ -265,30 +251,19 @@ moveForward(distance, callback) {
             // Finalize the state and invoke the callback
             this.currentAngle = targetAngle;
             console.log(`Final position rotate: (${this.currentX}, ${this.currentY})`);
-            const traceEndR = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    traceEndR.setAttribute("cx", this.currentX.toFixed(2));
-                    traceEndR.setAttribute("cy", this.currentY.toFixed(2));
-                    traceEndR.setAttribute("r", 1.8);
-                    traceEndR.setAttribute("fill", 'green');
-                    svgRoot.appendChild(traceEndR);
         
-                const RoffsetX3 = this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
-                const RoffsetY3 = -this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
+            const RoffsetX3 = this.selectedMission.offsetY * this.scaleY * Math.cos(angleRadians);
+            const RoffsetY3 = -this.selectedMission.offsetY * this.scaleY * Math.sin(angleRadians);
 
-                const newAngleRadians = this.currentAngle * (Math.PI / 180);
-                const RoffsetX4 = this.selectedMission.offsetY * this.scaleY * Math.cos(newAngleRadians);
-                const RoffsetY4 = -this.selectedMission.offsetY * this.scaleY * Math.sin(newAngleRadians);
+            const newAngleRadians = this.currentAngle * (Math.PI / 180);
+            const RoffsetX4 = this.selectedMission.offsetY * this.scaleY * Math.cos(newAngleRadians);
+            const RoffsetY4 = -this.selectedMission.offsetY * this.scaleY * Math.sin(newAngleRadians);
+    
+            this.currentX += (-RoffsetX3+RoffsetX4);
+            this.currentY += (-RoffsetY3+RoffsetY4);
+            console.log(`Current Angle: (${this.currentAngle})`);
         
-                this.currentX += (-RoffsetX3+RoffsetX4);
-                this.currentY += (-RoffsetY3+RoffsetY4);
-                console.log(`Current Angle: (${this.currentAngle})`);
-        
-                const traceEndR2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                traceEndR2.setAttribute("cx", this.currentX.toFixed(2));
-                traceEndR2.setAttribute("cy", this.currentY.toFixed(2));
-                traceEndR2.setAttribute("r", 1.8);
-                traceEndR2.setAttribute("fill", 'Yellow');
-                svgRoot.appendChild(traceEndR2);
+
             callback();
         }
 
