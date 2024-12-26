@@ -171,7 +171,7 @@ moveForward(distance, callback) {
         this.currentX = startX + progress * (endX - startX);
         this.currentY = startY + progress * (endY - startY);
 
-        // Adjust for the robot's orientation and offset
+        // Adjust for the robot's offset (ensure it matches rotation offsets)
         const offsetAngleRadians = this.currentAngle * (Math.PI / 180);
         const offsetX = this.selectedMission.offsetY * this.scaleY * Math.cos(offsetAngleRadians);
         const offsetY = -this.selectedMission.offsetY * this.scaleY * Math.sin(offsetAngleRadians);
@@ -182,7 +182,7 @@ moveForward(distance, callback) {
         // Update the robot's position and rotation in the SVG
         this.robot.setAttribute(
             "transform",
-            `translate(${this.currentX}, ${this.currentY}) rotate(${90 - this.currentAngle})`
+            `translate(${this.currentX.toFixed(2)}, ${this.currentY.toFixed(2)}) rotate(${90 - this.currentAngle})`
         );
 
         // Add a trace point at the adjusted position
@@ -199,6 +199,9 @@ moveForward(distance, callback) {
         if (progress < 1) {
             requestAnimationFrame(animate); // Continue animation
         } else {
+            // Ensure final position is accurate
+            this.currentX = endX;
+            this.currentY = endY;
             callback(); // Invoke callback when animation completes
         }
     };
