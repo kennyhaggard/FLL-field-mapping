@@ -150,6 +150,8 @@ const app = new Vue({
             }
         },
 moveForward(distance, callback) {
+    const svgRoot = document.getElementById("mission-field");
+
     const distanceSvg = distance * this.scaleY;
     const angleRadians = (this.currentAngle * Math.PI) / 180;
     const deltaX = distanceSvg * Math.cos(angleRadians);
@@ -165,7 +167,6 @@ moveForward(distance, callback) {
             traceStart.setAttribute("cy", startY.toFixed(2));
             traceStart.setAttribute("r", 0.8);
             traceStart.setAttribute("fill", 'red');
-            const svgRoot = document.getElementById("mission-field");
             svgRoot.appendChild(traceStart);
 
     const traceEnd = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -173,7 +174,6 @@ moveForward(distance, callback) {
         traceEnd.setAttribute("cy", endY.toFixed(2));
         traceEnd.setAttribute("r", 0.8);
         traceEnd.setAttribute("fill", 'red');
-        const svgRoot = document.getElementById("mission-field");
         svgRoot.appendChild(traceStart);
 
     const duration = 2000; // Duration for the movement animation
@@ -208,7 +208,6 @@ moveForward(distance, callback) {
             trace.setAttribute("cy", traceY.toFixed(2));
             trace.setAttribute("r", 0.8);
             trace.setAttribute("fill", this.traceColor);
-            const svgRoot = document.getElementById("mission-field");
             svgRoot.appendChild(trace);
         }
 
