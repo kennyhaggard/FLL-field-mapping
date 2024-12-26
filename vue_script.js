@@ -174,7 +174,7 @@ moveForward(distance, callback) {
         traceEnd.setAttribute("cy", endY.toFixed(2));
         traceEnd.setAttribute("r", 1.8);
         traceEnd.setAttribute("fill", 'red');
-        svgRoot.appendChild(traceStart);
+        svgRoot.appendChild(traceEnd);
 
     const duration = 2000; // Duration for the movement animation
     const startTime = performance.now();
