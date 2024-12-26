@@ -150,6 +150,7 @@ const app = new Vue({
             }
         },
 moveForward(distance, callback) {
+    console.log(`Final position {$this.currentX},{$this.currentY})`)
     const distanceSvg = distance * this.scaleY;
     const angleRadians = (this.currentAngle * Math.PI) / 180;
     const deltaX = distanceSvg * Math.cos(angleRadians);
@@ -250,10 +251,13 @@ moveForward(distance, callback) {
             this.currentAngle = targetAngle;
             callback();
         }
+
     };
 
     // Start the animation
     requestAnimationFrame(animate);
+    console.log(`Final position {$this.currentX},{$this.currentY})`)
+
 }
 
     }
