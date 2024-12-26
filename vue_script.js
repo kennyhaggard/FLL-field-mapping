@@ -150,11 +150,6 @@ const app = new Vue({
             }
         },
 moveForward(distance, callback) {
-console.log(`Start position move forward: (${this.currentX}, ${this.currentY})`);
-        this.robot.setAttribute(
-        "transform",
-        `translate(${this.currentX}, ${this.currentY})`
-    );
     const distanceSvg = distance * this.scaleY;
     const angleRadians = (this.currentAngle * Math.PI) / 180;
     const deltaX = distanceSvg * Math.cos(angleRadians);
@@ -164,6 +159,22 @@ console.log(`Start position move forward: (${this.currentX}, ${this.currentY})`)
     const startY = this.currentY;
     const endX = startX + deltaX;
     const endY = startY + deltaY;
+
+    const traceStart = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            traceStart.setAttribute("cx", startX.toFixed(2));
+            traceStart.setAttribute("cy", startY.toFixed(2));
+            traceStart.setAttribute("r", 0.8);
+            traceStart.setAttribute("fill", 'red');
+            const svgRoot = document.getElementById("mission-field");
+            svgRoot.appendChild(traceStart);
+
+    const traceEnd = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        traceEnd.setAttribute("cx", endX.toFixed(2));
+        traceEnd.setAttribute("cy", endY.toFixed(2));
+        traceEnd.setAttribute("r", 0.8);
+        traceEnd.setAttribute("fill", 'red');
+        const svgRoot = document.getElementById("mission-field");
+        svgRoot.appendChild(traceStart);
 
     const duration = 2000; // Duration for the movement animation
     const startTime = performance.now();
