@@ -280,7 +280,7 @@ moveForward(distance, callback) {
                 const RoffsetY4 = -this.selectedMission.offsetY * this.scaleY * Math.sin(newAngleRadians);
         
                 this.currentX += (-RoffsetX3+RoffsetX4);
-                this.currentY += -(RoffsetY3+RoffsetY4);
+                this.currentY += (-RoffsetY3+RoffsetY4);
                 console.log(`Current Angle: (${this.currentAngle})`);
         
                 const traceEndR2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
