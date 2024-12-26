@@ -284,8 +284,8 @@ moveForward(distance, callback) {
         const RoffsetX3 = this.selectedMission.offsetY * this.scaleY * Math.cos(currentAngleRadians2);
         const RoffsetY3 = -this.selectedMission.offsetY * this.scaleY * Math.sin(currentAngleRadians2);
 
-        this.currentX += RoffsetX3;
-        this.currentY += RoffsetY3;
+        this.currentX += -RoffsetX3;
+        this.currentY += -RoffsetY3;
 
         const traceEndR2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         traceEndR2.setAttribute("cx", this.currentX.toFixed(2));
