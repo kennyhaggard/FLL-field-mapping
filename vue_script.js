@@ -278,8 +278,21 @@ moveForward(distance, callback) {
             traceEndR.setAttribute("r", 1.8);
             traceEndR.setAttribute("fill", 'green');
             svgRoot.appendChild(traceEndR);
+               
+            
+        const currentAngleRadians2 = currentAngle * (Math.PI / 180);
+        const RoffsetX3 = this.selectedMission.offsetY * this.scaleY * Math.cos(currentAngleRadians2);
+        const RoffsetY3 = -this.selectedMission.offsetY * this.scaleY * Math.sin(currentAngleRadians2);
 
+        this.currentX += RoffsetX3;
+        this.currentY += RoffsetY3;
 
+        const traceEndR2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        traceEndR2.setAttribute("cx", this.currentX.toFixed(2));
+        traceEndR2.setAttribute("cy", this.currentY.toFixed(2));
+        traceEndR2.setAttribute("r", 1.8);
+        traceEndR2.setAttribute("fill", 'Yellow');
+        svgRoot.appendChild(traceEndR2);
 }
 
     }
