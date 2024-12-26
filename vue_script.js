@@ -151,6 +151,10 @@ const app = new Vue({
         },
 moveForward(distance, callback) {
 console.log(`Start position move forward: (${this.currentX}, ${this.currentY})`);
+        this.robot.setAttribute(
+        "transform",
+        `translate(${this.currentX}, ${this.currentY})`
+    );
     const distanceSvg = distance * this.scaleY;
     const angleRadians = (this.currentAngle * Math.PI) / 180;
     const deltaX = distanceSvg * Math.cos(angleRadians);
