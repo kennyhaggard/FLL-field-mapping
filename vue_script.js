@@ -165,14 +165,14 @@ moveForward(distance, callback) {
     const traceStart = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             traceStart.setAttribute("cx", startX.toFixed(2));
             traceStart.setAttribute("cy", startY.toFixed(2));
-            traceStart.setAttribute("r", 0.8);
+            traceStart.setAttribute("r", 1.8);
             traceStart.setAttribute("fill", 'red');
             svgRoot.appendChild(traceStart);
 
     const traceEnd = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         traceEnd.setAttribute("cx", endX.toFixed(2));
         traceEnd.setAttribute("cy", endY.toFixed(2));
-        traceEnd.setAttribute("r", 0.8);
+        traceEnd.setAttribute("r", 1.8);
         traceEnd.setAttribute("fill", 'red');
         svgRoot.appendChild(traceStart);
 
