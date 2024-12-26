@@ -273,8 +273,8 @@ moveForward(distance, callback) {
     requestAnimationFrame(animate);
     console.log(`Final position rotate: (${this.currentX}, ${this.currentY})`);
     const traceEndR = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            traceEndR.setAttribute("cx", startX.toFixed(2));
-            traceEndR.setAttribute("cy", startY.toFixed(2));
+            traceEndR.setAttribute("cx", this.currentX.toFixed(2));
+            traceEndR.setAttribute("cy", this.currentY.toFixed(2));
             traceEndR.setAttribute("r", 1.8);
             traceEndR.setAttribute("fill", 'green');
             svgRoot.appendChild(traceEndR);
