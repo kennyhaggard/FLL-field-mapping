@@ -286,6 +286,7 @@ moveForward(distance, callback) {
 
         this.currentX += -RoffsetX3;
         this.currentY += -RoffsetY3;
+        console.log(`Current Angle: (${this.currentAngle})`);
 
         const traceEndR2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         traceEndR2.setAttribute("cx", this.currentX.toFixed(2));
