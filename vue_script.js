@@ -23,19 +23,17 @@ const app = new Vue({
             this.missions = [
                 {
                     name: "Demo Mission",
-                    startX: 10,
+                    startX: 0,
                     startY: 0,
                     startAngle: 90,
-                    robotWidthCm: 18.4,
-                    robotHeightCm: 15.2,
+                    robotWidthCm: 10,
+                    robotHeightCm: 12,
                     traceColor: "green",
                     offsetY: -3.2,
                     actions: [
-                        { type: "move", value: 35 },
-                        { type: "rotate", value: -45 },
-                        { type: "move", value: 30 },
-                        { type: "rotate", value: -45 },
-                        { type: "move", value: 10 }
+                        { type: "move", value: 50 },
+                        { type: "rotate", value: -90 },
+                        { type: "move", value: 30 }
                     ]
                 }
             ];
