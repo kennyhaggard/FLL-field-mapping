@@ -29,6 +29,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "robotWidthCm": 30,
         "robotHeightCm": 13,
         "traceColor": "green",
+        "offsetY": -3.2,
         "actions": [
             { "type": "move", "value": 17 },
             { "type": "rotate", "value": -24 },
@@ -46,6 +47,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "robotWidthCm": 30,
         "robotHeightCm": 12,
         "traceColor": "red",
+        "offsetY": -3.2,
         "actions": [
             { "type": "move", "value": 50 },
             { "type": "rotate", "value": 90 },
@@ -60,6 +62,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "robotWidthCm": 10,
         "robotHeightCm": 12,
         "traceColor": "yellow",
+        "offsetY": -3.2,
         "actions": [
             { "type": "move", "value": 50 },
             { "type": "rotate", "value": -90 },
@@ -74,6 +77,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "robotWidthCm": 10,
         "robotHeightCm": 12,
         "traceColor": "blue",
+        "offsetY": -3.2,
         "actions": [
             { "type": "move", "value": 50 },
             { "type": "rotate", "value": -90 },
@@ -88,6 +92,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "robotWidthCm": 10,
         "robotHeightCm": 12,
         "traceColor": "purple",
+        "offsetY": -3.2,
         "actions": [
             { "type": "move", "value": 50 },
             { "type": "rotate", "value": -90 },
