@@ -103,9 +103,27 @@ const app = new Vue({
             this.scaleY = this.scaleX;
             this.scaleOffsetY = -mission.offsetY * this.scaleY
 
-            this.currentX = mission.startX * this.scaleX + mission.robotWidthCm * this.scaleX / 2;
-            this.currentY = svgRoot.viewBox.baseVal.height - mission.startY * this.scaleY - mission.robotLengthCm * this.scaleY / 2;
+            // Normalize angle and get cos/sin
+            const thetaDeg = ((mission.startAngle % 360) + 360) % 360;
+            const thetaRad = thetaDeg * Math.PI / 180;
+            const c = Math.cos(thetaRad);
+            const s = Math.sin(thetaRad);
+            
+            // Half-dimensions in SVG units (respect aspect scales)
+            const halfLx = (mission.robotLengthCm * this.scaleX) / 2; // length projected to X scale
+            const halfLy = (mission.robotLengthCm * this.scaleY) / 2; // length projected to Y scale
+            const halfWx = (mission.robotWidthCm  * this.scaleX) / 2; // width projected to X scale
+            const halfWy = (mission.robotWidthCm  * this.scaleY) / 2; // width projected to Y scale
+            
+            // Axis-aligned half-extents of the rotated rectangle (AABB)
+            const dx = Math.abs(c) * halfLx + Math.abs(s) * halfWx; // how far from left wall to center
+            const dy = Math.abs(s) * halfLy + Math.abs(c) * halfWy; // how far from bottom wall to center
+            
+            // Place the robot's CENTER so it stays "in field" from the left/bottom edges
+            this.currentX     = mission.startX * this.scaleX + dx;
+            this.currentY     = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY) - dy;
             this.currentAngle = mission.startAngle;
+    
             this.traceColor = mission.traceColor;
 
             const robot = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -274,4 +292,5 @@ moveForward(distance, callback) {
 
     }
 });
+
 
