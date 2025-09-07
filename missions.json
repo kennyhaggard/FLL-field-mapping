@@ -5,7 +5,7 @@
         "startY": 0,
         "startAngle": 90,
         "robotWidthCm": 17,
-        "robotHeightCm": 15,
+        "robotLengthCm": 15,
 	"traceColor": "green",
 	"offsetY":1.8,
         "actions": [
@@ -23,7 +23,7 @@
         "startY": 0,
         "startAngle": 90,
         "robotWidthCm": 17,
-        "robotHeightCm": 15,
+        "robotLengthCm": 15,
 	"traceColor":"red",
 	"offsetY":1.8,
         "actions": [
@@ -41,7 +41,7 @@
         "startY": 24,
         "startAngle": 0,
         "robotWidthCm": 17,
-        "robotHeightCm": 15,
+        "robotLengthCm": 15,
 	"traceColor": "yellow",
 	"offsetY":1.8,
         "actions": [
@@ -64,7 +64,7 @@
         "startY": 10,
         "startAngle": 180,
         "robotWidthCm": 9.8,
-        "robotHeightCm": 30,
+        "robotLengthCm": 30,
 	"traceColor":"blue",
 	"offsetY":14,
         "actions": [
@@ -80,7 +80,7 @@
         "startY": 25.1,
         "startAngle": 180,
         "robotWidthCm": 10.4,
-        "robotHeightCm": 11.2,
+        "robotLengthCm": 11.2,
 	"traceColor":"purple",
 	"offsetY":2.8,
         "actions": [
@@ -103,7 +103,7 @@
         "startY": 25.1,
         "startAngle": 180,
         "robotWidthCm": 10.4,
-        "robotHeightCm": 11.2,
+        "robotLengthCm": 11.2,
 	"traceColor":"blue",
 	"offsetY":2.8,
         "actions": [
@@ -118,3 +118,4 @@
 	]       
     }
 ]
+
