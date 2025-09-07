@@ -27,7 +27,7 @@ const app = new Vue({
                     startY: 0,
                     startAngle: 90,
                     robotWidthCm: 10,
-                    robotHeightCm: 12,
+                    robotLengthCm: 12,
                     traceColor: "green",
                     offsetY: -3.2,
                     actions: [
@@ -104,15 +104,15 @@ const app = new Vue({
             this.scaleOffsetY = -mission.offsetY * this.scaleY
 
             this.currentX = mission.startX * this.scaleX + mission.robotWidthCm * this.scaleX / 2;
-            this.currentY = svgRoot.viewBox.baseVal.height - mission.startY * this.scaleY - mission.robotHeightCm * this.scaleY / 2;
+            this.currentY = svgRoot.viewBox.baseVal.height - mission.startY * this.scaleY - mission.robotLengthCm * this.scaleY / 2;
             this.currentAngle = mission.startAngle;
             this.traceColor = mission.traceColor;
 
             const robot = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             robot.setAttribute("x", -mission.robotWidthCm * this.scaleX / 2);
-            robot.setAttribute("y", -mission.robotHeightCm * this.scaleY / 2);
+            robot.setAttribute("y", -mission.robotLengthCm * this.scaleY / 2);
             robot.setAttribute("width", mission.robotWidthCm * this.scaleX);
-            robot.setAttribute("height", mission.robotHeightCm * this.scaleY);
+            robot.setAttribute("height", mission.robotLengthCm * this.scaleY);
             robot.setAttribute("fill", "blue");
             robot.setAttribute("fill-opacity", "0.6");
             robot.setAttribute("stroke", "red");
@@ -274,3 +274,4 @@ moveForward(distance, callback) {
 
     }
 });
+
