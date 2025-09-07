@@ -27,7 +27,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "startY": 0,
         "startAngle": 90,
         "robotWidthCm": 30,
-        "robotHeightCm": 13,
+        "robotLengthCm": 13,
         "traceColor": "green",
         "offsetY": -3.2,
         "actions": [
@@ -45,7 +45,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "startY": 30,
         "startAngle": 0,
         "robotWidthCm": 30,
-        "robotHeightCm": 12,
+        "robotLengthCm": 12,
         "traceColor": "red",
         "offsetY": -3.2,
         "actions": [
@@ -60,7 +60,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "startY": 30,
         "startAngle": 180,
         "robotWidthCm": 10,
-        "robotHeightCm": 12,
+        "robotLengthCm": 12,
         "traceColor": "yellow",
         "offsetY": -3.2,
         "actions": [
@@ -75,7 +75,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "startY": 30,
         "startAngle": 180,
         "robotWidthCm": 10,
-        "robotHeightCm": 12,
+        "robotLengthCm": 12,
         "traceColor": "blue",
         "offsetY": -3.2,
         "actions": [
@@ -90,7 +90,7 @@ The tool requires missions to be provided in a specific JSON format. Below is an
         "startY": 30,
         "startAngle": 180,
         "robotWidthCm": 10,
-        "robotHeightCm": 12,
+        "robotLengthCm": 12,
         "traceColor": "purple",
         "offsetY": -3.2,
         "actions": [
