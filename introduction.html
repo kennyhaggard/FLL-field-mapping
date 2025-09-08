@@ -60,8 +60,10 @@
             <li><strong>Zero Point Turns</strong>: The robot's turns are assumed to be zero point or in place. Wheelbases are typically offset from the center so I have included the ability to define the offset. A positive offset pushes the center of rotation towards the back of the robot.</li>
             <li><strong>Movement Timing</strong>: Timing is not representative of the robot's actual speed; it only reflects the robot's path.</li>
             <li><strong>Accurate Turns</strong>: The robot must turn accurately for the tool to be effective. This is best achieved by using the hub's yaw sensor. Implementation can be done in Python or block code.</li>
-		<li><strong>Coordinate System</strong>: A robot oriented at 90 degrees (facing up) and placed at (0,0) would be in the lower left corner of the field. So facing up is 90 degrees, facing right is 0 degrees, left is 180 degrees and down is 270 degrees.</li>
-		<li>Orienting the robot left or right, would shift the (0,0) start position from being stricktly in the lower left corner. This might take some experimenting to get a hang of how it is programmed.</li>
+			<li><strong>Coordinate System</strong>: (0,0) is the lower left corner of the map. You might have to experiment with placements to get the hang of how I have it programed. It is set so that the start position will be made respective of the orientation of the robot at start of the mission. Experimenet with different inputs!</li>
+			<li><strong>Measurements</strong>: All measurements are in centimeters and degrees. In general, the coordinates follow the 0 degrees is in the positive x-axis and positive angles are counter-clockwise.</strong>
+			<li><strong>Shape</strong>:It is assumed the robot is a single rectangle, more complicated or even true boarders is not setup in this model.</li>
+			<li>Orienting the robot left or right, would shift the (0,0) start position from being stricktly in the lower left corner. This might take some experimenting to get a hang of how it is programmed.</li>
         </ul>
 
 	<h3>Explanation of Offset:</h3>
