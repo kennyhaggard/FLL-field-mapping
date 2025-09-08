@@ -160,6 +160,7 @@ input[type="file"] {
 <!-- Mission Editor Sidebar -->
 <div class="editor-container active">
   <h2>Edit Mission</h2>
+    <p>You can edit the JSON directly or use the builder tool below to add move and rotate commands. Click the 'Use in tool' and the JSON will be built and ready to launch.</p>
   <!-- add an id so the builder can target this easily -->
   <textarea id="mission-json" v-model="missionEditorContent"></textarea>
   <p v-if="editorError" style="color: red;">{{ editorError }}</p>
@@ -320,6 +321,7 @@ input[type="file"] {
     <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
