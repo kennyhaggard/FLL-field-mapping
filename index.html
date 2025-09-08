@@ -163,7 +163,6 @@ input[type="file"] {
     <p>You can edit the JSON directly or use the builder tool below to add move and rotate commands. Click the 'Use in tool' and the JSON will be built and ready to launch.</p>
   
   <!-- add an id to this button so we can reuse your exact flow -->
-  <button id="btn-save-changes" class='clear-button' @click="saveMissionAndInitialize">Save Changes</button>
 </div>
 
 <!-- === BUILDER (new) === -->
@@ -224,9 +223,11 @@ input[type="file"] {
 
   <!-- Use in Tool -->
   <div style="margin-top:12px; display:flex; justify-content:flex-end;">
-    <button class="start-button" @click="builderUseInTool">Save Changes</button>
+    <button class="start-button" @click="builderUseInTool">Save Builder Changes</button>
   </div>
   <textarea id="mission-json" v-model="missionEditorContent"></textarea>
+  <button id="btn-save-changes" class='clear-button' @click="saveMissionAndInitialize">Save JSON Changes</button>
+
   <p v-if="editorError" style="color: red;">{{ editorError }}</p>
 </div>
         </div>
@@ -321,6 +322,7 @@ input[type="file"] {
     <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
