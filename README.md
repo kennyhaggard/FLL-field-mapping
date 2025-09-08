@@ -12,12 +12,15 @@ This is a simple script that relies on providing a JSON text file with a set of 
 1. **Zero Point Turns**: The robot's turns are centered at its midpoint. This may not always be accurate as wheelbases are typically offset.
 2. **Movement Timing**: Timing is not representative of the robot's actual speed; it only reflects the robot's path.
 3. **Accurate Turns**: The robot must turn accurately for the tool to be effective. This is best achieved by using the hub's yaw sensor. Implementation can be done in Python or block code.
-4. **Coordinate System**: (0,0) is the lower left corner of the robot when it is oriented at 90 degrees (pointedup). You might have to experiment with placements to get the hang of how I have it programed.
+4. **Coordinate System**: (0,0) is the lower left corner of the map. You might have to experiment with placements to get the hang of how I have it programed. It is set so that the start position will be made respective of the orientation of the robot at start of the mission. Experimenet with different inputs!
 5. **Measurements** All measurements are in centimeters and degrees. In general, the coordinates follow the 0 degrees is in the positive x-axis and positive angles are counter-clockwise.
+6. **Shape** It is assumed the robot is a single rectangle, more complicated or even true boarders is not setup in this model.
 
 ## Mission Format
+There is a builder tool that allows move and rotate blocks to be added. There is also a JSON format that is used to run the app.
+The JSON upload can be used to load several missions to showcase different potential paths or a full set of mission plans. 
 
-The tool requires missions to be provided in a specific JSON format. Below is an example, also in the repository there is a missions.json file with this code:
+Below is an example, also in the repository there is a missions.json file with this code:
 
 ```json
 [
