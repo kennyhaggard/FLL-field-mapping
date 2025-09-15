@@ -228,6 +228,7 @@ input[type="file"] {
   <p v-if="editorError" style="color: red;">{{ editorError }}</p>
 </div>
         </div>
+        <div id="field-view">
         <div id="field-container">
             <!-- SVG Field -->
             <svg id="mission-field" viewBox="0 0 226.281 128.981" preserveAspectRatio="none">
@@ -315,10 +316,12 @@ input[type="file"] {
                             <button class="start-button" @click="startMission" :disabled="!selectedMission">Start Movement</button>
             <button class="clear-button" @click="clearField">Clear Field</button>
     </div>
+        </div>
 </div>
     <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
