@@ -17,22 +17,32 @@
             display: table;
         }
         /* Make the left pane scroll on its own when it gets long */
-#control-container {
-  /* you had 'display:table-cell' — keep your layout choice */
-  vertical-align: top;
-  height: calc(100vh - 20px); /* adjust if you have a fixed header */
-  overflow: auto;
-}
+        #control-container {
+          /* you had 'display:table-cell' — keep your layout choice */
+          vertical-align: top;
+          height: calc(100vh - 20px); /* adjust if you have a fixed header */
+          overflow: auto;
+        }
 
-/* Keep the entire field area “stuck” to the top of the viewport */
-#field-view .field-container {
-  position: sticky;
-  top: 10px;                  /* space from top; bump if you have a fixed header */
-  max-height: calc(100vh - 30px);
-  overflow: auto;             /* lets you scroll to the buttons under the SVG */
-  background: #fff;           /* avoids showing content underneath while sticky */
-  border-radius: 8px;         /* optional polish */
-}
+        /* Keep the entire field area “stuck” to the top of the viewport */
+        #field-view .field-container {
+          position: sticky;
+          top: 10px;                  /* space from top; bump if you have a fixed header */
+          max-height: calc(100vh - 30px);
+          overflow: auto;             /* lets you scroll to the buttons under the SVG */
+          background: #fff;           /* avoids showing content underneath while sticky */
+          border-radius: 8px;         /* optional polish */
+        }
+
+          /* Make sure SVG scales and doesn’t overflow horizontally */
+      #mission-field {
+        display: block;
+        width: 100%;
+        height: auto;                      /* respects viewBox aspect ratio */
+      }
+    
+      /* Optional: spacing for the buttons under the field */
+      .field-controls { padding: 8px 0; }
 
         button,input {
             margin: 5px 5px;
@@ -137,10 +147,6 @@ input[type="file"] {
   width: 60px !important;
 }
 
-/* Make sure the left/right panes scroll nicely if content grows */
-#control-container, #field-view {
-  vertical-align: top;
-}
 </style>
 </head>
 <body>
@@ -329,6 +335,7 @@ input[type="file"] {
     <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
