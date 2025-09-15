@@ -157,6 +157,7 @@ const app = new Vue({
       );
       dynamicElements.forEach((element) => svgRoot.removeChild(element));
       this.robot = null;
+      this.saveMissionAndInitialize();
     },
 
     initializeMission(mission) {
@@ -359,3 +360,4 @@ const app = new Vue({
     }
   }
 });
+
