@@ -66,8 +66,53 @@ const app = new Vue({
         }))
       };
     },
+    builderUseInTool() {
+      // 1) dump builder JSON into your existing editor
+      const payload = this.builderCompileSchema();
+      this.missionEditorContent = JSON.stringify(payload, null, 4);
+      // 2) reuse your existing flow to place robot
+      this.saveMissionAndInitialize();
+    },
 
-    // Duration calculators (ms)
+    // Load an existing mission schema into the builder UI
+    builderLoadFromSchema(schema) {
+      if (!schema) return;
+      this.builder.name          = schema.name ?? 'Demo Mission';
+      this.builder.startX        = Number(schema.startX ?? 0);
+      this.builder.startY        = Number(schema.startY ?? 0);
+      this.builder.startAngle    = Number(schema.startAngle ?? 0);
+      this.builder.robotWidthCm  = Number(schema.robotWidthCm ?? 0);
+      this.builder.robotLengthCm = Number(schema.robotLengthCm ?? 0);
+      this.builder.offsetY       = Number(schema.offsetY ?? 0);
+      this.builder.traceColor    = this.normalizeColorToHex(schema.traceColor ?? '#008000');
+      const safe = Array.isArray(schema.actions) ? schema.actions : [];
+      this.builder.actions = safe.map(a => ({
+        type: a.type,
+        value: Number(a.value) || 0
+      }));
+    },
+
+    // Normalize any CSS color to full hex (for the picker)
+    normalizeColorToHex(colorStr) {
+      try {
+        const ctx = document.createElement('canvas').getContext('2d');
+        if (!ctx) return '#008000';
+        ctx.fillStyle = '#000';
+        ctx.fillStyle = String(colorStr);
+        const computed = ctx.fillStyle; // "#rrggbb" or "rgb(r,g,b)"
+        if (computed.startsWith('#')) return computed;
+        const m = computed.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
+        if (!m) return '#008000';
+        const toHex = n => ('0' + parseInt(n, 10).toString(16)).slice(-2);
+        return `#${toHex(m[1])}${toHex(m[2])}${toHex(m[3])}`;
+      } catch {
+        return '#008000';
+      }
+    },
+
+    /* =========================
+     *  Durations & easing
+     * ========================= */
     moveDurationMs(distanceCm) {
       const s = Math.max(0.1, Number(this.moveSpeedCmPerSec) || 20); // guard against 0
       return Math.max(1, Math.abs(distanceCm) / s * 1000);
@@ -76,27 +121,18 @@ const app = new Vue({
       const s = Math.max(1, Number(this.rotateSpeedDegPerSec) || 90);
       return Math.max(1, Math.abs(angleDeg) / s * 1000);
     },
-
-    // Smooth ease-in-out (0..1 -> 0..1); use linear if you prefer
     easeInOut(t) {
       return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    }, // <-- MISSING COMMA WAS HERE
-
-    builderUseInTool() {
-      // 1) dump builder JSON into your existing editor
-      const payload = this.builderCompileSchema();
-      this.missionEditorContent = JSON.stringify(payload, null, 4);
-
-      // 2) reuse your existing flow to place robot
-      this.saveMissionAndInitialize();
     },
 
     /* =========================
      *  Existing mission UI helpers
      * ========================= */
     selectAndEditMission(mission) {
-      this.initializeMission(mission); // Initialize the mission
-      this.missionEditorContent = JSON.stringify(mission, null, 4); // Pre-fill the editor
+      this.initializeMission(mission);
+      this.missionEditorContent = JSON.stringify(mission, null, 4);
+      // Keep builder in sync with selected mission
+      this.builderLoadFromSchema(mission);
     },
     loadDemoMission() {
       this.missions = [
@@ -116,11 +152,16 @@ const app = new Vue({
           ]
         }
       ];
+      // (Optional) auto-select demo:
+      // this.selectAndEditMission(this.missions[0]);
     },
     saveMissionAndInitialize() {
       try {
         const updatedMission = JSON.parse(this.missionEditorContent);
         this.selectedMission = updatedMission;
+        // Sync builder from editor JSON
+        this.builderLoadFromSchema(updatedMission);
+        // Place robot
         this.initializeMission(updatedMission);
         this.editorError = null;
       } catch (error) {
@@ -214,7 +255,7 @@ const app = new Vue({
       this.currentY     = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY) - dy;
       this.currentAngle = thetaDeg;
 
-      // Trace color (string: hex or name)
+      // Trace color
       this.traceColor = mission.traceColor;
 
       // Draw robot rect centered at (0,0); we move it via transform
@@ -226,7 +267,6 @@ const app = new Vue({
       robot.setAttribute("fill", "blue");
       robot.setAttribute("fill-opacity", "0.6");
       robot.setAttribute("stroke", "red");
-      // Note rotation is about the rect origin, which we've centered via x/y above
       robot.setAttribute("transform", `translate(${this.currentX}, ${this.currentY}) rotate(${90 - this.currentAngle})`);
 
       svgRoot.appendChild(robot);
