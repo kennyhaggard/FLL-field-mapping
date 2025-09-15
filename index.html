@@ -221,7 +221,7 @@ input[type="file"] {
     <button class="start-button" @click="builderUseInTool">Save Builder Changes</button>
   </div>
   <h2> JSON Editor</h2>
-  <p>Both loaded missions and missions built from the builder are formatted here:</p>
+  <p>Both loaded missions and missions built from the builder are formatted here. Changes made will be reflected in the builder when saved.</p>
   <textarea id="mission-json" v-model="missionEditorContent"></textarea>
   <button id="btn-save-changes" class='clear-button' @click="saveMissionAndInitialize">Save JSON Changes</button>
 
@@ -319,6 +319,7 @@ input[type="file"] {
     <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
