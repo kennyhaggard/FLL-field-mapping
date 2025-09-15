@@ -1,251 +1,295 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mission Field</title>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            display: block;
-        }
-        #app {
-            width: 100%;
-            height: 100vh;
-            display: table;
-        }
-        /* Make the left pane scroll on its own when it gets long */
-        #control-container {
-          /* you had 'display:table-cell' — keep your layout choice */
-          vertical-align: top;
-          height: calc(100vh - 20px); /* adjust if you have a fixed header */
-          overflow: auto;
-        }
+  <meta charset="utf-8" />
+  <title>Mission Field + Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        /* Keep the entire field area “stuck” to the top of the viewport */
-        #field-view .field-container {
-          position: sticky;
-          top: 10px;                  /* space from top; bump if you have a fixed header */
-          max-height: calc(100vh - 30px);
-          overflow: auto;             /* lets you scroll to the buttons under the SVG */
-          background: #fff;           /* avoids showing content underneath while sticky */
-          border-radius: 8px;         /* optional polish */
-        }
+  <style>
+    /* --- Base layout: two columns using table/table-cell --- */
+    body {
+      margin: 0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;
+      background: #f6f7fb;
+      color: #1c2233;
+    }
+    .page {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+    /* LEFT PANE: editor + builder; scrolls independently */
+    #control-container {
+      display: table-cell;      /* (fixed typo) */
+      vertical-align: top;
+      height: 100vh;            /* full viewport height */
+      overflow: auto;           /* independent scroll */
+      padding: 12px;
+      width: 420px;             /* tweak as you like */
+      background: #fff;
+      border-right: 1px solid #e5e7eb;
+    }
+    /* RIGHT PANE: field view (sticky field panel) */
+    #field-view {
+      display: table-cell;
+      vertical-align: top;
+      padding: 12px;
+      background: #f6f7fb;
+    }
+    #field-view .field-panel {
+      position: sticky;
+      top: 12px;                          /* adjust if you have a fixed header */
+      max-height: calc(100vh - 24px);
+      overflow: auto;                      /* scroll inside if SVG+buttons are tall */
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
 
-          /* Make sure SVG scales and doesn’t overflow horizontally */
-      #mission-field {
-        display: block;
-        width: 100%;
-        height: auto;                      /* respects viewBox aspect ratio */
-      }
-    
-      /* Optional: spacing for the buttons under the field */
-      .field-controls { padding: 8px 0; }
+    /* --- Controls / cards in the left pane --- */
+    h2 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .editor-container {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+    }
 
-        button,input {
-            margin: 5px 5px;
-            padding: 10px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            color: black;
-        }
-        .start-button {
-            background-color: #4CAF50;
-        }
-        .clear-button {
-            background-color: orange;
-        }
-        .demo-button {
-            background-color: #007bff;
-        }
-        .load-button {
-            background-color: #cdcdcd;
-        }
-        .mission-list {
-            margin-top: 20px;
-        }
-        .mission-button {
-            background-color: #8a02b5;
-            margin-bottom: 5px;
-        }
-        .editor-container {
-            margin-top: 20px;
-            display: none;
-        }
-        .editor-container.active {
-            display: block;
-        }
-        textarea {
-            width: 90%;
-            height: 250px;
-            font-family: monospace;
-            font-size: 14px;
-            margin: 10px 0;
-        }
-        #field-container {
-            display: table-cell;
-            width: 90%;
-            vertical-align: top;
-            background-color: #fff;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        #mission-field {
-            width: 100%;
-            height: auto;
-            margin: 0 auto;
-        }
-        #file-upload {
-            padding:10px;
-            width:90%;
-        }
-    </style>
-    <style id="builder-fixes">
-/* Make sure only buttons get the button styles */
-button {
-  margin: 5px 5px;
-  padding: 10px;
-  font-size: 16px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  color: white;
-}
+    /* --- Buttons --- */
+    .start-button      { background:#22c55e; }
+    .clear-button      { background:#ef4444; }
+    .demo-button       { background:#3b82f6; }
+    .neutral-button    { background:#6b7280; }
+    button {
+      margin: 5px 5px 5px 0;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+    }
 
-/* Restore sane defaults for inputs used by the builder + editor */
-input[type="text"],
-input[type="number"],
-input[type="color"],
-textarea {
-  color: #111;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 6px 8px;
-  cursor: text;
-}
+    /* --- IMPORTANT: keep inputs readable (don’t style like buttons) --- */
+    input[type="text"],
+    input[type="number"],
+    input[type="color"],
+    textarea {
+      color: #111;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+    input[type="file"] {
+      margin: 5px 0;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 6px;
+      color: inherit;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
 
-/* Keep file input looking clickable without turning ALL inputs into buttons */
-input[type="file"] {
-  margin: 5px 5px;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 5px;
-  color: inherit;
-  cursor: pointer; /* optional */
-  border: 1px solid #ccc;
-  background: #fff;
-}
+    /* --- Builder tweaks --- */
+    .builder-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .builder-grid label {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .builder-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+    .builder-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .builder-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .builder-tag {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 12px;
+      background: #eef3ff;
+      color: #2749b6;
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+    .builder-item label span {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    /* Keep the action value compact (your 60px preference) */
+    .builder-item input[type="number"] { width: 60px; }
 
-/* Builder action value box width (your 60px preference) */
-.editor-container input[type="number"][v-model],
-.editor-container input[type="number"][style*="width:60px"] {
-  width: 60px !important;
-}
-
-</style>
+    /* --- Field / SVG --- */
+    #mission-field {
+      display: block;
+      width: 100%;
+      height: auto; /* keeps aspect via viewBox */
+      border-radius: 6px;
+      background: #fafafa;
+    }
+    .field-controls {
+      padding: 10px 0 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    /* Toolbar / top bar (optional) */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+  </style>
 </head>
 <body>
-    <div id="app">
-        <div id="control-container">
-            <h1>First Lego League Field Mapping Tool</h1>
-            <p>Check the <a href= 'https://kennyhaggard.github.io/FLL-field-mapping/introduction.html'>README file</a> for instructions.</p>
-            <button class="demo-button" id = "demo-button" @click="loadDemoMission">Load Demo Mission</button>
-            <input type="file" id="file-upload" @change="loadMissions" accept=".json" class="load-button">
+  <header>
+    <h1>Mission Tool</h1>
+    <span style="color:#6b7280">Editor + Builder (left) • Field (right)</span>
+  </header>
 
-            <!-- Mission List -->
-            <div class="mission-list" v-if="missions.length > 0">
-                <h3>Loaded Missions</h3>
-                <p>Select a mission to start and/or edit</p>
-                <button 
-                    v-for="(mission, index) in missions" 
-                    :key="index" 
-                    class="mission-button" 
-                    @click="selectAndEditMission(mission)">
-                    {{ mission.name || `Mission ${index + 1}` }}
-                </button>
-            </div>
+  <div id="app" class="page">
+    <!-- LEFT PANE -->
+    <div id="control-container">
+      <!-- Loader / basic controls -->
+      <div class="editor-container">
+        <h2>Load Missions</h2>
+        <input type="file" accept="application/json" @change="loadMissions" />
+        <button class="demo-button" @click="loadDemoMission">Load Demo</button>
+      </div>
 
-            <!-- Mission Editor Sidebar -->
-<!-- Mission Editor Sidebar -->
-<div class="editor-container active">
-  <h2>Edit Mission</h2>
-    <p>You can edit the JSON directly or use the Builder tools below to add move and rotate commands. Click the 'Save Builder Changes' and the JSON will be built and ready to launch.</p>
-  
-  <!-- add an id to this button so we can reuse your exact flow -->
-</div>
-
-<!-- === BUILDER (new) === -->
-<div class="editor-container active" style="margin-top:18px;">
-  <h2>Builder (Beta)</h2>
-
-  <!-- Settings -->
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-    <label>Name
-      <input type="text" v-model="builder.name">
-    </label>
-    <label>traceColor
-      <span style="display:flex; align-items:center; gap:8px;">
-        <input type="color" v-model="builder.traceColor" />
-        <span :style="{width:'20px',height:'20px',border:'1px solid #ccc',borderRadius:'4px',background:builder.traceColor}"></span>
-      </span>
-    </label>
-    <label>startX (cm)
-      <input type="number" step="0.1" v-model.number="builder.startX">
-    </label>
-    <label>startY (cm)
-      <input type="number" step="0.1" v-model.number="builder.startY">
-    </label>
-    <label>startAngle (deg)
-      <input type="number" step="1" v-model.number="builder.startAngle">
-    </label>
-    <label>offsetY (cm)
-      <input type="number" step="0.1" v-model.number="builder.offsetY">
-    </label>
-    <label>robotWidthCm (cm)
-      <input type="number" step="0.1" v-model.number="builder.robotWidthCm">
-    </label>
-    <label>robotLengthCm (cm)
-      <input type="number" step="0.1" v-model.number="builder.robotLengthCm">
-    </label>
-  </div>
-  <!-- Actions list -->
-  <div style="display:flex; flex-direction:column; gap:8px;">
-    <div v-for="(a, i) in builder.actions" :key="i"
-         style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #ddd; border-radius:8px; padding:8px;">
-      <span style="font-weight:700; text-transform:uppercase; font-size:12px; background:#eef3ff; color:#2749b6; border-radius:999px; padding:2px 8px;">{{a.type}}</span>
-      <label style="display:flex; align-items:center; gap:6px;">
-        <span style="font-size:12px;color:#666;">value</span>
-        <!-- NOTE: you planned to set width to 60px; inline style keeps it local -->
-        <input type="number" step="1" v-model.number="a.value" style="width:60px; padding:6px 8px; border:1px solid #ddd; border-radius:6px;">
-      </label>
-      <span style="flex:1"></span>
-      <button class="clear-button" @click="builderDelete(i)" style="background:#fff0f0;color:#b55050;border:1px solid #ffd6d6;">Delete</button>
-    </div>
-  </div>
-
-  <!-- Use in Tool -->
-  <div style="margin-top:12px; display:flex; justify-content:flex-end;">
-    <button class="demo-button" @click="builderAdd('move')">+ Move</button>
-    <button class="demo-button" @click="builderAdd('rotate')">+ Rotate</button>
-    <button class="start-button" @click="builderUseInTool">Save Builder Changes</button>
-  </div>
-  <h2> JSON Editor</h2>
-  <p>Both loaded missions and missions built from the builder are formatted here. Changes made will be reflected in the builder when saved.</p>
-  <textarea id="mission-json" v-model="missionEditorContent"></textarea>
-  <button id="btn-save-changes" class='clear-button' @click="saveMissionAndInitialize">Save JSON Changes</button>
-
-  <p v-if="editorError" style="color: red;">{{ editorError }}</p>
-</div>
+      <!-- Mission editor -->
+      <div class="editor-container">
+        <h2>Edit Mission JSON</h2>
+        <textarea id="mission-json" v-model="missionEditorContent" placeholder='Paste or edit your mission JSON here'></textarea>
+        <p v-if="editorError" style="color: red; margin:6px 0 0;">{{ editorError }}</p>
+        <div style="margin-top:10px;">
+          <button class="neutral-button" @click="openMissionEditor">Open Editor</button>
+          <button class="start-button"  @click="saveMissionAndInitialize">Save Changes</button>
         </div>
-        <div id="field-view">
-        <div id="field-container" class="field-panel">
-            <!-- SVG Field -->
-            <svg id="mission-field" viewBox="0 0 226.281 128.981" preserveAspectRatio="none">
+      </div>
+
+      <!-- BUILDER (Beta) -->
+      <div class="editor-container">
+        <h2>Builder (Beta)</h2>
+
+        <!-- Settings -->
+        <div class="builder-grid">
+          <label>Name
+            <input type="text" v-model="builder.name">
+          </label>
+          <label>traceColor
+            <span style="display:flex; align-items:center; gap:8px;">
+              <input type="color" v-model="builder.traceColor" />
+              <span :style="{width:'20px',height:'20px',border:'1px solid #ccc',borderRadius:'4px',background:builder.traceColor}"></span>
+            </span>
+          </label>
+          <label>startX (cm)
+            <input type="number" step="0.1" v-model.number="builder.startX">
+          </label>
+          <label>startY (cm)
+            <input type="number" step="0.1" v-model.number="builder.startY">
+          </label>
+          <label>startAngle (deg)
+            <input type="number" step="1" v-model.number="builder.startAngle">
+          </label>
+          <label>offsetY (cm)
+            <input type="number" step="0.1" v-model.number="builder.offsetY">
+          </label>
+          <label>robotWidthCm (cm)
+            <input type="number" step="0.1" v-model.number="builder.robotWidthCm">
+          </label>
+          <label>robotLengthCm (cm)
+            <input type="number" step="0.1" v-model.number="builder.robotLengthCm">
+          </label>
+        </div>
+
+        <!-- Builder toolbar -->
+        <div class="builder-actions">
+          <button class="demo-button" @click="builderAdd('move')">+ Move</button>
+          <button class="demo-button" @click="builderAdd('rotate')">+ Rotate</button>
+        </div>
+
+        <!-- Actions list -->
+        <div class="builder-list">
+          <div class="builder-item" v-for="(a,i) in builder.actions" :key="i">
+            <span class="builder-tag">{{ a.type }}</span>
+            <label style="display:flex; align-items:center; gap:6px;">
+              <span>value</span>
+              <input type="number" step="1" v-model.number="a.value">
+            </label>
+            <span style="flex:1"></span>
+            <button class="clear-button" @click="builderDelete(i)" style="background:#fff0f0;color:#b55050;border:1px solid #ffd6d6;">Delete</button>
+          </div>
+        </div>
+
+        <!-- Use in Tool -->
+        <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+          <button class="start-button" @click="builderUseInTool">Use in Tool</button>
+        </div>
+
+        <!-- (Optional) Animation speed knobs -->
+        <div style="margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <label>Move speed (cm/s)
+            <input type="number" step="0.1" v-model.number="moveSpeedCmPerSec">
+          </label>
+          <label>Rotate speed (°/s)
+            <input type="number" step="1" v-model.number="rotateSpeedDegPerSec">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE -->
+    <div id="field-view">
+      <div class="field-panel">
+        <!-- SVG FIELD -->
+            <svg id="mission-field" viewBox="0 0 226.281 128.981" preserveAspectRatio="xMidYMid meet">
 <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
@@ -327,14 +371,22 @@ input[type="file"] {
   </g>
 </svg>
 
-                            <button class="start-button" @click="startMission" :disabled="!selectedMission">Start Movement</button>
-            <button class="clear-button" @click="clearField">Clear Field</button>
-    </div>
+
+        <!-- Buttons under the field -->
+        <div class="field-controls">
+          <button class="start-button" @click="startMission">Start Mission</button>
+          <button class="clear-button" @click="clearField">Clear Field</button>
         </div>
-</div>
-    <script src="vue_script.js"></script>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue + your app script -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
