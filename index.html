@@ -199,13 +199,6 @@ input[type="file"] {
       <input type="number" step="0.1" v-model.number="builder.robotLengthCm">
     </label>
   </div>
-
-  <!-- Toolbar -->
-  <div style="margin:10px 0; display:flex; gap:8px; flex-wrap:wrap;">
-    <button class="demo-button" @click="builderAdd('move')">+ Move</button>
-    <button class="demo-button" @click="builderAdd('rotate')">+ Rotate</button>
-  </div>
-
   <!-- Actions list -->
   <div style="display:flex; flex-direction:column; gap:8px;">
     <div v-for="(a, i) in builder.actions" :key="i"
@@ -326,6 +319,7 @@ input[type="file"] {
     <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
