@@ -16,16 +16,24 @@
             height: 100vh;
             display: table;
         }
-        #control-container {
-            width: 25%;
-            display:table-cell;
-            min-width: 300px;
-            vertical-align: top;
-            background-color: #f9f9f9;
-            border-right: 2px solid #000;
-            padding: 10px;
-            box-sizing: border-box;
-        }
+        /* Make the left pane scroll on its own when it gets long */
+#control-container {
+  /* you had 'display:table-cell' — keep your layout choice */
+  vertical-align: top;
+  height: calc(100vh - 20px); /* adjust if you have a fixed header */
+  overflow: auto;
+}
+
+/* Keep the entire field area “stuck” to the top of the viewport */
+#field-view .field-container {
+  position: sticky;
+  top: 10px;                  /* space from top; bump if you have a fixed header */
+  max-height: calc(100vh - 30px);
+  overflow: auto;             /* lets you scroll to the buttons under the SVG */
+  background: #fff;           /* avoids showing content underneath while sticky */
+  border-radius: 8px;         /* optional polish */
+}
+
         button,input {
             margin: 5px 5px;
             padding: 10px;
@@ -229,7 +237,7 @@ input[type="file"] {
 </div>
         </div>
         <div id="field-view">
-        <div id="field-container">
+        <div id="field-container" class="field-panel">
             <!-- SVG Field -->
             <svg id="mission-field" viewBox="0 0 226.281 128.981" preserveAspectRatio="none">
 <g
@@ -321,6 +329,7 @@ input[type="file"] {
     <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
