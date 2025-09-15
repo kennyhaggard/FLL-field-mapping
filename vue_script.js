@@ -15,6 +15,9 @@ const app = new Vue({
     traceColor: '#008000',
     tracePath: true,
 
+    moveSpeedCmPerSec: 20,   // how fast moves animate
+    rotateSpeedDegPerSec: 90, // how fast rotations animate
+
     // Mission editor
     isEditing: true,
     missionEditorContent: '',
@@ -62,6 +65,19 @@ const app = new Vue({
         }))
       };
     },
+    moveDurationMs(distanceCm) {
+      const s = Math.max(0.1, Number(this.moveSpeedCmPerSec) || 20); // guard against 0
+      return Math.max(1, Math.abs(distanceCm) / s * 1000);
+    },
+    rotateDurationMs(angleDeg) {
+      const s = Math.max(1, Number(this.rotateSpeedDegPerSec) || 90);
+      return Math.max(1, Math.abs(angleDeg) / s * 1000);
+    },
+
+// Smooth ease-in-out (0..1 -> 0..1); use linear if you prefer
+    easeInOut(t) {
+      return t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; 
+    }
     builderUseInTool() {
       // 1) dump builder JSON into your existing editor
       const payload = this.builderCompileSchema();
@@ -265,99 +281,93 @@ const app = new Vue({
      *  Kinematics (animated)
      * ========================= */
     moveForward(distance, callback) {
-      const svgRoot = document.getElementById("mission-field");
-      if (!svgRoot || !this.robot) return;
+  const svgRoot = document.getElementById("mission-field");
+  if (!svgRoot || !this.robot) return;
 
-      const distanceSvg = distance * this.scaleY;
-      const startX = this.currentX;
-      const startY = this.currentY;
-      const angleRad = (this.currentAngle * Math.PI) / 180;
-      const endX = startX + distanceSvg * Math.cos(angleRad);
-      const endY = startY - distanceSvg * Math.sin(angleRad);
+  const distanceSvg = distance * this.scaleY;          // draw units
+  const startX = this.currentX;
+  const startY = this.currentY;
+  const angleRad = (this.currentAngle * Math.PI) / 180;
+  const endX = startX + distanceSvg * Math.cos(angleRad);
+  const endY = startY - distanceSvg * Math.sin(angleRad);
 
-      const duration = 2000;
-      const t0 = performance.now();
+  const duration = this.moveDurationMs(distance);      // <-- distance-based
+  const t0 = performance.now();
 
-      const animate = (t) => {
-        const p = Math.min((t - t0) / duration, 1);
-        this.currentX = startX + p * (endX - startX);
-        this.currentY = startY + p * (endY - startY);
+  const animate = (t) => {
+    const raw = Math.min((t - t0) / duration, 1);
+    const p = this.easeInOut(raw);                     // or use raw for linear
 
-        // Trace point at offset-adjusted position (recompute each frame)
-        const { ox, oy } = this.offsetXY(this.currentAngle);
-        const traceX = this.currentX - ox;
-        const traceY = this.currentY - oy;
+    this.currentX = startX + p * (endX - startX);
+    this.currentY = startY + p * (endY - startY);
 
-        // Update robot pose
-        this.robot.setAttribute(
-          "transform",
-          `translate(${this.currentX.toFixed(2)}, ${this.currentY.toFixed(2)}) rotate(${90 - this.currentAngle})`
-        );
+    const { ox, oy } = this.offsetXY(this.currentAngle);
+    const traceX = this.currentX - ox;
+    const traceY = this.currentY - oy;
 
-        // Drop a trace dot
-        if (this.tracePath) {
-          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-          dot.setAttribute("cx", traceX.toFixed(2));
-          dot.setAttribute("cy", traceY.toFixed(2));
-          dot.setAttribute("r", 0.8);
-          dot.setAttribute("fill", this.traceColor);
-          svgRoot.appendChild(dot);
-        }
+    this.robot.setAttribute(
+      "transform",
+      `translate(${this.currentX.toFixed(2)}, ${this.currentY.toFixed(2)}) rotate(${90 - this.currentAngle})`
+    );
 
-        if (p < 1) requestAnimationFrame(animate);
-        else {
-          // finalize exact end
-          this.currentX = endX;
-          this.currentY = endY;
-          callback();
-        }
-      };
+    if (this.tracePath) {
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", traceX.toFixed(2));
+      dot.setAttribute("cy", traceY.toFixed(2));
+      dot.setAttribute("r", 0.8);
+      dot.setAttribute("fill", this.traceColor);
+      svgRoot.appendChild(dot);
+    }
 
-      requestAnimationFrame(animate);
-    },
+    if (raw < 1) requestAnimationFrame(animate);
+    else { this.currentX = endX; this.currentY = endY; callback(); }
+  };
+
+  requestAnimationFrame(animate);
+},
 
     rotateRobotStatic(angle, callback) {
-      const svgRoot = document.getElementById("mission-field");
-      if (!svgRoot || !this.robot) return;
+  const svgRoot = document.getElementById("mission-field");
+  if (!svgRoot || !this.robot) return;
 
-      const startAngle = this.currentAngle;
-      const targetAngle = startAngle + angle;
+  const startAngle = this.currentAngle;
+  const targetAngle = startAngle + angle;
 
-      // Pivot center = current pose minus current offset (so rotation keeps trace point fixed)
-      const { ox: ox0, oy: oy0 } = this.offsetXY(startAngle);
-      const pivotX = this.currentX - ox0;
-      const pivotY = this.currentY - oy0;
+  // Keep pivot (trace point) fixed during rotation
+  const { ox: ox0, oy: oy0 } = this.offsetXY(startAngle);
+  const pivotX = this.currentX - ox0;
+  const pivotY = this.currentY - oy0;
 
-      const duration = 1000;
-      const t0 = performance.now();
+  const duration = this.rotateDurationMs(angle);       // <-- angle-based
+  const t0 = performance.now();
 
-      const animate = (t) => {
-        const p = Math.min((t - t0) / duration, 1);
-        const a = startAngle + (targetAngle - startAngle) * p;
+  const animate = (t) => {
+    const raw = Math.min((t - t0) / duration, 1);
+    const p = this.easeInOut(raw);                     // or use raw for linear
+    const a = startAngle + (targetAngle - startAngle) * p;
 
-        // Reapply offset at interpolated angle
-        const { ox, oy } = this.offsetXY(a);
-        const x = pivotX + ox;
-        const y = pivotY + oy;
+    const { ox, oy } = this.offsetXY(a);
+    const x = pivotX + ox;
+    const y = pivotY + oy;
 
-        this.robot.setAttribute(
-          "transform",
-          `translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${90 - a})`
-        );
+    this.robot.setAttribute(
+      "transform",
+      `translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${90 - a})`
+    );
 
-        if (p < 1) requestAnimationFrame(animate);
-        else {
-          // finalize
-          this.currentAngle = targetAngle;
-          const { ox: oxF, oy: oyF } = this.offsetXY(this.currentAngle);
-          this.currentX = pivotX + oxF;
-          this.currentY = pivotY + oyF;
-          callback();
-        }
-      };
-
-      requestAnimationFrame(animate);
+    if (raw < 1) requestAnimationFrame(animate);
+    else {
+      this.currentAngle = targetAngle;
+      const { ox: oxF, oy: oyF } = this.offsetXY(this.currentAngle);
+      this.currentX = pivotX + oxF;
+      this.currentY = pivotY + oyF;
+      callback();
     }
+  };
+
+  requestAnimationFrame(animate);
+}
   }
 });
+
 
