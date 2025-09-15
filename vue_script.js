@@ -77,7 +77,7 @@ const app = new Vue({
 // Smooth ease-in-out (0..1 -> 0..1); use linear if you prefer
     easeInOut(t) {
       return t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; 
-    }
+    },
     builderUseInTool() {
       // 1) dump builder JSON into your existing editor
       const payload = this.builderCompileSchema();
@@ -369,5 +369,6 @@ const app = new Vue({
 }
   }
 });
+
 
 
