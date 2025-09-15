@@ -17,7 +17,7 @@ const app = new Vue({
 
     // Animation speeds (global)
     moveSpeedCmPerSec: 20,    // cm/s
-    rotateSpeedDegPerSec: 90, // deg/s
+    rotateSpeedDegPerSec: 45, // deg/s
 
     // Mission editor
     isEditing: true,
@@ -415,3 +415,4 @@ const app = new Vue({
     }
   }
 });
+
