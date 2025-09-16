@@ -143,7 +143,7 @@ const app = new Vue({
           startAngle: 90,
           robotWidthCm: 10,
           robotLengthCm: 12,
-          traceColor: "green",
+          traceColor: "#008000",
           offsetY: -3.2,
           actions: [
             { type: "move", value: 50 },
@@ -415,4 +415,5 @@ const app = new Vue({
     }
   }
 });
+
 
