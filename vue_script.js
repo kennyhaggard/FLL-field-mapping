@@ -324,32 +324,38 @@ const app = new Vue({
   //  - local Y grows downward in SVG coordinates
   let x=0, y=0, wRect=0, hRect=0;
 
-  switch ((att.side || '').toLowerCase()) {
-    case 'front':
-      wRect = wX; hRect = lY;
-      x = -wRect/2 + posX;   // shift along X
-      y = -halfL - hRect;    // placed "above" the base (local negative Y)
-      break;
-    case 'rear':
-      wRect = wX; hRect = lY;
-      x = -wRect/2 + posX;
-      y =  halfL;            // placed "below" the base (local positive Y)
-      break;
-    case 'left':
-      // along Y-side; length sticks out in -X
-      wRect = lX; hRect = wY;
-      x = -halfW - wRect;    // to the left (local negative X)
-      y = -hRect/2 - posY;   // pos>0 shifts toward rear (down)
-      break;
-    case 'right':
-      wRect = lX; hRect = wY;
-      x =  halfW;            // to the right (local positive X)
-      y = -hRect/2 - posY;
-      break;
-    default:
-      return null;
-  }
+// Always: width → X, length → Y
+wRect = wX;
+hRect = lY;
 
+switch ((att.side || '').toLowerCase()) {
+  case 'front':
+    // attach above base (local negative Y)
+    x = -wRect/2 + posX;   // position along X (left/right)
+    y = -halfL - hRect;    // put its top-left above the base
+    break;
+
+  case 'rear':
+    // attach below base (local positive Y)
+    x = -wRect/2 + posX;   // position along X (left/right)
+    y =  halfL;            // put its top-left below the base
+    break;
+
+  case 'left':
+    // attach to the left (local negative X), centered in Y by default
+    x = -halfW - wRect;    // push entirely to the left of the base
+    y = -hRect/2 - posY;   // position along Y (front/back): + = toward rear (down)
+    break;
+
+  case 'right':
+    // attach to the right (local positive X), centered in Y by default
+    x =  halfW;            // flush against right edge
+    y = -hRect/2 - posY;   // position along Y (front/back)
+    break;
+
+  default:
+    return null;
+}
   const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 r.setAttribute("x", x.toFixed(2));
 r.setAttribute("y", y.toFixed(2));
@@ -508,6 +514,7 @@ return r;
     }
   }
 });
+
 
 
 
