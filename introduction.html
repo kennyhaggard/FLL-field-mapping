@@ -43,6 +43,47 @@
                 padding: 10px;
             }
         }
+
+	  .fab-back {
+    position: fixed;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom)); /* iOS safe area friendly */
+    z-index: 9999;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 12px 14px;
+    border-radius: 999px;
+    background: #2563eb; /* blue */
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12);
+    transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease;
+  }
+  .fab-back:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,.22), 0 3px 8px rgba(0,0,0,.14); }
+  .fab-back:active { transform: translateY(0); box-shadow: 0 4px 14px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12); }
+  .fab-back__icon {
+    display: inline-block;
+    width: 18px; height: 18px; line-height: 1;
+    filter: brightness(0) invert(1); /* ensure icon stays white if using an image/SVG */
+  }
+
+  /* Mobile tweaks: smaller + slightly translucent so it’s less in the way */
+  @media (max-width: 600px) {
+    .fab-back {
+      right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      padding: 10px 12px;
+      font-size: 14px;
+      opacity: 0.95;
+    }
+    .fab-back__icon { width: 16px; height: 16px; }
+  }
+
     </style>
 </head>
 <body>
@@ -145,5 +186,10 @@
         <p>Good luck, and have fun plotting your robot’s paths!</p>
 		<p> <a href = "https://kennyhaggard.github.io/FLL-field-mapping/">Back to Mapping Tool</a></p>
     </div>
+	<a class="fab-back" href="https://kennyhaggard.github.io/FLL-field-mapping/" aria-label="Back to Mapping Tool">
+  <!-- Simple arrow icon via emoji to avoid extra assets; swap for an SVG if you prefer -->
+  <span class="fab-back__icon" aria-hidden="true">↩︎</span>
+  Back to Mapping Tool
+	</a>
 </body>
 </html>
