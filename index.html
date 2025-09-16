@@ -246,12 +246,6 @@
           </label>
         </div>
 
-        <!-- Builder toolbar -->
-        <div class="builder-actions">
-          <button class="demo-button" @click="builderAdd('move')">+ Move</button>
-          <button class="demo-button" @click="builderAdd('rotate')">+ Rotate</button>
-        </div>
-
         <!-- Actions list -->
         <div class="builder-list">
           <div class="builder-item" v-for="(a,i) in builder.actions" :key="i">
@@ -267,7 +261,9 @@
 
         <!-- Use in Tool -->
         <div style="margin-top:12px; display:flex; justify-content:flex-end;">
-          <button class="start-button" @click="builderUseInTool">Use in Tool</button>
+          <button class="demo-button" @click="builderAdd('move')">+ Move</button>
+          <button class="demo-button" @click="builderAdd('rotate')">+ Rotate</button>
+          <button class="start-button" @click="builderUseInTool">Save Changes</button>
         </div>
 
        <div class="editor-container">
@@ -278,8 +274,6 @@
           <button class="start-button"  @click="saveMissionAndInitialize">Save Changes</button>
         </div>
       </div>
-
-        <!-- (Optional) Animation speed knobs -->
       </div>
     </div>
 
@@ -384,6 +378,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
