@@ -190,23 +190,26 @@
   <div id="app" class="page">
     <!-- LEFT PANE -->
     <div id="control-container">
-      <!-- Loader / basic controls -->
-      <div class="editor-container">
-        <h2>Load Missions</h2>
-        <input type="file" accept="application/json" @change="loadMissions" />
-        <button class="demo-button" @click="loadDemoMission">Load Demo</button>
+      <h1>First Lego League Field Mapping Tool</h1>
+      <p>Check the <a href= 'https://kennyhaggard.github.io/FLL-field-mapping/introduction.html'>README file</a> for instructions.</p>
+      <button class="demo-button" id = "demo-button" @click="loadDemoMission">Load Demo Mission</button>
+      <input type="file" id="file-upload" @change="loadMissions" accept=".json" class="load-button">
+
+      <!-- Mission List -->
+      <div class="mission-list" v-if="missions.length > 0">
+          <h3>Loaded Missions</h3>
+          <p>Select a mission to start and/or edit</p>
+          <button 
+              v-for="(mission, index) in missions" 
+              :key="index" 
+              class="mission-button" 
+              @click="selectAndEditMission(mission)">
+              {{ mission.name || `Mission ${index + 1}` }}
+          </button>
       </div>
 
       <!-- Mission editor -->
-      <div class="editor-container">
-        <h2>Edit Mission JSON</h2>
-        <textarea id="mission-json" v-model="missionEditorContent" placeholder='Paste or edit your mission JSON here'></textarea>
-        <p v-if="editorError" style="color: red; margin:6px 0 0;">{{ editorError }}</p>
-        <div style="margin-top:10px;">
-          <button class="neutral-button" @click="openMissionEditor">Open Editor</button>
-          <button class="start-button"  @click="saveMissionAndInitialize">Save Changes</button>
-        </div>
-      </div>
+
 
       <!-- BUILDER (Beta) -->
       <div class="editor-container">
@@ -267,15 +270,16 @@
           <button class="start-button" @click="builderUseInTool">Use in Tool</button>
         </div>
 
-        <!-- (Optional) Animation speed knobs -->
-        <div style="margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <label>Move speed (cm/s)
-            <input type="number" step="0.1" v-model.number="moveSpeedCmPerSec">
-          </label>
-          <label>Rotate speed (°/s)
-            <input type="number" step="1" v-model.number="rotateSpeedDegPerSec">
-          </label>
+       <div class="editor-container">
+        <h2>Edit Mission JSON</h2>
+        <textarea id="mission-json" v-model="missionEditorContent" placeholder='Paste or edit your mission JSON here'></textarea>
+        <p v-if="editorError" style="color: red; margin:6px 0 0;">{{ editorError }}</p>
+        <div style="margin-top:10px;">
+          <button class="start-button"  @click="saveMissionAndInitialize">Save Changes</button>
         </div>
+      </div>
+
+        <!-- (Optional) Animation speed knobs -->
       </div>
     </div>
 
@@ -380,6 +384,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
