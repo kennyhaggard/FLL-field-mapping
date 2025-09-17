@@ -288,6 +288,7 @@ const app = new Vue({
   base.setAttribute("fill", "blue");
   base.setAttribute("fill-opacity", "0.6");
   base.setAttribute("stroke", "red");
+  base.setAttribute("stroke-width", "1.5");
   g.appendChild(base);
 
   // Attachments (optional)
@@ -514,6 +515,7 @@ return r;
     }
   }
 });
+
 
 
 
