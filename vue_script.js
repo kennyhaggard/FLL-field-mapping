@@ -288,7 +288,7 @@ const app = new Vue({
   base.setAttribute("fill", "blue");
   base.setAttribute("fill-opacity", "0.6");
   base.setAttribute("stroke", "red");
-  base.setAttribute("stroke-width", "1.5");
+  base.setAttribute("stroke-width", "3");
   base.setAttribute("vector-effect", "non-scaling-stroke");
   g.appendChild(base);
 
@@ -368,7 +368,7 @@ r.setAttribute("height", hRect.toFixed(2));
 r.setAttribute("fill", "#FFD400");       // LEGO-ish yellow
 r.setAttribute("fill-opacity", "0.4");   // similar transparency to base
 r.setAttribute("stroke", "#000");
-r.setAttribute("stroke-width", "1.5");
+r.setAttribute("stroke-width", "3");
 r.setAttribute("vector-effect", "non-scaling-stroke"); // keeps border width constant
 
 return r;
@@ -516,6 +516,7 @@ return r;
     }
   }
 });
+
 
 
 
