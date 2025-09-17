@@ -85,6 +85,68 @@
       cursor: pointer;
     }
 
+    .attach-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .attach-row {
+    display: grid;
+    gap: 8px;
+    align-items: center;
+  }
+  /* Row types */
+  .attach-row.top {
+    grid-template-columns: auto 1fr auto; /* tag | side | position */
+  }
+  .attach-row.mid {
+    grid-template-columns: 1fr 1fr;       /* width | length */
+  }
+  .attach-row.actions {
+    grid-template-columns: 1fr auto;      /* hint | delete */
+  }
+
+  /* Make selects match inputs */
+  .builder-item select {
+    color: #111;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 6px 8px;
+    min-width: 96px;
+  }
+
+  /* Keep number inputs compact */
+  .builder-item input[type="number"] {
+    width: 80px;   /* a bit wider than actions’ 60px to avoid wrapping */
+  }
+
+  /* Tiny hint text */
+  .attach-hint {
+    color: #6b7280;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Prevent card from overrunning sidebar */
+  .builder-item.attach-card {
+    overflow: hidden;
+  }
+
+  /* Mobile: stack gracefully */
+  @media (max-width: 600px) {
+    .attach-row.top,
+    .attach-row.mid,
+    .attach-row.actions {
+      grid-template-columns: 1fr 1fr;
+    }
+    .attach-row.top .builder-tag { grid-column: 1 / -1; }
+    .attach-row.actions { grid-template-columns: 1fr; }
+    .attach-row.actions .attach-hint { margin-bottom: 6px; }
+  }
+
     /* --- IMPORTANT: keep inputs readable (don’t style like buttons) --- */
     input[type="text"],
     input[type="number"],
@@ -281,12 +343,15 @@
 
   <!-- Attachment rows -->
   <div class="builder-list" v-if="builder.attachments && builder.attachments.length">
-    <div class="builder-item" v-for="(att, i) in builder.attachments" :key="'att-'+i">
+  <div class="builder-item attach-card" v-for="(att, i) in builder.attachments" :key="'att-'+i">
+
+    <!-- Row 1: tag + side + position -->
+    <div class="attach-row top">
       <span class="builder-tag">ATTACH</span>
 
       <label style="display:flex; align-items:center; gap:6px;">
         <span>Side</span>
-        <select v-model="att.side" style="min-width:88px; padding:6px 8px; border:1px solid #ccc; border-radius:6px;">
+        <select v-model="att.side">
           <option value="front">front</option>
           <option value="rear">rear</option>
           <option value="left">left</option>
@@ -294,6 +359,14 @@
         </select>
       </label>
 
+      <label style="display:flex; align-items:center; gap:6px;">
+        <span>Position</span>
+        <input type="number" step="0.1" v-model.number="att.positionCm" />
+      </label>
+    </div>
+
+    <!-- Row 2: width + length -->
+    <div class="attach-row mid">
       <label style="display:flex; align-items:center; gap:6px;">
         <span>Width</span>
         <input type="number" step="0.1" v-model.number="att.widthCm" />
@@ -303,21 +376,20 @@
         <span>Length</span>
         <input type="number" step="0.1" v-model.number="att.lengthCm" />
       </label>
+    </div>
 
-      <label style="display:flex; align-items:center; gap:6px;">
-        <span>Position</span>
-        <input type="number" step="0.1" v-model.number="att.positionCm" />
-      </label>
-
-      <span style="flex:1"></span>
-
+    <!-- Row 3: hint + delete -->
+    <div class="attach-row actions">
+      <div class="attach-hint">Width = left↔right • Length = front↕back</div>
       <button class="clear-button"
               @click="builder.attachments.splice(i,1)"
               style="background:#fff0f0;color:#b55050;border:1px solid #ffd6d6;">
         Delete
       </button>
     </div>
+
   </div>
+</div>
 
   <!-- Empty helper text -->
   <p v-else style="color:#6b7280; font-size:12px; margin:6px 0 0;">
@@ -457,6 +529,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
