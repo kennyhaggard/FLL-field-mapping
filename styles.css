@@ -1,6 +1,6 @@
-/* ================================
-   Root & Base
-================================ */
+/* ===============================
+   Root / Base
+=================================*/
 :root {
   --bg: #f6f7fb;
   --card: #fff;
@@ -9,10 +9,10 @@
   --line: #e5e7eb;
 
   --btn-green: #22c55e;
-  --btn-blue: #3b82f6;
-  --btn-gray: #6b7280;
-  --btn-orange: #efa444;
-  --btn-purple: #9d0d9d;
+  --btn-blue:  #3b82f6;
+  --btn-gray:  #6b7280;
+  --btn-orange:#efa444;
+  --btn-purple:#9d0d9d;
 
   --input-border: #ccc;
 }
@@ -21,21 +21,21 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif;
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
   background: var(--bg);
   color: var(--ink);
 }
 
-/* ================================
+/* ===============================
    Layout: sidebar + field
-================================ */
+=================================*/
 .page {
   display: grid;
-  grid-template-columns: 420px 1fr; /* fixed sidebar + flexible field */
+  grid-template-columns: 420px 1fr;   /* fixed sidebar + flexible field */
   min-height: 100vh;
 }
 
-/* Left pane: controls / builder */
+/* Left Pane */
 #control-container {
   overflow: auto;
   padding: 12px;
@@ -43,7 +43,7 @@ body {
   border-right: 1px solid var(--line);
 }
 
-/* Right pane: field view */
+/* Right Pane */
 #field-view {
   padding: 12px;
   background: var(--bg);
@@ -58,7 +58,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+  box-shadow: 0 1px 2px rgba(0,0,0,.05);
 }
 
 /* Responsive: collapse to one column */
@@ -70,9 +70,9 @@ body {
   }
 }
 
-/* ================================
+/* ===============================
    Headings & Editor
-================================ */
+=================================*/
 h2 {
   margin: 0 0 10px;
   font-size: 14px;
@@ -95,9 +95,9 @@ textarea {
   resize: vertical;
 }
 
-/* ================================
+/* ===============================
    Buttons
-================================ */
+=================================*/
 button {
   margin: 5px 5px 5px 0;
   padding: 10px 12px;
@@ -124,9 +124,9 @@ button {
   font-size: 14px;
 }
 
-/* ================================
-   Form controls
-================================ */
+/* ===============================
+   Form Controls
+=================================*/
 input[type="text"],
 input[type="number"],
 input[type="color"],
@@ -140,10 +140,6 @@ textarea {
   font-size: 14px;
 }
 
-input[type = "number"] {
-  width:100px;
-}
-
 input[type="file"] {
   margin: 5px 0;
   padding: 8px;
@@ -155,9 +151,9 @@ input[type="file"] {
   background: #fff;
 }
 
-/* ================================
-   Builder layout
-================================ */
+/* ===============================
+   Builder Layout
+=================================*/
 .builder-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -218,55 +214,57 @@ input[type="file"] {
   white-space: nowrap;
 }
 
-/* ================================
-   Attachment cards
-================================ */
-.attach-card {
+/* ===============================
+   Attachment Table (2×3 grid)
+=================================*/
+.attach-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: none;
+  margin: 0;
+}
+
+.attach-table td {
+  padding: 4px 6px;
+  vertical-align: middle;
+  border: none;            /* invisible grid lines */
+}
+
+.attach-table label {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.attach-row {
-  display: grid;
-  gap: 10px;
   align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
-.attach-row.top    { grid-template-columns: auto 1fr 1fr; } /* tag | side | position */
-.attach-row.mid    { grid-template-columns: 1fr 1fr; }      /* width | length */
-.attach-row.actions{ grid-template-columns: 1fr auto; }     /* hint | delete */
-
-.attach-card select,
-.attach-card input[type="number"] {
+.attach-table select,
+.attach-table input[type="number"] {
   height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  font-size: 14px;
   width: 120px;
 }
 
-.attach-hint {
-  color: var(--muted);
+.attach-table .builder-tag {
+  display: inline-block;
+  font-weight: 700;
+  text-transform: uppercase;
   font-size: 12px;
+  background: #eef3ff;
+  color: #2749b6;
+  border-radius: 999px;
+  padding: 2px 8px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-@media (max-width: 600px) {
-  .attach-row.top,
-  .attach-row.mid,
-  .attach-row.actions { grid-template-columns: 1fr 1fr; }
-
-  .attach-row.top .builder-tag { grid-column: 1 / -1; }
-  .attach-row.actions { grid-template-columns: 1fr; }
-  .attach-hint { margin-bottom: 6px; }
-
-  .attach-card select,
-  .attach-card input[type="number"] { width: 100%; }
-}
-
-/* ================================
+/* ===============================
    Field / SVG
-================================ */
+=================================*/
 #mission-field {
   display: block;
   width: 100%;
@@ -281,9 +279,9 @@ input[type="file"] {
   gap: 8px;
 }
 
-/* ================================
+/* ===============================
    Optional header
-================================ */
+=================================*/
 header {
   position: sticky;
   top: 0;
