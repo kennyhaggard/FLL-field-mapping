@@ -1,0 +1,292 @@
+/* ================================
+   Base layout
+================================ */
+:root{
+  --bg:#f6f7fb;
+  --card:#fff;
+  --ink:#1c2233;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+
+  --btn-green:#22c55e;
+  --btn-blue:#3b82f6;
+  --btn-gray:#6b7280;
+  --btn-orange:#efa444;
+  --btn-purple:#9d0d9d;
+
+  --input-border:#ccc;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.page {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Left pane: editor + builder (independent scroll) */
+#control-container {
+  display: table-cell;
+  vertical-align: top;
+  height: 100vh;
+  overflow: auto;
+  padding: 12px;
+  width: 420px;                 /* tweak as needed */
+  background: var(--card);
+  border-right: 1px solid var(--line);
+}
+
+/* Right pane: field view (sticky field panel) */
+#field-view {
+  display: table-cell;
+  vertical-align: top;
+  padding: 12px;
+  background: var(--bg);
+}
+
+#field-view .field-panel {
+  position: sticky;
+  top: 20px;                    /* adjust if you add a fixed header */
+  max-height: calc(100vh - 24px);
+  overflow: auto;               /* SVG + buttons scroll inside if tall */
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+
+/* ================================
+   Cards / sections
+================================ */
+h2 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.editor-container {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+/* Mission editor textarea */
+textarea {
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+}
+
+/* ================================
+   Buttons
+================================ */
+button {
+  margin: 5px 5px 5px 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.start-button   { background: var(--btn-green); }
+.clear-button   { background: var(--btn-orange); }
+.demo-button    { background: var(--btn-blue); }
+.neutral-button { background: var(--btn-gray); }
+.mission-button { background: var(--btn-purple); }
+
+/* Small red “Delete” style used in lists */
+.delete-btn {
+  background:#fff0f0;
+  color:#b55050;
+  border:1px solid #ffd6d6;
+  border-radius:6px;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+/* ================================
+   Form controls
+================================ */
+input[type="text"],
+input[type="number"],
+input[type="color"],
+select,
+textarea {
+  color: #111;
+  background: #fff;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+input[type="file"] {
+  margin: 5px 0;
+  padding: 8px;
+  font-size: 14px;
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  border: 1px solid var(--input-border);
+  background: #fff;
+}
+
+/* ================================
+   Builder layout
+================================ */
+.builder-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.builder-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.builder-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.builder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.builder-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  overflow: hidden; /* prevent sidebar overflow */
+}
+
+.builder-item label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.builder-item label span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.builder-tag {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  background: #eef3ff;
+  color: #2749b6;
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+/* Action value input compact */
+.builder-item input[type="number"].narrow { width: 60px; }
+
+/* ================================
+   Attachment cards
+================================ */
+.attach-card { flex-direction: column; gap: 6px; }
+.attach-row  { display: grid; gap: 10px; align-items: center; }
+
+.attach-row.top    { grid-template-columns: auto 1fr 1fr; } /* TAG | Side | Position */
+.attach-row.mid    { grid-template-columns: 1fr 1fr; }      /* Width | Length */
+.attach-row.actions{ grid-template-columns: 1fr auto; }     /* hint | Delete */
+
+.attach-card select,
+.attach-card input[type="number"] {
+  height: 32px;                    /* unified height */
+  width: 120px;                    /* stable width */
+}
+
+.attach-hint {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ================================
+   Field / SVG
+================================ */
+#mission-field {
+  display: block;
+  width: 100%;
+  height: auto;                     /* respects viewBox */
+  background: #fafafa;
+}
+
+.field-controls {
+  padding: 10px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ================================
+   Header (optional)
+================================ */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+header h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ================================
+   Responsive
+================================ */
+@media (max-width: 600px) {
+  #control-container { width: 100%; }
+  .attach-row.top,
+  .attach-row.mid,
+  .attach-row.actions { grid-template-columns: 1fr 1fr; }
+
+  .attach-row.top .builder-tag { grid-column: 1 / -1; }
+  .attach-row.actions { grid-template-columns: 1fr; }
+  .attach-hint { margin-bottom: 6px; }
+
+  .attach-card select,
+  .attach-card input[type="number"] { width: 100%; }
+}
