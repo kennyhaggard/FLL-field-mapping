@@ -78,56 +78,66 @@
     </button>
   </div>
 
-  <table class="attach-table">
-  <tbody>
-    <!-- Row 1: Tag | Side -->
-    <tr>
-      <td class="cell-tag">
-        <span class="builder-tag">ATTACH</span>
-      </td>
-      <td>
-        <label>
-          <span>Side</span>
-          <select v-model="att.side">
-            <option value="front">front</option>
-            <option value="rear">rear</option>
-            <option value="left">left</option>
-            <option value="right">right</option>
-          </select>
-        </label>
-      </td>
-    </tr>
+ <!-- Attachment tables -->
+<div class="builder-list" v-if="builder.attachments && builder.attachments.length">
+  <div class="builder-item" v-for="(att, i) in builder.attachments" :key="'att-'+i">
+    <table class="attach-table">
+      <tbody>
+        <!-- Row 1: Tag | Side -->
+        <tr>
+          <td class="cell-tag">
+            <span class="builder-tag">ATTACH</span>
+          </td>
+          <td>
+            <label>
+              <span>Side</span>
+              <select v-model="att.side">
+                <option value="front">front</option>
+                <option value="rear">rear</option>
+                <option value="left">left</option>
+                <option value="right">right</option>
+              </select>
+            </label>
+          </td>
+        </tr>
 
-    <!-- Row 2: Width | Length -->
-    <tr>
-      <td>
-        <label>
-          <span>Width</span>
-          <input class="narrow" type="number" step="0.1" v-model.number="att.widthCm">
-        </label>
-      </td>
-      <td>
-        <label>
-          <span>Length</span>
-          <input class="narrow" type="number" step="0.1" v-model.number="att.lengthCm">
-        </label>
-      </td>
-    </tr>
+        <!-- Row 2: Width | Length -->
+        <tr>
+          <td>
+            <label>
+              <span>Width</span>
+              <input class="narrow" type="number" step="0.1" v-model.number="att.widthCm">
+            </label>
+          </td>
+          <td>
+            <label>
+              <span>Length</span>
+              <input class="narrow" type="number" step="0.1" v-model.number="att.lengthCm">
+            </label>
+          </td>
+        </tr>
 
-    <!-- Row 3: Position | Delete -->
-    <tr>
-      <td>
-        <label>
-          <span>Position</span>
-          <input class="narrow" type="number" step="0.1" v-model.number="att.positionCm">
-        </label>
-      </td>
-      <td>
-        <button class="delete-btn" @click="builder.attachments.splice(i,1)">Delete</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+        <!-- Row 3: Position | Delete -->
+        <tr>
+          <td>
+            <label>
+              <span>Position</span>
+              <input class="narrow" type="number" step="0.1" v-model.number="att.positionCm">
+            </label>
+          </td>
+          <td>
+            <button class="delete-btn" @click="builder.attachments.splice(i,1)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Empty state -->
+<p v-else style="color:#6b7280; font-size:12px; margin:6px 0 0;">
+  No attachments yet. Click “+ Attachment” to add one.
+</p>
 </div>
 
         <!-- Actions list -->
