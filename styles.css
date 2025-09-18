@@ -1,20 +1,20 @@
 /* ================================
-   Base layout
+   Root & Base
 ================================ */
-:root{
-  --bg:#f6f7fb;
-  --card:#fff;
-  --ink:#1c2233;
-  --muted:#6b7280;
-  --line:#e5e7eb;
+:root {
+  --bg: #f6f7fb;
+  --card: #fff;
+  --ink: #1c2233;
+  --muted: #6b7280;
+  --line: #e5e7eb;
 
-  --btn-green:#22c55e;
-  --btn-blue:#3b82f6;
-  --btn-gray:#6b7280;
-  --btn-orange:#efa444;
-  --btn-purple:#9d0d9d;
+  --btn-green: #22c55e;
+  --btn-blue: #3b82f6;
+  --btn-gray: #6b7280;
+  --btn-orange: #efa444;
+  --btn-purple: #9d0d9d;
 
-  --input-border:#ccc;
+  --input-border: #ccc;
 }
 
 * { box-sizing: border-box; }
@@ -26,46 +26,52 @@ body {
   color: var(--ink);
 }
 
+/* ================================
+   Layout: sidebar + field
+================================ */
 .page {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
+  display: grid;
+  grid-template-columns: 420px 1fr; /* fixed sidebar + flexible field */
+  min-height: 100vh;
 }
 
-/* Left pane: editor + builder (independent scroll) */
+/* Left pane: controls / builder */
 #control-container {
-  display: table-cell;
-  vertical-align: top;
-  height: 100vh;
   overflow: auto;
   padding: 12px;
-  width: 420px;                 /* tweak as needed */
   background: var(--card);
   border-right: 1px solid var(--line);
 }
 
-/* Right pane: field view (sticky field panel) */
+/* Right pane: field view */
 #field-view {
-  display: table-cell;
-  vertical-align: top;
   padding: 12px;
   background: var(--bg);
 }
 
 #field-view .field-panel {
   position: sticky;
-  top: 20px;                    /* adjust if you add a fixed header */
+  top: 20px;
   max-height: calc(100vh - 24px);
-  overflow: auto;               /* SVG + buttons scroll inside if tall */
+  overflow: auto;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+}
+
+/* Responsive: collapse to one column */
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; }
+  #control-container {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
 }
 
 /* ================================
-   Cards / sections
+   Headings & Editor
 ================================ */
 h2 {
   margin: 0 0 10px;
@@ -83,7 +89,6 @@ h2 {
   margin-bottom: 12px;
 }
 
-/* Mission editor textarea */
 textarea {
   width: 100%;
   min-height: 220px;
@@ -109,12 +114,11 @@ button {
 .neutral-button { background: var(--btn-gray); }
 .mission-button { background: var(--btn-purple); }
 
-/* Small red “Delete” style used in lists */
 .delete-btn {
-  background:#fff0f0;
-  color:#b55050;
-  border:1px solid #ffd6d6;
-  border-radius:6px;
+  background: #fff0f0;
+  color: #b55050;
+  border: 1px solid #ffd6d6;
+  border-radius: 6px;
   height: 32px;
   padding: 0 12px;
   font-size: 14px;
@@ -184,7 +188,7 @@ input[type="file"] {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px;
-  overflow: hidden; /* prevent sidebar overflow */
+  overflow: hidden;
 }
 
 .builder-item label {
@@ -210,23 +214,29 @@ input[type="file"] {
   white-space: nowrap;
 }
 
-/* Action value input compact */
-.builder-item input[type="number"].narrow { width: 60px; }
-
 /* ================================
    Attachment cards
 ================================ */
-.attach-card { flex-direction: column; gap: 6px; }
-.attach-row  { display: grid; gap: 10px; align-items: center; }
+.attach-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-.attach-row.top    { grid-template-columns: auto 1fr 1fr; } /* TAG | Side | Position */
-.attach-row.mid    { grid-template-columns: 1fr 1fr; }      /* Width | Length */
-.attach-row.actions{ grid-template-columns: 1fr auto; }     /* hint | Delete */
+.attach-row {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+}
+
+.attach-row.top    { grid-template-columns: auto 1fr 1fr; } /* tag | side | position */
+.attach-row.mid    { grid-template-columns: 1fr 1fr; }      /* width | length */
+.attach-row.actions{ grid-template-columns: 1fr auto; }     /* hint | delete */
 
 .attach-card select,
 .attach-card input[type="number"] {
-  height: 32px;                    /* unified height */
-  width: 120px;                    /* stable width */
+  height: 32px;
+  width: 120px;
 }
 
 .attach-hint {
@@ -237,13 +247,26 @@ input[type="file"] {
   text-overflow: ellipsis;
 }
 
+@media (max-width: 600px) {
+  .attach-row.top,
+  .attach-row.mid,
+  .attach-row.actions { grid-template-columns: 1fr 1fr; }
+
+  .attach-row.top .builder-tag { grid-column: 1 / -1; }
+  .attach-row.actions { grid-template-columns: 1fr; }
+  .attach-hint { margin-bottom: 6px; }
+
+  .attach-card select,
+  .attach-card input[type="number"] { width: 100%; }
+}
+
 /* ================================
    Field / SVG
 ================================ */
 #mission-field {
   display: block;
   width: 100%;
-  height: auto;                     /* respects viewBox */
+  height: auto;
   background: #fafafa;
 }
 
@@ -255,7 +278,7 @@ input[type="file"] {
 }
 
 /* ================================
-   Header (optional)
+   Optional header
 ================================ */
 header {
   position: sticky;
@@ -268,25 +291,9 @@ header {
   align-items: center;
   gap: 12px;
 }
+
 header h1 {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-}
-
-/* ================================
-   Responsive
-================================ */
-@media (max-width: 600px) {
-  #control-container { width: 100%; }
-  .attach-row.top,
-  .attach-row.mid,
-  .attach-row.actions { grid-template-columns: 1fr 1fr; }
-
-  .attach-row.top .builder-tag { grid-column: 1 / -1; }
-  .attach-row.actions { grid-template-columns: 1fr; }
-  .attach-hint { margin-bottom: 6px; }
-
-  .attach-card select,
-  .attach-card input[type="number"] { width: 100%; }
 }
