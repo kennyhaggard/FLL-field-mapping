@@ -167,6 +167,10 @@
         <div style="margin-top:10px;">
           <button class="start-button"  @click="saveMissionAndInitialize">Save Changes</button>
         </div>
+        <div style="margin-top:10px;">
+          <button class="demo-button" @click="copyShareLink">Copy Link</button>
+          <button type="button" class="neutral-button" @click="emailShareLink">Email Mission Link</button> 
+        </div>
       </div>
       </div>
     </div>
@@ -260,9 +264,7 @@
         <!-- Buttons under the field -->
         <div class="field-controls">
           <button class="start-button" @click="startMission">Start Mission</button>
-          <button class="clear-button" @click="clearField">Clear Field</button>
-          <button class="demo-button" @click="copyShareLink">Copy Link</button>
-          <button type="button" class="neutral-button" @click="emailShareLink">Email Mission Link</button>        
+          <button class="clear-button" @click="clearField">Clear Field</button>       
         </div>
       </div>
     </div>
