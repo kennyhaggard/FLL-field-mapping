@@ -229,7 +229,24 @@ const app = new Vue({
         reader.readAsText(file);
       }
     },
-
+    generateShareLink() {
+      // Take the current builder schema and compress it into the URL
+      const payload = this.builderCompileSchema();
+      const json = JSON.stringify(payload);
+  
+      // Base64-encode so it’s URL-safe (btoa handles UTF-8 fine for this use)
+      const encoded = btoa(unescape(encodeURIComponent(json)));
+  
+      // Build the link (using current origin + path)
+      const link = `${window.location.origin}${window.location.pathname}?mission=${encoded}`;
+      return link;
+    },
+    copyShareLink() {
+      const url = this.generateShareLink();
+      navigator.clipboard.writeText(url)
+        .then(() => alert('Share link copied to clipboard!'))
+        .catch(() => alert('Unable to copy. Here is the link:\n' + url));
+    },
     /* =========================
      *  SVG field management
      * ========================= */
@@ -516,6 +533,7 @@ return r;
     }
   }
 });
+
 
 
 
