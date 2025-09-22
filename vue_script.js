@@ -531,6 +531,24 @@ return r;
 
       requestAnimationFrame(animate);
     }
+  },
+  mounted() {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('mission');
+    if (encoded) {
+      try {
+        const json = decodeURIComponent(escape(atob(encoded)));
+        const mission = JSON.parse(json);
+
+        // Load into the builder/editor and field
+        this.builderLoadFromSchema(mission);
+        this.missionEditorContent = JSON.stringify(mission, null, 4);
+        this.initializeMission(mission);
+      } catch (e) {
+        console.error('Invalid mission link', e);
+        alert('The mission link is invalid or corrupted.');
+      }
+    }
   }
 });
 
