@@ -247,6 +247,28 @@ const app = new Vue({
         .then(() => alert('Share link copied to clipboard!'))
         .catch(() => alert('Unable to copy. Here is the link:\n' + url));
     },
+    emailShareLink(provider = 'default') {
+      const link = this.generateShareLink();   // reuse the existing generator
+      const subject = `FLL Mission: ${this.builder.name || 'Untitled'}`;
+      const body =
+    `Here’s a link to load this mission in the Builder:
+
+    ${link}
+
+    If the link doesn’t open automatically, copy and paste it into your browser.`;
+
+      if (provider === 'gmail') {
+        // Opens Gmail web compose in a new tab
+        const gmail = `https://mail.google.com/mail/?view=cm&fs=1` +
+          `&su=${encodeURIComponent(subject)}` +
+          `&body=${encodeURIComponent(body)}`;
+        window.open(gmail, '_blank');
+      } else {
+        // Opens the user’s default mail client
+        const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailto;
+      }
+    }
     /* =========================
      *  SVG field management
      * ========================= */
