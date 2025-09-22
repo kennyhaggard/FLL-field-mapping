@@ -270,7 +270,7 @@ const app = new Vue({
         console.error('emailShareLink failed:', e);
         alert('Sorry—could not open your email client.');
       }
-    }
+    },
     /* =========================
      *  SVG field management
      * ========================= */
