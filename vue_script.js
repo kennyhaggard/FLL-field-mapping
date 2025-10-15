@@ -168,10 +168,10 @@ const app = new Vue({
           startX: 0,
           startY: 0,
           startAngle: 90,
-          robotWidthCm: 10,
-          robotLengthCm: 12,
+          robotWidthCm: 12.7,
+          robotLengthCm: 20.5,
           traceColor: "#008000",
-          offsetY: -3.2,
+          offsetY: 6.1,
           attachments: [
             { side: "front", widthCm: 6, lengthCm: 5, positionCm: 0 },
             { side: "left",  widthCm: 4, lengthCm: 10, positionCm: 3 }
