@@ -41,9 +41,9 @@ const app = new Vue({
       offsetY: 6.1,
       attachments: [],
       actions: [
-        {type: 'move', value = 50},
-        {type: 'rotate', value =-90},
-        {type: 'move', value=50}
+        {type: 'move', value: 50},
+        {type: 'rotate', value: -90},
+        {type: 'move', value: 50}
       ] // { type: 'move'|'rotate', value: number }
     },
 
