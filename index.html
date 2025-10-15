@@ -264,7 +264,8 @@
         <!-- Buttons under the field -->
         <div class="field-controls">
           <button class="start-button" @click="startMission">Start Mission</button>
-          <button class="clear-button" @click="clearField">Clear Field</button>       
+          <button class="clear-button" @click="clearField">Clear Field</button>  
+          <button class="btn" @click="stopMission":disabled="!isRunning">Stop Mission</button>    
         </div>
       </div>
     </div>
