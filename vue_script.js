@@ -45,8 +45,8 @@ const app = new Vue({
         {type: 'rotate', value: -90},
         {type: 'move', value: 50}
       ] // { type: 'move'|'rotate', value: number }
-    },
-
+    }
+  },
   methods: {
     /* =========================
      *  Builder (Beta)
