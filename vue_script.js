@@ -38,15 +38,14 @@ const app = new Vue({
       robotWidthCm: 12.7,
       robotLengthCm: 20.5,
       traceColor: '#008000',
-      offsetY: -6.1,
+      offsetY: 6.1,
       attachments: [],
       actions: [
         {type: 'move', value = 50},
         {type: 'rotate', value =-90},
         {type: 'move', value=50}
       ] // { type: 'move'|'rotate', value: number }
-    }
-  },
+    },
 
   methods: {
     /* =========================
