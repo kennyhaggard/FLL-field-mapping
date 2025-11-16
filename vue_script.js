@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyZNtSiyRiRQJHzrN_jhjEWLB0yP4FRzKdmroF3Gwv/exec'; // <-- paste your URL
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyZNtSiyRiRQJHzrN_jhjEWLB0yP4FRzKdmroF3Gwv/exec';
 
 const app = new Vue({
   el: '#app',
@@ -31,6 +31,9 @@ const app = new Vue({
     stopRequested: false, // set to interrupt flow immediately
     _rafId: null,         // current requestAnimationFrame handle
 
+    // Cloud / lookup
+    savedMissionName: '',   // <--- added so you can type a name and load it
+
     // Builder (Beta)
     builder: {
       name: 'Demo Mission',
@@ -49,6 +52,7 @@ const app = new Vue({
       ] // { type: 'move'|'rotate', value: number }
     }
   },
+
   methods: {
     /* =========================
      *  Builder (Beta)
@@ -70,7 +74,6 @@ const app = new Vue({
         robotLengthCm: Number(this.builder.robotLengthCm) || 0,
         traceColor: this.builder.traceColor || '#008000',
         offsetY: Number(this.builder.offsetY) || 0,
-        // keep attachments even if there’s no UI yet
         attachments: Array.isArray(this.builder.attachments)
           ? this.builder.attachments.map(a => ({
               side: (a.side || '').toLowerCase(),
@@ -86,14 +89,11 @@ const app = new Vue({
       };
     },
     builderUseInTool() {
-      // 1) dump builder JSON into your existing editor
       const payload = this.builderCompileSchema();
       this.missionEditorContent = JSON.stringify(payload, null, 4);
-      // 2) reuse your existing flow to place robot
       this.saveMissionAndInitialize();
     },
 
-    // Load an existing mission schema into the builder UI
     builderLoadFromSchema(schema) {
       if (!schema) return;
       this.builder.name          = schema.name ?? 'Demo Mission';
@@ -105,7 +105,6 @@ const app = new Vue({
       this.builder.offsetY       = Number(schema.offsetY ?? 0);
       this.builder.traceColor    = this.normalizeColorToHex(schema.traceColor ?? '#008000');
 
-      // NEW: attachments passthrough
       const attSafe = Array.isArray(schema.attachments) ? schema.attachments : [];
       this.builder.attachments = attSafe.map(a => ({
         side: (a.side || '').toLowerCase(),
@@ -128,7 +127,7 @@ const app = new Vue({
         if (!ctx) return '#008000';
         ctx.fillStyle = '#000';
         ctx.fillStyle = String(colorStr);
-        const computed = ctx.fillStyle; // "#rrggbb" or "rgb(r,g,b)"
+        const computed = ctx.fillStyle;
         if (computed.startsWith('#')) return computed;
         const m = computed.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
         if (!m) return '#008000';
@@ -143,7 +142,7 @@ const app = new Vue({
      *  Durations & easing
      * ========================= */
     moveDurationMs(distanceCm) {
-      const s = Math.max(0.1, Number(this.moveSpeedCmPerSec) || 20); // guard against 0
+      const s = Math.max(0.1, Number(this.moveSpeedCmPerSec) || 20);
       return Math.max(1, Math.abs(distanceCm) / s * 1000);
     },
     rotateDurationMs(angleDeg) {
@@ -160,7 +159,6 @@ const app = new Vue({
     selectAndEditMission(mission) {
       this.initializeMission(mission);
       this.missionEditorContent = JSON.stringify(mission, null, 4);
-      // Keep builder in sync with selected mission
       this.builderLoadFromSchema(mission);
     },
     loadDemoMission() {
@@ -185,16 +183,13 @@ const app = new Vue({
           ]
         }
       ];
-      // (Optional) auto-select demo:
       // this.selectAndEditMission(this.missions[0]);
     },
     saveMissionAndInitialize() {
       try {
         const updatedMission = JSON.parse(this.missionEditorContent);
         this.selectedMission = updatedMission;
-        // Sync builder from editor JSON
         this.builderLoadFromSchema(updatedMission);
-        // Place robot
         this.initializeMission(updatedMission);
         this.editorError = null;
       } catch (error) {
@@ -240,7 +235,6 @@ const app = new Vue({
       }
     },
     generateShareLink() {
-      // Take the current builder schema and compress it into the URL
       const payload = this.builderCompileSchema();
       const json = JSON.stringify(payload);
       const encoded = b64EncodeUnicode(json);
@@ -248,7 +242,6 @@ const app = new Vue({
       return link;
 
       function b64EncodeUnicode(str){
-        // Handles full Unicode properly for base64
         return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_,p1)=>String.fromCharCode('0x'+p1)));
       }
     },
@@ -260,7 +253,7 @@ const app = new Vue({
     },
     emailShareLink() {
       try {
-        const link = this.generateShareLink(); // use the generator you already have
+        const link = this.generateShareLink();
         if (!link || typeof link !== 'string') {
           alert('Could not create share link.');
           return;
@@ -276,7 +269,7 @@ const app = new Vue({
         ].join('\n');
 
         const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.location.href = mailto;   // launches the user’s default email client
+        window.location.href = mailto;
       } catch (e) {
         console.error('emailShareLink failed:', e);
         alert('Sorry—could not open your email client.');
@@ -295,7 +288,6 @@ const app = new Vue({
       dynamicElements.forEach((element) => svgRoot.removeChild(element));
       this.robot = null;
 
-      // Optional: re-place current mission after clearing field
       this.saveMissionAndInitialize();
     },
 
@@ -306,16 +298,13 @@ const app = new Vue({
       const svgRoot = document.getElementById("mission-field");
       if (!svgRoot) return;
 
-      // Scale
       this.scaleX = svgRoot.viewBox.baseVal.width / 200;
       this.scaleY = this.scaleX;
 
-      // Normalize angle
       const thetaDeg = ((mission.startAngle % 360) + 360) % 360;
       const c = Math.cos(thetaDeg * Math.PI / 180);
       const s = Math.sin(thetaDeg * Math.PI / 180);
 
-      // --- base AABB only (unchanged) ---
       const halfLx = (mission.robotLengthCm * this.scaleX) / 2;
       const halfLy = (mission.robotLengthCm * this.scaleY) / 2;
       const halfWx = (mission.robotWidthCm  * this.scaleX) / 2;
@@ -328,11 +317,9 @@ const app = new Vue({
       this.currentAngle = thetaDeg;
       this.traceColor   = mission.traceColor;
 
-      // --- NEW: parent group ---
       const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
       g.setAttribute("id", "robot-group");
 
-      // Base rect (centered at group origin)
       const base = document.createElementNS("http://www.w3.org/2000/svg", "rect");
       base.setAttribute("x", -mission.robotWidthCm * this.scaleX / 2);
       base.setAttribute("y", -mission.robotLengthCm * this.scaleY / 2);
@@ -345,70 +332,52 @@ const app = new Vue({
       base.setAttribute("vector-effect", "non-scaling-stroke");
       g.appendChild(base);
 
-      // Attachments (optional)
       const atts = Array.isArray(mission.attachments) ? mission.attachments : [];
       for (const att of atts) {
         const rect = this._makeAttachmentRect(att, mission);
         if (rect) g.appendChild(rect);
       }
 
-      // Group transform (same transform you used on rect before)
       g.setAttribute("transform", `translate(${this.currentX}, ${this.currentY}) rotate(${90 - this.currentAngle})`);
       svgRoot.appendChild(g);
-
-      // IMPORTANT: store the group as the "robot" so move/rotate update the group
       this.robot = g;
     },
 
     _makeAttachmentRect(att, mission) {
-      const w  = Number(att.widthCm)     || 0; // cross dimension
-      const l  = Number(att.lengthCm)    || 0; // sticks out
+      const w  = Number(att.widthCm)     || 0;
+      const l  = Number(att.lengthCm)    || 0;
       const pos= Number(att.positionCm)  || 0;
       if (w <= 0 || l <= 0) return null;
 
-      // Convert to SVG units
       const wX = w * this.scaleX, wY = w * this.scaleY;
       const lX = l * this.scaleX, lY = l * this.scaleY;
       const posX = pos * this.scaleX, posY = pos * this.scaleY;
 
-      // Base half sizes in SVG units
       const halfW = (mission.robotWidthCm  * this.scaleX) / 2;
       const halfL = (mission.robotLengthCm * this.scaleY) / 2;
 
-      // We keep the same convention as the base:
-      //  - width along local X, length along local Y
-      //  - local Y grows downward in SVG coordinates
       let x=0, y=0, wRect=0, hRect=0;
 
-      // Always: width → X, length → Y
       wRect = wX;
       hRect = lY;
 
       switch ((att.side || '').toLowerCase()) {
         case 'front':
-          // attach above base (local negative Y)
-          x = -wRect/2 + posX;   // position along X (left/right)
-          y = -halfL - hRect;    // put its top-left above the base
+          x = -wRect/2 + posX;
+          y = -halfL - hRect;
           break;
-
         case 'rear':
-          // attach below base (local positive Y)
-          x = -wRect/2 + posX;   // position along X (left/right)
-          y =  halfL;            // put its top-left below the base
+          x = -wRect/2 + posX;
+          y =  halfL;
           break;
-
         case 'left':
-          // attach to the left (local negative X), centered in Y by default
-          x = -halfW - wRect;    // push entirely to the left of the base
-          y = -hRect/2 - posY;   // position along Y (front/back): + = toward rear (down)
+          x = -halfW - wRect;
+          y = -hRect/2 - posY;
           break;
-
         case 'right':
-          // attach to the right (local positive X), centered in Y by default
-          x =  halfW;            // flush against right edge
-          y = -hRect/2 - posY;   // position along Y (front/back)
+          x =  halfW;
+          y = -hRect/2 - posY;
           break;
-
         default:
           return null;
       }
@@ -417,14 +386,11 @@ const app = new Vue({
       r.setAttribute("y", y.toFixed(2));
       r.setAttribute("width",  wRect.toFixed(2));
       r.setAttribute("height", hRect.toFixed(2));
-
-      // style: yellow translucent fill + black border
-      r.setAttribute("fill", "#FFD400");       // LEGO-ish yellow
-      r.setAttribute("fill-opacity", "0.4");   // similar transparency to base
+      r.setAttribute("fill", "#FFD400");
+      r.setAttribute("fill-opacity", "0.4");
       r.setAttribute("stroke", "#000");
       r.setAttribute("stroke-width", "3");
-      r.setAttribute("vector-effect", "non-scaling-stroke"); // keeps border width constant
-
+      r.setAttribute("vector-effect", "non-scaling-stroke");
       return r;
     },
 
@@ -436,34 +402,24 @@ const app = new Vue({
         alert("Please select a mission first");
         return;
       }
-      if (this.isRunning) return;     // guard re-entry
+      if (this.isRunning) return;
       this.stopRequested = false;
       this.isRunning = true;
-
-      // Work on a copy to avoid mutating the selected array mid-run
       this.executeActions([...this.selectedMission.actions]);
     },
 
-    // ---- NEW: stop immediately ----
     stopMission() {
       if (!this.isRunning) return;
       this.stopRequested = true;
-      this._cancelRaf();        // cancel any in-flight animation frame
-      // The running step will see stopRequested and self-abort without calling next callback.
-      // executeActions() will also short-circuit on its next tick.
+      this._cancelRaf();
       this._finishRun('stopped');
     },
 
-    // ---- NEW: common finish/reset ----
     _finishRun(status) {
-      // status can be 'done', 'stopped', or 'error'
       this._cancelRaf();
       this.isRunning = false;
-      // You can add logging/toast if desired:
-      // console.log(`Mission ${status}`);
     },
 
-    // ---- NEW: cancel the current rAF if set ----
     _cancelRaf() {
       if (this._rafId != null) {
         cancelAnimationFrame(this._rafId);
@@ -480,15 +436,8 @@ const app = new Vue({
     },
 
     executeActions(actions) {
-      // If we were stopped, exit immediately and mark finished
-      if (this.stopRequested) {
-        this._finishRun('stopped');
-        return;
-      }
-      if (actions.length === 0) {
-        this._finishRun('done');
-        return;
-      }
+      if (this.stopRequested) { this._finishRun('stopped'); return; }
+      if (actions.length === 0) { this._finishRun('done'); return; }
 
       const action = actions.shift();
       if (action.type === "move") {
@@ -496,19 +445,13 @@ const app = new Vue({
       } else if (action.type === "rotate") {
         this.rotateRobotStatic(action.value, () => this.executeActions(actions));
       } else {
-        // Unknown action type; skip
         this.executeActions(actions);
       }
     },
 
-    /* =========================
-     *  Offset helper (recompute-on-demand)
-     *  Returns offset (ox, oy) in SVG units for a given absolute angle.
-     *  Positive offsetY means forward along the robot's heading.
-     * ========================= */
     offsetXY(angleDeg) {
-      const oCm = this.selectedMission?.offsetY ?? 0; // cm
-      const oSvg = oCm * this.scaleY;                 // convert to SVG units
+      const oCm = this.selectedMission?.offsetY ?? 0;
+      const oSvg = oCm * this.scaleY;
       const r = (angleDeg * Math.PI) / 180;
       return {
         ox:  oSvg * Math.cos(r),
@@ -516,29 +459,25 @@ const app = new Vue({
       };
     },
 
-    /* =========================
-     *  Kinematics (animated, speed-based)
-     * ========================= */
     moveForward(distance, callback) {
       const svgRoot = document.getElementById("mission-field");
       if (!svgRoot || !this.robot) return;
 
-      const distanceSvg = distance * this.scaleY;          // draw units
+      const distanceSvg = distance * this.scaleY;
       const startX = this.currentX;
       const startY = this.currentY;
       const angleRad = (this.currentAngle * Math.PI) / 180;
       const endX = startX + distanceSvg * Math.cos(angleRad);
       const endY = startY - distanceSvg * Math.sin(angleRad);
 
-      const duration = this.moveDurationMs(distance);      // distance-based
+      const duration = this.moveDurationMs(distance);
       const t0 = performance.now();
 
       const animate = (t) => {
-        // If stop was requested, abort mid-step without calling next callback
         if (this.stopRequested) { this._finishRun('stopped'); return; }
 
         const raw = Math.min((t - t0) / duration, 1);
-        const p = this.easeInOut(raw);                     // or use raw for linear
+        const p = this.easeInOut(raw);
 
         this.currentX = startX + p * (endX - startX);
         this.currentY = startY + p * (endY - startY);
@@ -565,7 +504,6 @@ const app = new Vue({
           this._rafId = requestAnimationFrame(animate);
         } else {
           this.currentX = endX; this.currentY = endY;
-          // Only advance if still running
           if (!this.stopRequested) callback();
         }
       };
@@ -580,20 +518,18 @@ const app = new Vue({
       const startAngle = this.currentAngle;
       const targetAngle = startAngle + angle;
 
-      // Keep pivot (trace point) fixed during rotation
       const { ox: ox0, oy: oy0 } = this.offsetXY(startAngle);
       const pivotX = this.currentX - ox0;
       const pivotY = this.currentY - oy0;
 
-      const duration = this.rotateDurationMs(angle);       // angle-based
+      const duration = this.rotateDurationMs(angle);
       const t0 = performance.now();
 
       const animate = (t) => {
-        // If stop was requested, abort mid-step without calling next callback
         if (this.stopRequested) { this._finishRun('stopped'); return; }
 
         const raw = Math.min((t - t0) / duration, 1);
-        const p = this.easeInOut(raw);                     // or use raw for linear
+        const p = this.easeInOut(raw);
         const a = startAngle + (targetAngle - startAngle) * p;
 
         const { ox, oy } = this.offsetXY(a);
@@ -612,73 +548,76 @@ const app = new Vue({
           const { ox: oxF, oy: oyF } = this.offsetXY(this.currentAngle);
           this.currentX = pivotX + oxF;
           this.currentY = pivotY + oyF;
-          // Only advance if still running
           if (!this.stopRequested) callback();
         }
       };
 
       this._rafId = requestAnimationFrame(animate);
-    }
-  },
-  async saveMissionToCloud() {
-    const name = (this.builder.name || '').trim();
-    if (!name) {
-      alert('Give your mission a name in the Builder first.');
-      return;
-    }
+    },
 
-    const mission = this.builderCompileSchema();
-
-    try {
-      const res = await fetch(APPS_SCRIPT_URL + '?action=save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, mission })
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || !data.ok) {
-        console.error('Save error:', data);
-        alert('Error saving mission to cloud.');
+    /* =========================
+     *  Cloud save/load
+     * ========================= */
+    async saveMissionToCloud() {
+      const name = (this.builder.name || '').trim();
+      if (!name) {
+        alert('Give your mission a name in the Builder first.');
         return;
       }
 
-      alert(`Mission "${name}" saved to cloud.`);
-    } catch (e) {
-      console.error(e);
-      alert('Network error saving mission to cloud.');
-    }
-  },
+      const mission = this.builderCompileSchema();
 
-  async loadMissionFromCloudByName() {
-    const name = (this.savedMissionName || this.builder.name || '').trim();
-    if (!name) {
-      alert('Enter a mission name (or set Builder name) to load.');
-      return;
-    }
+      try {
+        const res = await fetch(APPS_SCRIPT_URL + '?action=save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, mission })
+        });
 
-    try {
-      const url = APPS_SCRIPT_URL + '?action=get&name=' + encodeURIComponent(name);
-      const res = await fetch(url);
-      const data = await res.json();
+        const data = await res.json().catch(() => ({}));
 
-      if (!res.ok || data.error) {
-        alert(`Mission "${name}" not found.`);
+        if (!res.ok || !data.ok) {
+          console.error('Save error:', data);
+          alert('Error saving mission to cloud.');
+          return;
+        }
+
+        alert(`Mission "${name}" saved to cloud.`);
+      } catch (e) {
+        console.error(e);
+        alert('Network error saving mission to cloud.');
+      }
+    },
+
+    async loadMissionFromCloudByName() {
+      const name = (this.savedMissionName || this.builder.name || '').trim();
+      if (!name) {
+        alert('Enter a mission name (or set Builder name) to load.');
         return;
       }
 
-      const mission = data.mission;
-      this.builderLoadFromSchema(mission);
-      this.missionEditorContent = JSON.stringify(mission, null, 4);
-      this.initializeMission(mission);
-      this.selectedMission = mission;
-    } catch (e) {
-      console.error(e);
-      alert('Network error loading mission from cloud.');
+      try {
+        const url = APPS_SCRIPT_URL + '?action=get&name=' + encodeURIComponent(name);
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          alert(`Mission "${name}" not found.`);
+          return;
+        }
+
+        const mission = data.mission;
+        this.builderLoadFromSchema(mission);
+        this.missionEditorContent = JSON.stringify(mission, null, 4);
+        this.initializeMission(mission);
+        this.selectedMission = mission;
+      } catch (e) {
+        console.error(e);
+        alert('Network error loading mission from cloud.');
+      }
     }
   },
-},
+
   mounted() {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('mission');
@@ -686,8 +625,6 @@ const app = new Vue({
       try {
         const json = decodeURIComponent(escape(atob(encoded)));
         const mission = JSON.parse(json);
-
-        // Load into the builder/editor and field
         this.builderLoadFromSchema(mission);
         this.missionEditorContent = JSON.stringify(mission, null, 4);
         this.initializeMission(mission);
@@ -697,5 +634,4 @@ const app = new Vue({
       }
     }
   }
-
 });
