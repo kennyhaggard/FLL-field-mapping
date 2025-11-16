@@ -28,6 +28,31 @@
           </button>
       </div>
 
+      <!-- Cloud Missions (shared via Sheets) -->
+      <div style="margin-top:16px; padding-top:10px; border-top:1px solid #e5e7eb;">
+        <h3 style="margin:0 0 6px; font-size:14px;">Cloud Missions (shared)</h3>
+      
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:6px;">
+            <span>Name</span>
+            <input type="text"
+                   v-model="savedMissionName"
+                   placeholder="DragonRun"
+                   style="padding:4px 8px; border-radius:6px; border:1px solid #d1d5db; min-width:160px;">
+          </label>
+          <button class="demo-button" type="button" @click="saveMissionToCloud">
+            Save to Cloud
+          </button>
+          <button class="start-button" type="button" @click="loadMissionFromCloudByName">
+            Load from Cloud
+          </button>
+        </div>
+      
+        <p style="margin:4px 0 0; font-size:12px; color:#6b7280;">
+          Students can tell you the mission name (e.g., "DragonRun") and you can load it here.
+        </p>
+      </div>
+
       <!-- Mission editor -->
 
 
@@ -276,6 +301,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
