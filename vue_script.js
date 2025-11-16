@@ -1,3 +1,5 @@
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyZNtSiyRiRQJHzrN_jhjEWLB0yP4FRzKdmroF3Gwv/exec'; // <-- paste your URL
+
 const app = new Vue({
   el: '#app',
   data: {
@@ -618,7 +620,65 @@ const app = new Vue({
       this._rafId = requestAnimationFrame(animate);
     }
   },
+  async saveMissionToCloud() {
+    const name = (this.builder.name || '').trim();
+    if (!name) {
+      alert('Give your mission a name in the Builder first.');
+      return;
+    }
 
+    const mission = this.builderCompileSchema();
+
+    try {
+      const res = await fetch(APPS_SCRIPT_URL + '?action=save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mission })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        console.error('Save error:', data);
+        alert('Error saving mission to cloud.');
+        return;
+      }
+
+      alert(`Mission "${name}" saved to cloud.`);
+    } catch (e) {
+      console.error(e);
+      alert('Network error saving mission to cloud.');
+    }
+  },
+
+  async loadMissionFromCloudByName() {
+    const name = (this.savedMissionName || this.builder.name || '').trim();
+    if (!name) {
+      alert('Enter a mission name (or set Builder name) to load.');
+      return;
+    }
+
+    try {
+      const url = APPS_SCRIPT_URL + '?action=get&name=' + encodeURIComponent(name);
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        alert(`Mission "${name}" not found.`);
+        return;
+      }
+
+      const mission = data.mission;
+      this.builderLoadFromSchema(mission);
+      this.missionEditorContent = JSON.stringify(mission, null, 4);
+      this.initializeMission(mission);
+      this.selectedMission = mission;
+    } catch (e) {
+      console.error(e);
+      alert('Network error loading mission from cloud.');
+    }
+  },
+},
   mounted() {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('mission');
@@ -637,4 +697,5 @@ const app = new Vue({
       }
     }
   }
+
 });
