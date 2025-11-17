@@ -1,6 +1,12 @@
-const APPS_SCRIPT_URL =
-  "https://corsproxy.io/?" +
-  encodeURIComponent("https://script.google.com/macros/s/AKfycby0R775Yf79W57m43XfrJtyZD-C3_HAj-r5OchxeJ5Mie1OaATPj_BtJUTGM_q3AR8BGg/exec");
+// Apps Script web app URL (the one you tested in the browser that works)
+const APPS_BASE = 'https://script.google.com/macros/s/AKfycb0R775Yf79W57m43XfrJtyZD-C3_HAj-r5OchxeJ5Mie1OaATPj_BtJUTGM_q3AR8BG/exec';
+
+// CORS proxy
+const PROXY_BASE = 'https://corsproxy.io/?';
+
+function proxied(url) {
+  return PROXY_BASE + encodeURIComponent(url);
+}
 
 const app = new Vue({
   el: '#app',
@@ -606,19 +612,21 @@ const app = new Vue({
       const mission = this.builderCompileSchema();
     
       try {
-        const res = await fetch(APPS_SCRIPT_URL + '?action=save', {
+        const endpoint = proxied(APPS_BASE + '?action=save');
+    
+        const res = await fetch(endpoint, {
           method: 'POST',
-          // 👇 no custom headers – use default text/plain so CORS preflight isn't triggered
+          // no custom headers → avoids extra CORS complications
           body: JSON.stringify({ name: name, mission: mission })
         });
     
-        const text = await res.text();           // read raw text for debugging
+        const text = await res.text();   // read raw text (for debugging)
         let data;
         try {
           data = JSON.parse(text);
         } catch (e) {
           console.error('Non-JSON response:', text);
-          alert('Unexpected response from cloud script.');
+          alert('Unexpected response from cloud script. Check Apps Script deployment.');
           return;
         }
     
@@ -641,28 +649,39 @@ const app = new Vue({
         alert('Enter a mission name (or set Builder name) to load.');
         return;
       }
-
+    
       try {
-        const url = APPS_SCRIPT_URL + '?action=get&name=' + encodeURIComponent(name);
-        const res = await fetch(url);
-        const data = await res.json();
-
+        const endpoint = proxied(
+          APPS_BASE + '?action=get&name=' + encodeURIComponent(name)
+        );
+    
+        const res = await fetch(endpoint);
+        const text = await res.text();
+    
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error('Non-JSON response from GET:', text);
+          alert('Unexpected response loading mission from cloud.');
+          return;
+        }
+    
         if (!res.ok || data.error) {
           alert('Mission "' + name + '" not found.');
           return;
         }
-
+    
         const mission = data.mission;
         this.builderLoadFromSchema(mission);
         this.missionEditorContent = JSON.stringify(mission, null, 4);
         this.initializeMission(mission);
         this.selectedMission = mission;
       } catch (e) {
-        console.error(e);
+        console.error('Network / fetch error:', e);
         alert('Network error loading mission from cloud.');
       }
-    }
-  },
+    },
 
   mounted: function () {
     const params = new URLSearchParams(window.location.search);
@@ -685,6 +704,7 @@ const app = new Vue({
     }
   }
 });
+
 
 
 
