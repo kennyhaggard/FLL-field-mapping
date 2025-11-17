@@ -681,7 +681,8 @@ const app = new Vue({
         console.error('Network / fetch error:', e);
         alert('Network error loading mission from cloud.');
       }
-    },
+    }
+  },
 
   mounted: function () {
     const params = new URLSearchParams(window.location.search);
@@ -702,8 +703,8 @@ const app = new Vue({
         alert('The mission link is invalid or corrupted.');
       }
     }
-  }
-});
+  });
+
 
 
 
