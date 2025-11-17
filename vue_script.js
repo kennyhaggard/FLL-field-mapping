@@ -1,12 +1,5 @@
-// Apps Script web app URL (the one you tested in the browser that works)
+// Apps Script web app URL
 const APPS_BASE = 'https://script.google.com/macros/s/AKfycbwH6kBAqzTGt7BWa6UM9y-fPcU57qnZLxRxe0UlxEb3VmJKLYKKhe0ueqopxaJU-d0CwQ/exec';
-
-// CORS proxy
-const PROXY_BASE = 'https://corsproxy.io/?';
-
-function proxied(url) {
-  return PROXY_BASE + encodeURIComponent(url);
-}
 
 const app = new Vue({
   el: '#app',
@@ -600,88 +593,96 @@ const app = new Vue({
     },
 
     /* =========================
-     *  Cloud save/load
+     *  JSONP helper
      * ========================= */
-    saveMissionToCloud: async function () {
+    jsonpRequest(url, callback) {
+      const cbName = 'fllJsonp_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+      const script = document.createElement('script');
+  
+      window[cbName] = (data) => {
+        try { callback(null, data); }
+        finally {
+          delete window[cbName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+      };
+  
+      script.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'callback=' + encodeURIComponent(cbName);
+      script.onerror = () => {
+        delete window[cbName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        callback(new Error('JSONP request failed'));
+      };
+  
+      document.head.appendChild(script);
+    },
+  
+    /* =========================
+     *  Cloud save/load using JSONP
+     * ========================= */
+    saveMissionToCloud() {
       const name = (this.builder.name || '').trim();
       if (!name) {
         alert('Give your mission a name in the Builder first.');
         return;
       }
-    
+  
       const mission = this.builderCompileSchema();
-    
-      try {
-        const endpoint = proxied(APPS_BASE + '?action=save');
-    
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          // no custom headers → avoids extra CORS complications
-          body: JSON.stringify({ name: name, mission: mission })
-        });
-    
-        const text = await res.text();   // read raw text (for debugging)
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          console.error('Non-JSON response:', text);
-          alert('Unexpected response from cloud script. Check Apps Script deployment.');
+      const encodedMission = encodeURIComponent(JSON.stringify(mission));
+  
+      const url =
+        APPS_BASE +
+        '?action=save&name=' +
+        encodeURIComponent(name) +
+        '&mission=' +
+        encodedMission;
+  
+      this.jsonpRequest(url, (err, data) => {
+        if (err) {
+          console.error('Save JSONP error:', err);
+          alert('Network error saving mission to cloud.');
           return;
         }
-    
-        if (!res.ok || !data.ok) {
+        if (!data || data.error || data.ok === false) {
           console.error('Save error:', data);
           alert('Error saving mission to cloud.');
           return;
         }
-    
         alert('Mission "' + name + '" saved to cloud.');
-      } catch (e) {
-        console.error('Network / fetch error:', e);
-        alert('Network error saving mission to cloud.');
-      }
+      });
     },
-
-    loadMissionFromCloudByName: async function () {
+  
+    loadMissionFromCloudByName() {
       const name = (this.savedMissionName || this.builder.name || '').trim();
       if (!name) {
         alert('Enter a mission name (or set Builder name) to load.');
         return;
       }
-    
-      try {
-        const endpoint = proxied(
-          APPS_BASE + '?action=get&name=' + encodeURIComponent(name)
-        );
-    
-        const res = await fetch(endpoint);
-        const text = await res.text();
-    
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          console.error('Non-JSON response from GET:', text);
-          alert('Unexpected response loading mission from cloud.');
+  
+      const url =
+        APPS_BASE +
+        '?action=get&name=' +
+        encodeURIComponent(name);
+  
+      this.jsonpRequest(url, (err, data) => {
+        if (err) {
+          console.error('Load JSONP error:', err);
+          alert('Network error loading mission from cloud.');
           return;
         }
-    
-        if (!res.ok || data.error) {
-          alert('Mission "' + name + '" not found.');
+        if (!data || data.error || !data.mission) {
+          alert('Mission "' + name + '" not found or invalid.');
           return;
         }
-    
+  
         const mission = data.mission;
         this.builderLoadFromSchema(mission);
         this.missionEditorContent = JSON.stringify(mission, null, 4);
         this.initializeMission(mission);
         this.selectedMission = mission;
-      } catch (e) {
-        console.error('Network / fetch error:', e);
-        alert('Network error loading mission from cloud.');
-      }
+      });
     }
+
   },
 
   mounted: function () {
@@ -706,6 +707,7 @@ const app = new Vue({
   }
   
 });
+
 
 
 
