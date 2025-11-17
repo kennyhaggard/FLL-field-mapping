@@ -600,27 +600,35 @@ const app = new Vue({
         alert('Give your mission a name in the Builder first.');
         return;
       }
-
+    
       const mission = this.builderCompileSchema();
-
+    
       try {
         const res = await fetch(APPS_SCRIPT_URL + '?action=save', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          // 👇 no custom headers – use default text/plain so CORS preflight isn't triggered
           body: JSON.stringify({ name: name, mission: mission })
         });
-
-        const data = await res.json().catch(function () { return {}; });
-
+    
+        const text = await res.text();           // read raw text for debugging
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error('Non-JSON response:', text);
+          alert('Unexpected response from cloud script.');
+          return;
+        }
+    
         if (!res.ok || !data.ok) {
           console.error('Save error:', data);
           alert('Error saving mission to cloud.');
           return;
         }
-
+    
         alert('Mission "' + name + '" saved to cloud.');
       } catch (e) {
-        console.error(e);
+        console.error('Network / fetch error:', e);
         alert('Network error saving mission to cloud.');
       }
     },
@@ -675,4 +683,5 @@ const app = new Vue({
     }
   }
 });
+
 
