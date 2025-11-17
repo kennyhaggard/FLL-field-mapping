@@ -1,5 +1,5 @@
 // Apps Script web app URL (the one you tested in the browser that works)
-const APPS_BASE = 'https://script.google.com/macros/s/AKfycb0R775Yf79W57m43XfrJtyZD-C3_HAj-r5OchxeJ5Mie1OaATPj_BtJUTGM_q3AR8BG/exec';
+const APPS_BASE = 'https://script.google.com/macros/s/AKfycbwH6kBAqzTGt7BWa6UM9y-fPcU57qnZLxRxe0UlxEb3VmJKLYKKhe0ueqopxaJU-d0CwQ/exec';
 
 // CORS proxy
 const PROXY_BASE = 'https://corsproxy.io/?';
@@ -706,6 +706,7 @@ const app = new Vue({
   }
   
 });
+
 
 
 
