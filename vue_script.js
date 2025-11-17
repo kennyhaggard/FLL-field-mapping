@@ -703,7 +703,10 @@ const app = new Vue({
         alert('The mission link is invalid or corrupted.');
       }
     }
-  });
+  }
+  
+});
+
 
 
 
