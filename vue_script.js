@@ -596,26 +596,19 @@ const app = new Vue({
      *  JSONP helper
      * ========================= */
     jsonpRequest(url, callback) {
-      const cbName = 'fllJsonp_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
-      const script = document.createElement('script');
-  
-      window[cbName] = (data) => {
-        try { callback(null, data); }
-        finally {
-          delete window[cbName];
-          if (script.parentNode) script.parentNode.removeChild(script);
-        }
-      };
-  
-      script.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'callback=' + encodeURIComponent(cbName);
-      script.onerror = () => {
-        delete window[cbName];
-        if (script.parentNode) script.parentNode.removeChild(script);
-        callback(new Error('JSONP request failed'));
-      };
-  
-      document.head.appendChild(script);
-    },
+        const transformer = 'https://jsonp.afeld.me/?callback=fllJsonp&url=';
+        const finalUrl = transformer + encodeURIComponent(url);
+      
+        window.fllJsonp = (data) => {
+          callback(null, data);
+          delete window.fllJsonp;
+        };
+      
+        const script = document.createElement('script');
+        script.src = finalUrl;
+        script.onerror = () => callback(new Error('JSONP failed'));
+        document.head.appendChild(script);
+      },
   
     /* =========================
      *  Cloud save/load using JSONP
@@ -707,6 +700,7 @@ const app = new Vue({
   }
   
 });
+
 
 
 
