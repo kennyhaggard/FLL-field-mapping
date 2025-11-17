@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyZNtSiyRiRQJHzrN_jhjEWLB0yP4FRzKdmroF3Gwv/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0R775Yf79W57m43XfrJtyZD-C3_HAj-r5OchxeJ5Mie1OaATPj_BtJUTGM_q3AR8BGg/exec';
 
 const app = new Vue({
   el: '#app',
@@ -675,3 +675,4 @@ const app = new Vue({
     }
   }
 });
+
