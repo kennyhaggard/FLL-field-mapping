@@ -437,8 +437,8 @@ const app = new Vue({
         body: JSON.stringify({
           teamName: this.teamName,
           pin: this.teamPin,
-          name,
-          mission
+          missionName: name,
+          mission: mission
         })
       });
 
@@ -479,7 +479,7 @@ const app = new Vue({
         body: JSON.stringify({
           teamName: this.teamName,
           pin: this.teamPin,
-          name
+          missionName
         })
       });
 
@@ -913,6 +913,7 @@ const app = new Vue({
   }
   }
 });
+
 
 
 
