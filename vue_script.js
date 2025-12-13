@@ -10,6 +10,7 @@ const app = new Vue({
     missionJsonText: '',        // JSON editor view of `mission`
     editorError: null,
     isEditing: true,
+    savedMissionName: "",
 
     /* ========= Robot / field state ========= */
     robot: null,
@@ -912,6 +913,7 @@ const app = new Vue({
   }
   }
 });
+
 
 
 
