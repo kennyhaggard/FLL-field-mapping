@@ -1,7 +1,9 @@
 // Apps Script web app URL
 const APPS_BASE = 'https://script.google.com/macros/s/AKfycbwH6kBAqzTGt7BWa6UM9y-fPcU57qnZLxRxe0UlxEb3VmJKLYKKhe0ueqopxaJU-d0CwQ/exec';
 
+const SUPABASE_URL = "https://yyqsvertfdlywlbtoaht.supabase.co";
 const SUPABASE_FN_BASE = "https://yyqsvertfdlywlbtoaht.functions.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5cXN2ZXJ0ZmRseXdsYnRvYWh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NTQ5ODUsImV4cCI6MjA4MTIzMDk4NX0.vMsCPxXy3txxd2V4_5Rt-mPucd9Tj9hMq4tRKYAG6TY";
 
 
 const app = new Vue({
@@ -78,14 +80,18 @@ const app = new Vue({
       try {
         const res = await fetch(SUPABASE_FN_BASE + "/list_missions", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": "Bearer " + SUPABASE_ANON_KEY
+          },
           body: JSON.stringify({
             teamName: this.teamName,
             pin: this.teamPin
           })
         });
     
-        const data = await res.json().catch(function () { return {}; });
+        const data = await res.json();
     
         if (!data.ok) {
           alert(data.error || "Login failed");
@@ -94,12 +100,6 @@ const app = new Vue({
     
         this.cloudMissions = data.missions || [];
         this.isTeamAuthed = true;
-    
-        // Optional: auto-select first mission in dropdown
-        if (this.cloudMissions.length && !this.selectedCloudMission) {
-          this.selectedCloudMission = this.cloudMissions[0].name;
-        }
-    
         alert('Connected as team "' + this.teamName + '"');
       } catch (e) {
         console.error(e);
@@ -749,6 +749,7 @@ const app = new Vue({
   }
   
 });
+
 
 
 
