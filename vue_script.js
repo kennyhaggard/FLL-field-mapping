@@ -1,6 +1,6 @@
 const SUPABASE_URL = "https://yyqsvertfdlywlbtoaht.supabase.co";
 const SUPABASE_FN_BASE = "https://yyqsvertfdlywlbtoaht.functions.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+const SUPABASE_ANON_KEY = "sb_publishable_NP5pQU0F3ApEYMCcBiV7jg_bIp10veM";
 
 const app = new Vue({
   el: '#app',
@@ -913,6 +913,7 @@ const app = new Vue({
   }
   }
 });
+
 
 
 
