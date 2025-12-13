@@ -79,7 +79,7 @@
           </button>
 
           <button class="start-button" type="button"
-                  @click="syncFromBuilder(); saveMissionToTeamCloud(builder.name)"
+                  @click="builderUseInTool; syncFromBuilder(); saveMissionToTeamCloud(builder.name)"
                   :disabled="!isTeamAuthed || !builder.name">
             Save Current
           </button>
@@ -103,7 +103,7 @@
                    style="padding:4px 8px; border-radius:6px; border:1px solid #d1d5db; min-width:160px;">
           </label>
 
-          <button class="demo-button" type="button" @click="syncFromBuilder(); saveMissionToCloud">
+          <button class="demo-button" type="button" @click="builderUseInTool; syncFromBuilder(); saveMissionToCloud">
             Save to Cloud
           </button>
 
@@ -373,6 +373,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
