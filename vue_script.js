@@ -1,6 +1,9 @@
 // Apps Script web app URL
 const APPS_BASE = 'https://script.google.com/macros/s/AKfycbwH6kBAqzTGt7BWa6UM9y-fPcU57qnZLxRxe0UlxEb3VmJKLYKKhe0ueqopxaJU-d0CwQ/exec';
 
+const SUPABASE_FN_BASE = "https://yyqsvertfdlywlbtoaht.functions.supabase.co";
+
+
 const app = new Vue({
   el: '#app',
   data: {
@@ -700,6 +703,7 @@ const app = new Vue({
   }
   
 });
+
 
 
 
