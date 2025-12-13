@@ -54,7 +54,15 @@ const app = new Vue({
         { type: 'rotate', value: -90 },
         { type: 'move',   value: 50 }
       ]
-    }
+    },
+    // Team login
+    teamName: "public",
+    teamPin: "",
+    isTeamAuthed: false,
+    
+    // Cloud missions
+    cloudMissions: [],
+    selectedCloudMission: ""
   },
 
   methods: {
@@ -703,6 +711,7 @@ const app = new Vue({
   }
   
 });
+
 
 
 
