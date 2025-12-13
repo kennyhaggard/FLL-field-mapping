@@ -90,33 +90,6 @@
         </p>
       </div>
 
-      <!-- OPTIONAL: SHARED CLOUD (Apps Script fallback) -->
-      <div style="margin-top:16px; padding-top:10px; border-top:1px solid #e5e7eb;">
-        <h3 style="margin:0 0 10px; font-size:14px;">Shared Cloud (optional fallback)</h3>
-
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <label style="display:flex; align-items:center; gap:6px;">
-            <span>Name</span>
-            <input type="text"
-                   v-model.trim="savedMissionName"
-                   placeholder="DragonRun"
-                   style="padding:4px 8px; border-radius:6px; border:1px solid #d1d5db; min-width:160px;">
-          </label>
-
-          <button class="demo-button" type="button" @click="builderUseInTool; syncFromBuilder(); saveMissionToCloud">
-            Save to Cloud
-          </button>
-
-          <button class="start-button" type="button" @click="loadMissionFromCloudByName">
-            Load from Cloud
-          </button>
-        </div>
-
-        <p style="margin:6px 0 0; font-size:12px; color:#6b7280;">
-          If connected as a team, these buttons route to team cloud instead.
-        </p>
-      </div>
-
       <!-- BUILDER -->
       <div class="editor-container" style="margin-top:16px;">
         <h2>Builder (Beta)</h2>
@@ -373,6 +346,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
