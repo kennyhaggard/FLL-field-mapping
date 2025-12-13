@@ -11,161 +11,248 @@
     <!-- LEFT PANE -->
     <div id="control-container">
       <h1>First Lego League Field Mapping Tool</h1>
-      <p>Check the <a href= 'https://kennyhaggard.github.io/FLL-field-mapping/introduction.html'>README file</a> for instructions.</p>
-      <button class="demo-button" id = "demo-button" @click="loadDemoMission">Load Demo Mission</button>
-      <input type="file" id="file-upload" @change="loadMissions" accept=".json" class="load-button">
+      <p>
+        Check the
+        <a href="https://kennyhaggard.github.io/FLL-field-mapping/introduction.html">README file</a>
+        for instructions.
+      </p>
 
-      <!-- Mission List -->
-      <div class="mission-list" v-if="missions.length > 0">
-          <h3>Loaded Missions</h3>
-          <p>Select a mission to start and/or edit</p>
-          <button 
-              v-for="(mission, index) in missions" 
-              :key="index" 
-              class="mission-button" 
-              @click="selectAndEditMission(mission)">
-              {{ mission.name || `Mission ${index + 1}` }}
-          </button>
+      <!-- Quick start -->
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button class="demo-button" id="demo-button" @click="loadDemoMission" :disabled="isCloudBusy">
+          Load Demo Mission
+        </button>
+
+        <button class="clear-button" @click="clearField" :disabled="isRunning || isCloudBusy">
+          Clear Field
+        </button>
+
+        <button class="start-button" @click="startMission" :disabled="!mission || isRunning || isCloudBusy">
+          Start Mission
+        </button>
+
+        <button class="btn" @click="stopMission" :disabled="!isRunning">
+          Stop Mission
+        </button>
       </div>
 
-      <!-- Cloud Missions (shared via Sheets) -->
+      <!-- =========================
+           CLOUD (PRIMARY)
+           ========================= -->
       <div style="margin-top:16px; padding-top:10px; border-top:1px solid #e5e7eb;">
-        <h3 style="margin:0 0 6px; font-size:14px;">Cloud Missions (shared)</h3>
-      
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <label style="display:flex; align-items:center; gap:6px;">
-            <span>Name</span>
+        <h2 style="margin:0 0 8px;">Team Cloud</h2>
+
+        <!-- Login -->
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+          <label style="display:flex; flex-direction:column; gap:4px;">
+            <span style="font-size:12px; color:#374151;">Team name</span>
             <input type="text"
-                   v-model="savedMissionName"
-                   placeholder="DragonRun"
-                   style="padding:4px 8px; border-radius:6px; border:1px solid #d1d5db; min-width:160px;">
+                   v-model.trim="teamName"
+                   placeholder="public"
+                   style="padding:6px 10px; border-radius:8px; border:1px solid #d1d5db; min-width:160px;">
           </label>
-          <button class="demo-button" type="button" @click="saveMissionToCloud">
-            Save to Cloud
+
+          <label style="display:flex; flex-direction:column; gap:4px;">
+            <span style="font-size:12px; color:#374151;">PIN</span>
+            <input type="password"
+                   inputmode="numeric"
+                   maxlength="6"
+                   v-model.trim="teamPin"
+                   placeholder="1234"
+                   style="padding:6px 10px; border-radius:8px; border:1px solid #d1d5db; width:110px;">
+          </label>
+
+          <button class="demo-button"
+                  type="button"
+                  @click="connectTeam"
+                  :disabled="isCloudBusy">
+            Connect
           </button>
-          <button class="start-button" type="button" @click="loadMissionFromCloudByName">
-            Load from Cloud
-          </button>
+
+          <span v-if="isTeamAuthed"
+                style="font-size:12px; color:#065f46; padding:4px 8px; border:1px solid #a7f3d0; border-radius:999px;">
+            Connected: {{ teamName }}
+          </span>
+
+          <span v-if="isCloudBusy" style="font-size:12px; color:#6b7280;">
+            Working…
+          </span>
         </div>
-      
-        <p style="margin:4px 0 0; font-size:12px; color:#6b7280;">
-          Students can tell you the mission name (e.g., "DragonRun") and you can load it here.
+
+        <p v-if="cloudError" style="margin:8px 0 0; color:#b91c1c; font-size:12px;">
+          {{ cloudError }}
         </p>
+
+        <!-- Mission list -->
+        <div style="margin-top:12px;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:12px; color:#374151;">Cloud missions</span>
+              <select v-model="selectedCloudMission"
+                      :disabled="!isTeamAuthed || isCloudBusy"
+                      style="padding:6px 10px; border-radius:8px; border:1px solid #d1d5db; min-width:220px;">
+                <option value="">-- Select a mission --</option>
+                <option v-for="m in cloudMissions" :key="m.name" :value="m.name">
+                  {{ m.name }}
+                </option>
+              </select>
+            </label>
+
+            <button class="start-button"
+                    type="button"
+                    @click="loadSelectedCloudMission"
+                    :disabled="!isTeamAuthed || !selectedCloudMission || isCloudBusy">
+              Load
+            </button>
+
+            <button class="demo-button"
+                    type="button"
+                    @click="refreshCloudList"
+                    :disabled="!isTeamAuthed || isCloudBusy">
+              Refresh
+            </button>
+          </div>
+
+          <p style="margin:6px 0 0; font-size:12px; color:#6b7280;">
+            Load a mission from your team’s cloud list, then edit in Builder or JSON and save back.
+          </p>
+        </div>
+
+        <!-- Save current mission -->
+        <div style="margin-top:12px; padding:10px; border:1px dashed #d1d5db; border-radius:10px;">
+          <h3 style="margin:0 0 8px; font-size:14px;">Save current mission</h3>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:12px; color:#374151;">Name</span>
+              <input type="text"
+                     v-model.trim="builder.name"
+                     placeholder="DragonRun"
+                     style="padding:6px 10px; border-radius:8px; border:1px solid #d1d5db; min-width:180px;">
+            </label>
+
+            <button class="demo-button"
+                    type="button"
+                    @click="saveMissionToCloud"
+                    :disabled="!isTeamAuthed || !mission || isCloudBusy">
+              Save to Cloud
+            </button>
+
+            <span style="font-size:12px; color:#6b7280;">
+              (Saves whatever is currently loaded as the mission.)
+            </span>
+          </div>
+        </div>
       </div>
 
-      <!-- Mission editor -->
-
-
-      <!-- BUILDER (Beta) -->
+      <!-- =========================
+           BUILDER (VIEW)
+           ========================= -->
       <div class="editor-container">
         <h2>Builder (Beta)</h2>
 
-        <!-- Settings -->
         <div class="builder-grid">
           <label>Name
             <input type="text" v-model="builder.name">
           </label>
+
           <label>traceColor
             <span style="display:flex; align-items:center; gap:8px;">
               <input type="color" v-model="builder.traceColor" />
               <span :style="{width:'20px',height:'20px',border:'1px solid #ccc',borderRadius:'4px',background:builder.traceColor}"></span>
             </span>
           </label>
+
           <label>startX (cm)
             <input type="number" step="0.1" v-model.number="builder.startX">
           </label>
+
           <label>startY (cm)
             <input type="number" step="0.1" v-model.number="builder.startY">
           </label>
+
           <label>startAngle (deg)
             <input type="number" step="1" v-model.number="builder.startAngle">
           </label>
+
           <label>offsetY (cm)
             <input type="number" step="0.1" v-model.number="builder.offsetY">
           </label>
+
           <label>robotWidthCm (cm)
             <input type="number" step="0.1" v-model.number="builder.robotWidthCm">
           </label>
+
           <label>robotLengthCm (cm)
             <input type="number" step="0.1" v-model.number="builder.robotLengthCm">
           </label>
         </div>
 
-        <!-- ATTACHMENTS -->
-<div style="margin-top:12px; margin-bottom:12px">
-  <h2 style="margin-top:0;">Attachments</h2>
+        <!-- Attachments -->
+        <div style="margin-top:12px; margin-bottom:12px">
+          <h2 style="margin-top:0;">Attachments</h2>
 
-  <!-- Add Attachment -->
-  <div class="builder-actions" style="margin-top:6px;">
-    <button class="demo-button"
-            @click="(builder.attachments = builder.attachments || []).push({ side:'front', widthCm:4, lengthCm:4, positionCm:0 })">
-      + Attachment
-    </button>
-  </div>
+          <div class="builder-actions" style="margin-top:6px;">
+            <button class="demo-button"
+                    @click="(builder.attachments = builder.attachments || []).push({ side:'front', widthCm:4, lengthCm:4, positionCm:0 })">
+              + Attachment
+            </button>
+          </div>
 
- <!-- Attachment tables -->
-<div class="builder-list" v-if="builder.attachments && builder.attachments.length">
-  <div class="builder-item" v-for="(att, i) in builder.attachments" :key="'att-'+i">
-    <table class="attach-table">
-      <tbody>
-        <!-- Row 1: Tag | Side -->
-        <tr>
-          <td class="cell-tag">
-            <span class="builder-tag">ATTACH</span>
-          </td>
-          <td>
-            <label>
-              <span>Side</span>
-              <select v-model="att.side">
-                <option value="front">front</option>
-                <option value="rear">rear</option>
-                <option value="left">left</option>
-                <option value="right">right</option>
-              </select>
-            </label>
-          </td>
-        </tr>
+          <div class="builder-list" v-if="builder.attachments && builder.attachments.length">
+            <div class="builder-item" v-for="(att, i) in builder.attachments" :key="'att-'+i">
+              <table class="attach-table">
+                <tbody>
+                  <tr>
+                    <td class="cell-tag"><span class="builder-tag">ATTACH</span></td>
+                    <td>
+                      <label>
+                        <span>Side</span>
+                        <select v-model="att.side">
+                          <option value="front">front</option>
+                          <option value="rear">rear</option>
+                          <option value="left">left</option>
+                          <option value="right">right</option>
+                        </select>
+                      </label>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <label>
+                        <span>Width</span>
+                        <input class="narrow" type="number" step="0.1" v-model.number="att.widthCm">
+                      </label>
+                    </td>
+                    <td>
+                      <label>
+                        <span>Length</span>
+                        <input class="narrow" type="number" step="0.1" v-model.number="att.lengthCm">
+                      </label>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <label>
+                        <span>Position</span>
+                        <input class="narrow" type="number" step="0.1" v-model.number="att.positionCm">
+                      </label>
+                    </td>
+                    <td>
+                      <button class="delete-btn" @click="builder.attachments.splice(i,1)">Delete</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-        <!-- Row 2: Width | Length -->
-        <tr>
-          <td>
-            <label>
-              <span>Width</span>
-              <input class="narrow" type="number" step="0.1" v-model.number="att.widthCm">
-            </label>
-          </td>
-          <td>
-            <label>
-              <span>Length</span>
-              <input class="narrow" type="number" step="0.1" v-model.number="att.lengthCm">
-            </label>
-          </td>
-        </tr>
+          <p v-else style="color:#6b7280; font-size:12px; margin:6px 0 0;">
+            No attachments yet. Click “+ Attachment” to add one.
+          </p>
+        </div>
 
-        <!-- Row 3: Position | Delete -->
-        <tr>
-          <td>
-            <label>
-              <span>Position</span>
-              <input class="narrow" type="number" step="0.1" v-model.number="att.positionCm">
-            </label>
-          </td>
-          <td>
-            <button class="delete-btn" @click="builder.attachments.splice(i,1)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Empty state -->
-<p v-else style="color:#6b7280; font-size:12px; margin:6px 0 0;">
-  No attachments yet. Click “+ Attachment” to add one.
-</p>
-</div>
-
-        <!-- Actions list -->
+        <!-- Actions -->
         <div class="builder-list">
           <div class="builder-item" v-for="(a,i) in builder.actions" :key="i">
             <span class="builder-tag">{{ a.type }}</span>
@@ -174,34 +261,64 @@
               <input type="number" step="1" v-model.number="a.value">
             </label>
             <span style="flex:1"></span>
-            <button class="clear-button" @click="builderDelete(i)" style="background:#fff0f0;color:#b55050;border:1px solid #ffd6d6;">Delete</button>
+            <button class="clear-button"
+                    @click="builderDelete(i)"
+                    style="background:#fff0f0;color:#b55050;border:1px solid #ffd6d6;">
+              Delete
+            </button>
           </div>
         </div>
 
-        <!-- Use in Tool -->
-        <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+        <!-- Builder actions -->
+        <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;">
           <button class="demo-button" @click="builderAdd('move')">+ Move</button>
           <button class="demo-button" @click="builderAdd('rotate')">+ Rotate</button>
-          <button class="start-button" @click="builderUseInTool">Save Changes</button>
+          <button class="start-button" @click="builderUseInTool">
+            Apply Builder to Mission
+          </button>
+        </div>
+      </div>
+
+      <!-- =========================
+           JSON EDITOR (VIEW)
+           ========================= -->
+      <div class="editor-container">
+        <h2>Edit Mission JSON</h2>
+
+        <textarea id="mission-json"
+                  v-model="missionJsonText"
+                  placeholder='Edit the mission JSON here (this view syncs with the current mission)'></textarea>
+
+        <p v-if="editorError" style="color:red; margin:6px 0 0;">
+          {{ editorError }}
+        </p>
+
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="start-button" @click="applyJsonToMission" :disabled="isRunning || isCloudBusy">
+            Apply JSON to Mission
+          </button>
+
+          <button class="demo-button" @click="copyShareLink" :disabled="!mission || isCloudBusy">
+            Copy Link
+          </button>
+
+          <button type="button" class="neutral-button" @click="emailShareLink" :disabled="!mission || isCloudBusy">
+            Email Mission Link
+          </button>
         </div>
 
-       <div class="editor-container">
-        <h2>Edit Mission JSON</h2>
-        <textarea id="mission-json" v-model="missionEditorContent" placeholder='Paste or edit your mission JSON here'></textarea>
-        <p v-if="editorError" style="color: red; margin:6px 0 0;">{{ editorError }}</p>
-        <div style="margin-top:10px;">
-          <button class="start-button"  @click="saveMissionAndInitialize">Save Changes</button>
-        </div>
-        <div style="margin-top:10px;">
-          <button class="demo-button" @click="copyShareLink">Copy Link</button>
-          <button type="button" class="neutral-button" @click="emailShareLink">Email Mission Link</button> 
-        </div>
-      </div>
+        <p style="margin:8px 0 0; font-size:12px; color:#6b7280;">
+          Tip: Builder and JSON both edit the same mission. Apply changes to update the field.
+        </p>
       </div>
     </div>
-    <!- RIGHT PANE -->
+
+    <!-- RIGHT PANE -->
     <div id="field-view">
       <div class="field-panel">
+        <!-- SVG FIELD -->
+        <!-- Paste your real SVG content inside this <svg> -->
+        
         <!-- SVG FIELD -->
             <svg id="mission-field" viewBox="0 0 226.281 128.981" preserveAspectRatio="xMidYMid meet">
 <g
@@ -284,13 +401,16 @@
        id="path53" />
   </g>
 </svg>
-
-
-        <!-- Buttons under the field -->
         <div class="field-controls">
-          <button class="start-button" @click="startMission">Start Mission</button>
-          <button class="clear-button" @click="clearField">Clear Field</button>  
-          <button class="btn" @click="stopMission":disabled="!isRunning">Stop Mission</button>    
+          <button class="start-button" @click="startMission" :disabled="!mission || isRunning || isCloudBusy">
+            Start Mission
+          </button>
+          <button class="clear-button" @click="clearField" :disabled="isRunning || isCloudBusy">
+            Clear Field
+          </button>
+          <button class="btn" @click="stopMission" :disabled="!isRunning">
+            Stop Mission
+          </button>
         </div>
       </div>
     </div>
