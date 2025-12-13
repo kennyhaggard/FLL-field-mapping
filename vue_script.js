@@ -910,7 +910,9 @@ const app = new Vue({
 
     this._rafId = requestAnimationFrame(animate);
   }
+  }
 });
+
 
 
 
