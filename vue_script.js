@@ -69,6 +69,44 @@ const app = new Vue({
     /* =========================
      *  Builder (Beta)
      * ========================= */
+    connectTeam: async function () {
+      if (!this.teamName || !this.teamPin) {
+        alert("Enter team name and 4-digit PIN");
+        return;
+      }
+    
+      try {
+        const res = await fetch(SUPABASE_FN_BASE + "/list_missions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            teamName: this.teamName,
+            pin: this.teamPin
+          })
+        });
+    
+        const data = await res.json().catch(function () { return {}; });
+    
+        if (!data.ok) {
+          alert(data.error || "Login failed");
+          return;
+        }
+    
+        this.cloudMissions = data.missions || [];
+        this.isTeamAuthed = true;
+    
+        // Optional: auto-select first mission in dropdown
+        if (this.cloudMissions.length && !this.selectedCloudMission) {
+          this.selectedCloudMission = this.cloudMissions[0].name;
+        }
+    
+        alert('Connected as team "' + this.teamName + '"');
+      } catch (e) {
+        console.error(e);
+        alert("Network error connecting to Supabase");
+      }
+    },
+    
     builderAdd: function (type) {
       const value = (type === 'move') ? 50 : -90;
       this.builder.actions.push({ type: type, value: value });
@@ -711,6 +749,7 @@ const app = new Vue({
   }
   
 });
+
 
 
 
