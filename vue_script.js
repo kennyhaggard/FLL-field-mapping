@@ -1068,7 +1068,7 @@ const app = new Vue({
 
     this._rafId = requestAnimationFrame(animate);
   }
-}   
+},   
 mounted() {
   // Team signup page
   if (window.PAGE === "signup") {
@@ -1093,6 +1093,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
