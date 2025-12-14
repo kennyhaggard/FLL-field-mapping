@@ -18,19 +18,10 @@
 <body>
   <div id="app" class="page">
 
-    <!-- Centered container -->
-    <div style="
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    ">
+    <!-- Centering wrapper -->
+    <div class="signup-wrapper">
+      <div class="editor-container signup-card">
 
-      <div class="editor-container" style="
-        width: 100%;
-        max-width: 520px;
-      ">
         <h1 style="margin-top:0;">Register a Team</h1>
 
         <p style="margin-top:4px;">
@@ -60,7 +51,7 @@
               v-model.trim="teamPin"
               inputmode="numeric"
               maxlength="4"
-              placeholder="e.g., 9898"
+              placeholder="e.g., 1111"
             />
           </label>
 
@@ -116,11 +107,12 @@
         <p v-if="cloudSuccess" style="margin-top:12px; color:#065f46;">
           {{ cloudSuccess }}
         </p>
+
       </div>
     </div>
   </div>
 
-  <!-- Vue + shared script -->
+  <!-- Vue + shared app script -->
   <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
   <script src="vue_script.js"></script>
 </body>
