@@ -495,6 +495,62 @@ const app = new Vue({
       alert("Network error loading from team cloud.");
     }
   },
+  async deleteSelectedMissionFromTeamCloud() {
+    if (!this.isTeamAuthed) {
+      alert("Connect as a team first.");
+      return;
+    }
+  
+    const name = String(this.selectedCloudMission || "").trim();
+    if (!name) {
+      alert("Select a mission to delete.");
+      return;
+    }
+  
+    const ok = confirm(`Delete mission "${name}"? This cannot be undone.`);
+    if (!ok) return;
+  
+    try {
+      const res = await fetch(SUPABASE_FN_BASE + "/delete_mission", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: "Bearer " + SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          teamName: this.teamName,
+          pin: this.teamPin,
+          name // <- IMPORTANT: matches your Edge Function expectation
+        })
+      });
+  
+      const data = await res.json();
+  
+      if (!data.ok) {
+        alert(data.error || "Delete failed");
+        return;
+      }
+  
+      // Refresh dropdown
+      await this.refreshTeamMissions();
+  
+      // Clear selection (and optionally clear the loaded mission if it was the one deleted)
+      if (this.mission && this.mission.name === name) {
+        this.mission = null;
+        this.missionJsonText = "";
+        this.editorError = null;
+        this.resetRobot();
+        this.clearField();
+      }
+  
+      this.selectedCloudMission = "";
+      alert(`Deleted mission "${name}".`);
+    } catch (e) {
+      console.error(e);
+      alert("Network error deleting mission.");
+    }
+  },
 
   /* =========================
    *  SHARED CLOUD (Apps Script JSONP) — optional fallback
@@ -913,6 +969,7 @@ const app = new Vue({
   }
   }
 });
+
 
 
 
