@@ -303,3 +303,18 @@ header h1 {
   font-size: 16px;
   font-weight: 700;
 }
+
+/* ===== Team signup page ===== */
+.signup-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.signup-card {
+  width: 100%;
+  max-width: 520px;
+  margin: auto;
+}
