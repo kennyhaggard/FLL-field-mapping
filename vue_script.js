@@ -1,9 +1,23 @@
+/* ========= Turnstile callbacks (must be global) ========= */
 window.onTurnstileSuccess = function (token) {
   if (window.app && window.app.$data) {
-    window.app.turnstileToken = token;
+    window.app.$data.turnstileToken = token || "";
   }
 };
 
+window.onTurnstileExpired = function () {
+  if (window.app && window.app.$data) {
+    window.app.$data.turnstileToken = "";
+  }
+};
+
+window.onTurnstileError = function () {
+  if (window.app && window.app.$data) {
+    window.app.$data.turnstileToken = "";
+  }
+};
+
+/* ========= Supabase config ========= */
 const SUPABASE_URL = "https://yyqsvertfdlywlbtoaht.supabase.co";
 const SUPABASE_FN_BASE = "https://yyqsvertfdlywlbtoaht.functions.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_NP5pQU0F3ApEYMCcBiV7jg_bIp10veM";
@@ -1029,6 +1043,10 @@ const app = new Vue({
   }
   }
 });
+
+// Make Vue accessible to Turnstile callbacks
+window.app = app;
+
 
 
 
