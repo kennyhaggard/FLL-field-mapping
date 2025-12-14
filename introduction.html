@@ -116,11 +116,10 @@
 	<p>This helps to explain the orientation of the robot on the playing field.</p>
 
         <h2>Mission Format</h2>
-        <p>There is a builder tool that allows move and rotate blocks to be added. There is also a JSON format that is used to run the app. The JSON upload can be used to load several missions to showcase different potential paths or a full set of mission plans.</p>
-		<p>Below is an example, also in the repository there is a missions.json file with this code:</p>
+        <p>There is a builder tool that allows move and rotate blocks to be added. There is also a JSON format that is used to run the app.</p>
+		<p>Below is an example: </p>
 
         <pre>
-[
     {
         "name": "Coral Sweep",
         "startX": 11.5,
@@ -138,50 +137,9 @@
             { "type": "rotate", "value": 24 },
 	    { "type": "move", "value": -17}
         ]
-    },
-    {
-        "name": "Raise the Mast",
-        "startX": 25,
-        "startY": 0,
-        "startAngle": 90,
-        "robotWidthCm": 17,
-        "robotLengthCm": 15,
-	"traceColor":"red",
-	"offsetY":1.8,
-        "actions": [
-            { "type": "move", "value": 55 },
-            { "type": "rotate", "value": -90 },
-            { "type": "move", "value": 20 },
-	    { "type": "move", "value": -20 },
-	    { "type": "rotate", "value": 90 },
-	    { "type": "move", "value": -55 }
-        ]
-    },
-    {
-        "name": "Coral Nursery/Shark Release",
-        "startX": 0,
-        "startY": 24,
-        "startAngle": 0,
-        "robotWidthCm": 17,
-        "robotLengthCm": 15,
-	"traceColor": "yellow",
-	"offsetY":1.8,
-        "actions": [
-            { "type": "move", "value": 40 },
-            { "type": "rotate", "value": 90 },
-            { "type": "move", "value": 43.5 },
-	    { "type": "rotate", "value": 90 },
-	    { "type": "move", "value": 20},
-	    { "type": "move", "value": -20},
-	    { "type": "rotate", "value": -36.5},
-            { "type": "move", "value": 29},
-	    { "type": "move", "value": -29},
-	    { "type": "rotate", "value": 90},
-	    { "type": "move", "value": 60}
-        ]
     }
-]
         </pre>
+		<p>I've also built in the capability for team's to save their missions to a database. It requires a team name and a unique 4-digit pin. I am working on the sign up functionality but have not opened it up yet.</p>
 
         <p>Good luck, and have fun plotting your robot’s paths!</p>
 		<p> <a href = "https://kennyhaggard.github.io/FLL-field-mapping/">Back to Mapping Tool</a></p>
