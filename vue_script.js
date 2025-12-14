@@ -427,7 +427,21 @@ const app = new Vue({
       this.isCloudBusy = false;
     }
   },
-    
+  resetSignupForm() {
+    this.teamName = "";
+    this.teamPin = "";
+    this.coachEmail = "";
+    this.cloudError = null;
+    this.cloudSuccess = null;
+    this.turnstileToken = "";
+  
+    // Reset the Turnstile widget if available
+    try {
+      if (window.turnstile && typeof window.turnstile.reset === "function") {
+        window.turnstile.reset();
+      }
+    } catch (e) {}
+  },
   async connectTeam() {
     if (!this.teamName || !this.teamPin) {
       alert("Enter team name and 4-digit PIN");
@@ -1046,6 +1060,7 @@ const app = new Vue({
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
