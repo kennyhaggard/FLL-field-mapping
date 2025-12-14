@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Team Signup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Tell vue_script.js which page we're on -->
+  <script>
+    window.PAGE = "signup";
+  </script>
+
+  <!-- Turnstile -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+
+<body>
+  <div id="app" class="page">
+    <div id="control-container">
+      <h1>Register a Team</h1>
+      <p><a href="./index.html">← Back to Mission Tool</a></p>
+
+      <div class="editor-container">
+        <h2>Team Info</h2>
+
+        <div class="builder-grid">
+          <label>Team name
+            <input type="text" v-model.trim="teamName" placeholder="e.g., Spring" />
+          </label>
+
+          <label>4-digit PIN
+            <input type="text" v-model.trim="teamPin" inputmode="numeric" maxlength="4" placeholder="e.g., 9898" />
+          </label>
+
+          <label>Coach email
+            <input type="email" v-model.trim="coachEmail" placeholder="coach@example.com" />
+          </label>
+        </div>
+
+        <div style="margin-top:12px;">
+          <!-- Replace with your Turnstile Site Key -->
+          <div class="cf-turnstile"
+               data-sitekey="YOUR_TURNSTILE_SITE_KEY"
+               data-callback="onTurnstileSuccess"
+               data-expired-callback="onTurnstileExpired"
+               data-error-callback="onTurnstileError"></div>
+
+          <p style="margin:6px 0 0; font-size:12px; color:#6b7280;">
+            If the captcha doesn’t load, disable aggressive blockers and refresh.
+          </p>
+        </div>
+
+        <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+          <button class="start-button"
+                  type="button"
+                  @click="registerTeam"
+                  :disabled="isCloudBusy">
+            {{ isCloudBusy ? "Registering..." : "Register Team" }}
+          </button>
+
+          <button class="neutral-button" type="button" @click="resetSignupForm" :disabled="isCloudBusy">
+            Reset
+          </button>
+        </div>
+
+        <p v-if="cloudError" style="margin-top:10px; color:#991b1b;">
+          {{ cloudError }}
+        </p>
+        <p v-if="cloudSuccess" style="margin-top:10px; color:#065f46;">
+          {{ cloudSuccess }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue + your single shared script -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <script src="vue_script.js"></script>
+</body>
+</html>
