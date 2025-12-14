@@ -305,16 +305,23 @@ header h1 {
 }
 
 /* ===== Team signup page ===== */
-.signup-wrapper {
-  min-height: 100vh;
-  display: flex;
+/* ===== Override layout for signup page ===== */
+.page-signup .page {
+  display: flex !important;
   align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Existing signup styles stay the same */
+.signup-wrapper {
+  width: 100%;
+  display: flex;
   justify-content: center;
   padding: 24px;
 }
 
 .signup-card {
   width: 100%;
-  max-width: 800px;
-  margin: auto;
+  max-width: 600px;
 }
