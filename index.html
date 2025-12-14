@@ -83,6 +83,12 @@
                   :disabled="!isTeamAuthed || !builder.name">
             Save Current
           </button>
+          <button class="clear-button"
+            type="button"
+            @click="deleteSelectedMissionFromTeamCloud"
+            :disabled="!isTeamAuthed || !selectedCloudMission">
+            Delete Mission
+          </button>
         </div>
 
         <p style="margin:6px 0 0; font-size:12px; color:#6b7280;">
@@ -346,6 +352,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
