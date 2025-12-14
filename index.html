@@ -341,7 +341,7 @@
         <div class="field-controls">
           <button class="start-button" @click="startMission" :disabled="!mission || isRunning">Start Mission</button>
           <button class="clear-button" @click="clearField">Clear Field</button>
-          <button class="btn" @click="stopMission" :disabled="!isRunning">Stop Mission</button>
+          <button class="mission-button" @click="stopMission" :disabled="!isRunning">Stop Mission</button>
         </div>
       </div>
     </div>
@@ -352,6 +352,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
