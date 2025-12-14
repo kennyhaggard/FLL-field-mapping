@@ -1,3 +1,9 @@
+window.onTurnstileSuccess = function (token) {
+  if (window.app && window.app.$data) {
+    window.app.turnstileToken = token;
+  }
+};
+
 const SUPABASE_URL = "https://yyqsvertfdlywlbtoaht.supabase.co";
 const SUPABASE_FN_BASE = "https://yyqsvertfdlywlbtoaht.functions.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_NP5pQU0F3ApEYMCcBiV7jg_bIp10veM";
@@ -57,6 +63,9 @@ const app = new Vue({
 
     cloudMissions: [],          // array of { name, updated_at?, ... } from list_missions
     selectedCloudMission: "",   // mission name selected in UI
+    
+    coachEmail: "",
+    turnstileToken: "",
 
     // UX
     isCloudBusy: false,
@@ -354,6 +363,57 @@ const app = new Vue({
    *   - get_mission    (recommended)
    *   - save_mission   (recommended)
    * ========================= */
+
+  async registerTeam() {
+    this.cloudError = null;
+  
+    const teamName = (this.teamName || "").trim();
+    const pin = (this.teamPin || "").trim();
+    const coachEmail = (this.coachEmail || "").trim();
+    const turnstileToken = (this.turnstileToken || "").trim();
+  
+    if (!teamName || !pin || !coachEmail) {
+      this.cloudError = "Please enter team name, coach email, and a 4-digit PIN.";
+      return;
+    }
+    if (!/^\d{4}$/.test(pin)) {
+      this.cloudError = "PIN must be exactly 4 digits.";
+      return;
+    }
+    if (!turnstileToken) {
+      this.cloudError = "Please complete the Turnstile check.";
+      return;
+    }
+  
+    this.isCloudBusy = true;
+    try {
+      const res = await fetch(SUPABASE_FN_BASE + "/register_team", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: "Bearer " + SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ teamName, pin, coachEmail, turnstileToken })
+      });
+  
+      const data = await res.json();
+      if (!data.ok) {
+        this.cloudError = data.error || "Registration failed";
+        return;
+      }
+  
+      alert(`Team "${teamName}" registered! You can now Connect Team.`);
+      // optional: auto-connect after successful registration
+      this.turnstileToken = "";
+    } catch (e) {
+      console.error(e);
+      this.cloudError = "Network error registering team.";
+    } finally {
+      this.isCloudBusy = false;
+    }
+  },
+    
   async connectTeam() {
     if (!this.teamName || !this.teamPin) {
       alert("Enter team name and 4-digit PIN");
@@ -969,6 +1029,7 @@ const app = new Vue({
   }
   }
 });
+
 
 
 
