@@ -84,6 +84,7 @@ const app = new Vue({
     // UX
     isCloudBusy: false,
     cloudError: null,
+    cloudSuccess: null,
 
     /* ========= Internal sync guard ========= */
     _suspendEditorSync: false,
@@ -380,6 +381,7 @@ const app = new Vue({
 
   async registerTeam() {
     this.cloudError = null;
+    this.cloudSuccess = null;
   
     const teamName = (this.teamName || "").trim();
     const pin = (this.teamPin || "").trim();
@@ -417,9 +419,20 @@ const app = new Vue({
         return;
       }
   
-      alert(`Team "${teamName}" registered! You can now Connect Team.`);
-      // optional: auto-connect after successful registration
+      // ✅ Success path
+      this.cloudSuccess = `Team "${teamName}" registered successfully! You can now connect from the Mission Tool.`;
+      this.cloudError = null;
+  
+      // Clear captcha token so it can't be reused
       this.turnstileToken = "";
+  
+      // Optional: reset Turnstile widget if available
+      try {
+        if (window.turnstile && typeof window.turnstile.reset === "function") {
+          window.turnstile.reset();
+        }
+      } catch (e) {}
+  
     } catch (e) {
       console.error(e);
       this.cloudError = "Network error registering team.";
@@ -1055,11 +1068,32 @@ const app = new Vue({
 
     this._rafId = requestAnimationFrame(animate);
   }
+}   
+mounted() {
+  // Team signup page
+  if (window.PAGE === "signup") {
+    // Ensure clean state
+    this.cloudError = null;
+    this.cloudSuccess = null;
+    this.isCloudBusy = false;
+
+    // Defensive: clear stale tokens
+    this.turnstileToken = "";
+    return;
   }
+
+  // Mission tool page
+  if (!window.PAGE || window.PAGE === "tool") {
+    // Optional: load demo mission on first visit
+    this.loadDemoMission();
+  }
+}
+
 });
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
