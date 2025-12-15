@@ -111,18 +111,19 @@ button {
 
 .demo-button {
   display: inline-block;
-  padding: 12px 18px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
   background: var(--btn-blue);
-  color: white;
 }
 
 .demo-button.secondary {
+  margin: 5px 5px 5px 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
   background: var(--btn-green);   /* gray */
 }
 
