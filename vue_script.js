@@ -1070,29 +1070,46 @@ const app = new Vue({
   }
 },   
 mounted() {
-  // Team signup page
+  // Signup page: do nothing mission-related
   if (window.PAGE === "signup") {
-    // Ensure clean state
     this.cloudError = null;
     this.cloudSuccess = null;
     this.isCloudBusy = false;
-
-    // Defensive: clear stale tokens
     this.turnstileToken = "";
     return;
   }
 
-  // Mission tool page
-  if (!window.PAGE || window.PAGE === "tool") {
-    // Optional: load demo mission on first visit
-    this.loadDemoMission();
+  // Tool page
+  const params = new URLSearchParams(window.location.search);
+  const encoded = params.get("mission");
+
+  // If a mission link is present, load it and STOP (do not load demo)
+  if (encoded) {
+    try {
+      const json = decodeURIComponent(
+        Array.prototype.map
+          .call(atob(encoded), (c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+      const mission = JSON.parse(json);
+      this.setMission(mission);
+      return; // ✅ prevents demo mission override
+    } catch (e) {
+      console.error("Invalid mission link", e);
+      alert("The mission link is invalid or corrupted.");
+      // fall through to demo load if you want
+    }
   }
+
+  // No mission param => safe to load demo (or do nothing)
+  this.loadDemoMission();
 }
 
 });
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
