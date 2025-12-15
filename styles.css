@@ -17,6 +17,7 @@
   --input-border: #ccc;
 }
 
+
 * { box-sizing: border-box; }
 
 body {
@@ -108,9 +109,25 @@ button {
   cursor: pointer;
 }
 
+.demo-button {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  background: var(--btn-blue);
+  color: white;
+}
+
+.demo-button.secondary {
+  background: var(--btn-green);   /* gray */
+}
+
 .start-button   { background: var(--btn-green); }
 .clear-button   { background: var(--btn-orange); }
-.demo-button    { background: var(--btn-blue); }
 .neutral-button { background: var(--btn-gray); }
 .mission-button { background: var(--btn-purple); }
 
