@@ -88,7 +88,15 @@ const app = new Vue({
 
     /* ========= Internal sync guard ========= */
     _suspendEditorSync: false,
-    _editorDebounceId: null
+    _editorDebounceId: null,
+
+    /* ========= Replay ========= */
+  replayFrames: [],        // [{tMs, x, y, angle}]
+  replayIndex: 0,          // slider index
+  isReplaying: false,
+  _replayRafId: null,
+  replayFps: 60,           // frame rate for pre-sim
+  replayTracePolyline: null // optional polyline element
   },
 
   methods: {
@@ -1079,7 +1087,282 @@ const app = new Vue({
     }
 
     this._rafId = requestAnimationFrame(animate);
-  }
+  },
+
+    /* =========================================================
+ *  REPLAY — pre-simulate + slider scrub
+ *  No changes to your existing runner functions.
+ * ========================================================= */
+
+  _cancelReplayRaf() {
+    if (this._replayRafId != null) {
+      cancelAnimationFrame(this._replayRafId);
+      this._replayRafId = null;
+    }
+  },
+  
+  stopReplay() {
+    this.isReplaying = false;
+    this._cancelReplayRaf();
+  },
+  
+  // Ensure scales exist even if you haven't initialized yet
+  _ensureScale() {
+    const svgRoot = document.getElementById("mission-field");
+    if (!svgRoot) return null;
+  
+    // same convention you already use
+    this.scaleX = svgRoot.viewBox.baseVal.width / 200;
+    this.scaleY = this.scaleX;
+    return svgRoot;
+  },
+  
+  // Computes your robot "center" start pose (same math as initializeMission)
+  _computeStartPose(mission) {
+    const svgRoot = document.getElementById("mission-field");
+    if (!svgRoot) return null;
+  
+    const thetaDeg = ((mission.startAngle % 360) + 360) % 360;
+    const c = Math.cos(thetaDeg * Math.PI / 180);
+    const s = Math.sin(thetaDeg * Math.PI / 180);
+  
+    const halfLx = (mission.robotLengthCm * this.scaleX) / 2;
+    const halfLy = (mission.robotLengthCm * this.scaleY) / 2;
+    const halfWx = (mission.robotWidthCm  * this.scaleX) / 2;
+    const halfWy = (mission.robotWidthCm  * this.scaleY) / 2;
+    const dx = Math.abs(c) * halfLx + Math.abs(s) * halfWx;
+    const dy = Math.abs(s) * halfLy + Math.abs(c) * halfWy;
+  
+    const x = mission.startX * this.scaleX + dx;
+    const y = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY) - dy;
+  
+    return { x, y, angle: thetaDeg };
+  },
+  
+  // Offset helper but for a provided mission + scale (no reliance on "current" state)
+  _offsetXYFor(mission, angleDeg) {
+    const oCm = Number(mission.offsetY) || 0;
+    const oSvg = oCm * this.scaleY;
+    const r = (angleDeg * Math.PI) / 180;
+    return { ox: oSvg * Math.cos(r), oy: -oSvg * Math.sin(r) };
+  },
+  
+  // Pre-simulate into frames in SVG coordinate space (x/y are robot center coords)
+  buildReplayFrames() {
+    const svgRoot = this._ensureScale();
+    if (!svgRoot) return;
+  
+    if (!this.mission) {
+      alert("Load a mission first.");
+      return;
+    }
+  
+    const mission = this.normalizeMission(this.mission);
+  
+    // Make sure robot exists visually (we'll re-render anyway)
+    if (!this.robot) this.initializeMission(mission);
+  
+    const pose0 = this._computeStartPose(mission);
+    if (!pose0) return;
+  
+    const fps = Math.max(10, Number(this.replayFps) || 60);
+    const dtMs = 1000 / fps;
+  
+    const frames = [];
+    let tMs = 0;
+  
+    // current simulated pose
+    let x = pose0.x;
+    let y = pose0.y;
+    let a = pose0.angle;
+  
+    frames.push({ tMs, x, y, angle: a });
+  
+    const actions = Array.isArray(mission.actions) ? mission.actions : [];
+    for (let i = 0; i < actions.length; i++) {
+      const act = actions[i];
+      if (!act || !act.type) continue;
+  
+      if (act.type === "move") {
+        const distCm = Number(act.value) || 0;
+        const distSvg = distCm * this.scaleY;
+  
+        // duration uses your same speed setting (cm/s)
+        const durMs = this.moveDurationMs(distCm);
+        const n = Math.max(1, Math.ceil(durMs / dtMs));
+  
+        const startX = x, startY = y;
+        const angleRad = (a * Math.PI) / 180;
+        const endX = startX + distSvg * Math.cos(angleRad);
+        const endY = startY - distSvg * Math.sin(angleRad);
+  
+        for (let k = 1; k <= n; k++) {
+          const raw = k / n;
+          const p = this.easeInOut(raw);
+          tMs += dtMs;
+  
+          x = startX + p * (endX - startX);
+          y = startY + p * (endY - startY);
+  
+          frames.push({ tMs, x, y, angle: a });
+        }
+  
+        // snap
+        x = endX; y = endY;
+  
+      } else if (act.type === "rotate") {
+        const delta = Number(act.value) || 0;
+  
+        // rotation in your current runner pivots around "trace point" (offsetY pivot)
+        const off0 = this._offsetXYFor(mission, a);
+        const pivotX = x - off0.ox;
+        const pivotY = y - off0.oy;
+  
+        const target = a + delta;
+  
+        const durMs = this.rotateDurationMs(delta);
+        const n = Math.max(1, Math.ceil(durMs / dtMs));
+  
+        const startA = a;
+  
+        for (let k = 1; k <= n; k++) {
+          const raw = k / n;
+          const p = this.easeInOut(raw);
+          const aa = startA + (target - startA) * p;
+          tMs += dtMs;
+  
+          // keep the pivot fixed while changing offset
+          const off = this._offsetXYFor(mission, aa);
+          x = pivotX + off.ox;
+          y = pivotY + off.oy;
+  
+          frames.push({ tMs, x, y, angle: aa });
+        }
+  
+        a = target;
+  
+        // final snap
+        const offF = this._offsetXYFor(mission, a);
+        x = pivotX + offF.ox;
+        y = pivotY + offF.oy;
+  
+      }
+    }
+  
+    this.replayFrames = frames;
+    this.replayIndex = 0;
+  
+    // render first frame
+    this.renderReplayFrame(0);
+  },
+  
+  renderReplayFrame(idx) {
+    if (!this.replayFrames || !this.replayFrames.length) return;
+    const i = Math.max(0, Math.min(this.replayFrames.length - 1, Number(idx) || 0));
+    const f = this.replayFrames[i];
+  
+    if (!this.robot) {
+      // ensure the robot exists
+      this.initializeMission(this.mission);
+    }
+  
+    // Update robot pose (same transform formula you already use)
+    this.robot.setAttribute(
+      "transform",
+      "translate(" + f.x.toFixed(2) + ", " + f.y.toFixed(2) + ") rotate(" + (90 - f.angle) + ")"
+    );
+  
+    // Keep current pose vars in sync (optional but helpful)
+    this.currentX = f.x;
+    this.currentY = f.y;
+    this.currentAngle = f.angle;
+  
+    // Optional trace: polyline up to frame i
+    this.renderReplayTrace(i);
+  },
+  
+  renderReplayTrace(uptoIndex) {
+    const svgRoot = document.getElementById("mission-field");
+    if (!svgRoot) return;
+    if (!this.mission || !this.replayFrames || !this.replayFrames.length) return;
+  
+    // remove old polyline
+    if (this.replayTracePolyline && this.replayTracePolyline.parentNode) {
+      this.replayTracePolyline.parentNode.removeChild(this.replayTracePolyline);
+      this.replayTracePolyline = null;
+    }
+  
+    if (!this.tracePath) return;
+  
+    const mission = this.normalizeMission(this.mission);
+    const end = Math.max(0, Math.min(uptoIndex, this.replayFrames.length - 1));
+  
+    const pts = [];
+    for (let i = 0; i <= end; i++) {
+      const f = this.replayFrames[i];
+      const off = this._offsetXYFor(mission, f.angle);
+      const tx = f.x - off.ox;
+      const ty = f.y - off.oy;
+      pts.push(tx.toFixed(2) + "," + ty.toFixed(2));
+    }
+  
+    const pl = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    pl.setAttribute("points", pts.join(" "));
+    pl.setAttribute("fill", "none");
+    pl.setAttribute("stroke", (mission.traceColor || "#008000"));
+    pl.setAttribute("stroke-width", "1.5");
+    pl.setAttribute("vector-effect", "non-scaling-stroke");
+    pl.setAttribute("opacity", "0.9");
+  
+    // Mark as dynamic (no "static" attribute) so your Clear Field removes it
+    svgRoot.appendChild(pl);
+    this.replayTracePolyline = pl;
+  },
+  
+  onReplaySliderInput() {
+    // slider scrubs instantly
+    this.stopReplay();
+    this.renderReplayFrame(this.replayIndex);
+  },
+  
+  playReplay() {
+    if (!this.replayFrames || this.replayFrames.length < 2) {
+      this.buildReplayFrames();
+      if (!this.replayFrames || this.replayFrames.length < 2) return;
+    }
+  
+    this.isReplaying = true;
+    this._cancelReplayRaf();
+  
+    const self = this;
+  
+    function tick() {
+      if (!self.isReplaying) return;
+  
+      const next = Number(self.replayIndex) + 1;
+      if (next >= self.replayFrames.length) {
+        self.isReplaying = false;
+        self._cancelReplayRaf();
+        return;
+      }
+  
+      self.replayIndex = next;
+      self.renderReplayFrame(next);
+  
+      self._replayRafId = requestAnimationFrame(tick);
+    }
+  
+    this._replayRafId = requestAnimationFrame(tick);
+  },
+  
+  resetReplay() {
+    this.stopReplay();
+    this.replayIndex = 0;
+    if (this.replayFrames && this.replayFrames.length) {
+      this.renderReplayFrame(0);
+    }
+  },
+    
 },   
 mounted() {
   // Signup page: do nothing mission-related
@@ -1121,6 +1404,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
