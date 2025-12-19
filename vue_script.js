@@ -823,20 +823,28 @@ const app = new Vue({
     this.scaleY = this.scaleX;
 
     const thetaDeg = ((mission.startAngle % 360) + 360) % 360;
-    const c = Math.cos(thetaDeg * Math.PI / 180);
-    const s = Math.sin(thetaDeg * Math.PI / 180);
 
-    const halfLx = (mission.robotLengthCm * this.scaleX) / 2;
-    const halfLy = (mission.robotLengthCm * this.scaleY) / 2;
-    const halfWx = (mission.robotWidthCm  * this.scaleX) / 2;
-    const halfWy = (mission.robotWidthCm  * this.scaleY) / 2;
-    const dx = Math.abs(c) * halfLx + Math.abs(s) * halfWx;
-    const dy = Math.abs(s) * halfLy + Math.abs(c) * halfWy;
-
-    this.currentX     = mission.startX * this.scaleX + dx;
-    this.currentY     = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY) - dy;
+    // Treat startX/startY as the TRACE POINT in cm
+    const traceStartX = mission.startX * this.scaleX;
+    const traceStartY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
+    
+    // Apply offset immediately so the ROBOT is positioned correctly at t=0
     this.currentAngle = thetaDeg;
     this.traceColor   = mission.traceColor;
+    
+    const off0 = this.offsetXY(this.currentAngle); // vector from trace -> robot center
+    this.currentX = traceStartX + off0.ox;
+    this.currentY = traceStartY + off0.oy;
+    
+    // Optional: draw the very first trace point so start position matches visually
+    if (this.tracePath) {
+      const dot0 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot0.setAttribute("cx", traceStartX.toFixed(2));
+      dot0.setAttribute("cy", traceStartY.toFixed(2));
+      dot0.setAttribute("r", 0.8);
+      dot0.setAttribute("fill", this.traceColor);
+      svgRoot.appendChild(dot0);
+    }
 
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     g.setAttribute("id", "robot-group");
@@ -1404,6 +1412,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
