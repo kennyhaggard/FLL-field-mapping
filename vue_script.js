@@ -960,42 +960,38 @@ const app = new Vue({
  *  currentX/currentY represent the robot CENTER
  * ========================================================= */
 
-_computeStartPose(missionInput) {
-  const svgRoot = document.getElementById("mission-field");
-  if (!svgRoot) return null;
-
-  const mission = this.normalizeMission(missionInput || this.mission);
-
-  // Ensure scale
-  this.scaleX = svgRoot.viewBox.baseVal.width / 200;
-  this.scaleY = this.scaleX;
-
-  const a = ((mission.startAngle % 360) + 360) % 360;
-  const r = (a * Math.PI) / 180;
-
-  // Field coords: startX/startY are cm from bottom-left.
-  // NEW DEFINITION:
-  //   startX/startY represent the *lower-left of the robot's rotated footprint*
-  //   (i.e., axis-aligned bounding box on the field) AFTER considering startAngle.
-  const anchorX = mission.startX * this.scaleX;
-  const anchorY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
-
-  const c = Math.cos(r);
-  const s = Math.sin(r);
-
-  const halfW = (mission.robotWidthCm  * this.scaleX) / 2;
-  const halfL = (mission.robotLengthCm * this.scaleY) / 2;
-
-  // Half-extents of the rotated rectangle's axis-aligned bounding box
-  const dx = Math.abs(c) * halfW + Math.abs(s) * halfL;
-  const dy = Math.abs(s) * halfW + Math.abs(c) * halfL;
-
-  // Center is lower-left + (dx, dy-up)
-  const cx = anchorX + dx;
-  const cy = anchorY - dy;
-
-  return { x: cx, y: cy, angle: a, mission };
-},
+  _computeStartPose(missionInput) {
+    const svgRoot = document.getElementById("mission-field");
+    if (!svgRoot) return null;
+  
+    const mission = this.normalizeMission(missionInput || this.mission);
+  
+    // Ensure scale (match initializeMission: scaleY == scaleX)
+    this.scaleX = svgRoot.viewBox.baseVal.width / 200;
+    this.scaleY = this.scaleX;
+  
+    const thetaDeg = ((mission.startAngle % 360) + 360) % 360;
+    const r = thetaDeg * Math.PI / 180;
+    const c = Math.cos(r);
+    const s = Math.sin(r);
+  
+    // Same half-dimensions and same dx/dy logic
+    const halfLx = (mission.robotLengthCm * this.scaleX) / 2;
+    const halfLy = (mission.robotLengthCm * this.scaleY) / 2;
+    const halfWx = (mission.robotWidthCm  * this.scaleX) / 2;
+    const halfWy = (mission.robotWidthCm  * this.scaleY) / 2;
+  
+    const dx = Math.abs(c) * halfLx + Math.abs(s) * halfWx;
+    const dy = Math.abs(s) * halfLy + Math.abs(c) * halfWy;
+  
+    // IMPORTANT:
+    // startX/startY are interpreted exactly as in initializeMission:
+    // (cm from bottom-left) but "start point" represents the lower-left of the *rotated robot's AABB*.
+    const x = mission.startX * this.scaleX + dx;
+    const y = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY) - dy;
+  
+    return { x, y, angle: thetaDeg, mission };
+  },
 
 initializeMission(missionInput) {
   const svgRoot = document.getElementById("mission-field");
@@ -1470,6 +1466,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
