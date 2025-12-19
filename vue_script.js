@@ -456,11 +456,20 @@ const app = new Vue({
     } catch (e) {}
   },
   async connectTeam() {
-    if (!this.teamName || !this.teamPin) {
-      alert("Enter team name and 4-digit PIN");
+    if (this.isCloudBusy) return;            // prevents double-click
+    this.cloudError = null;
+    this.cloudSuccess = null;
+  
+    const teamName = (this.teamName || "").trim();
+    const pin = (this.teamPin || "").trim();
+  
+    if (!teamName || !pin) {
+      this.cloudError = "Enter team name and 4-digit PIN.";
       return;
     }
-
+  
+    this.isCloudBusy = true;
+  
     try {
       const res = await fetch(SUPABASE_FN_BASE + "/list_missions", {
         method: "POST",
@@ -469,26 +478,29 @@ const app = new Vue({
           apikey: SUPABASE_ANON_KEY,
           Authorization: "Bearer " + SUPABASE_ANON_KEY
         },
-        body: JSON.stringify({
-          teamName: this.teamName,
-          pin: this.teamPin
-        })
+        body: JSON.stringify({ teamName, pin })
       });
-
+  
       const data = await res.json();
-
+  
       if (!data.ok) {
-        alert(data.error || "Login failed");
+        this.isTeamAuthed = false;
+        this.cloudMissions = [];
+        this.cloudError = data.error || "Login failed";
         return;
       }
-
+  
       this.cloudMissions = data.missions || [];
       this.isTeamAuthed = true;
-      alert('Connected as team "' + this.teamName + '"');
+      this.cloudSuccess = `Connected as team "${teamName}".`;
     } catch (e) {
       console.error(e);
-      alert("Network error connecting to Supabase");
-    }
+      this.isTeamAuthed = false;
+      this.cloudMissions = [];
+      this.cloudError = "Network error connecting to Supabase.";
+    } finally {
+      this.isCloudBusy = false;
+    }      
   },
 
   async refreshTeamMissions() {
@@ -1109,6 +1121,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
