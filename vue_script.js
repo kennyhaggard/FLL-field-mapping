@@ -826,20 +826,26 @@ const app = new Vue({
     this.currentAngle = thetaDeg;
     this.traceColor = mission.traceColor;
   
-    // Treat startX/startY as TRACE POINT in cm (converted to SVG coords)
-    const traceStartX = mission.startX * this.scaleX;
-    const traceStartY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
+    // --- startX/startY are REAR CENTER in cm (field coords: origin bottom-left)
+    const rearX = mission.startX * this.scaleX;
+    const rearY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
   
-    // offsetXY is ROBOT -> TRACE, so robot center = trace - offset
-    const off0 = this.offsetXY(this.currentAngle);
-    this.currentX = traceStartX - off0.ox;
-    this.currentY = traceStartY - off0.oy;
+    // --- convert rear center -> robot center by moving forward half robot length
+    const halfL = (mission.robotLengthCm / 2) * this.scaleY;
+    const r = (thetaDeg * Math.PI) / 180;
   
-    // Optional: draw first trace point
+    this.currentX = rearX + halfL * Math.cos(r);
+    this.currentY = rearY - halfL * Math.sin(r);
+  
+    // Optional: draw initial trace point (trace = robot center + offset)
     if (this.tracePath) {
+      const off0 = this.offsetXY(this.currentAngle); // robot -> trace
+      const traceX0 = this.currentX + off0.ox;
+      const traceY0 = this.currentY + off0.oy;
+  
       const dot0 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      dot0.setAttribute("cx", traceStartX.toFixed(2));
-      dot0.setAttribute("cy", traceStartY.toFixed(2));
+      dot0.setAttribute("cx", traceX0.toFixed(2));
+      dot0.setAttribute("cy", traceY0.toFixed(2));
       dot0.setAttribute("r", 0.8);
       dot0.setAttribute("fill", this.traceColor);
       svgRoot.appendChild(dot0);
@@ -851,7 +857,7 @@ const app = new Vue({
     const base = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     base.setAttribute("x", -mission.robotWidthCm * this.scaleX / 2);
     base.setAttribute("y", -mission.robotLengthCm * this.scaleY / 2);
-    base.setAttribute("width", mission.robotWidthCm * this.scaleX);
+    base.setAttribute("width",  mission.robotWidthCm * this.scaleX);
     base.setAttribute("height", mission.robotLengthCm * this.scaleY);
     base.setAttribute("fill", "blue");
     base.setAttribute("fill-opacity", "0.6");
@@ -1041,7 +1047,6 @@ const app = new Vue({
     if (!svgRoot || !this.robot) return;
   
     const distanceSvg = distance * this.scaleY;
-  
     const startX = this.currentX;
     const startY = this.currentY;
   
@@ -1062,8 +1067,7 @@ const app = new Vue({
       self.currentX = startX + p * (endX - startX);
       self.currentY = startY + p * (endY - startY);
   
-      // offsetXY is ROBOT -> TRACE, so trace = robot + offset
-      const off = self.offsetXY(self.currentAngle);
+      const off = self.offsetXY(self.currentAngle); // robot -> trace
       const traceX = self.currentX + off.ox;
       const traceY = self.currentY + off.oy;
   
@@ -1100,8 +1104,8 @@ const app = new Vue({
     const startAngle = this.currentAngle;
     const targetAngle = startAngle + angle;
   
-    // pivot is TRACE POINT
-    const off0 = this.offsetXY(startAngle); // robot -> trace
+    // pivot is TRACE point = robot + offset
+    const off0 = this.offsetXY(startAngle);
     const pivotX = this.currentX + off0.ox;
     const pivotY = this.currentY + off0.oy;
   
@@ -1116,24 +1120,14 @@ const app = new Vue({
       const p = self.easeInOut(raw);
       const a = startAngle + (targetAngle - startAngle) * p;
   
-      const off = self.offsetXY(a);     // robot -> trace at angle a
-      const x = pivotX - off.ox;        // robot center = trace - offset
+      const off = self.offsetXY(a);
+      const x = pivotX - off.ox;   // robot = trace - offset
       const y = pivotY - off.oy;
   
       self.robot.setAttribute(
         "transform",
         "translate(" + x.toFixed(2) + ", " + y.toFixed(2) + ") rotate(" + (90 - a) + ")"
       );
-  
-      // Optional: if you want rotation dots too, uncomment this block:
-      // if (self.tracePath) {
-      //   const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      //   dot.setAttribute("cx", pivotX.toFixed(2));
-      //   dot.setAttribute("cy", pivotY.toFixed(2));
-      //   dot.setAttribute("r", 0.8);
-      //   dot.setAttribute("fill", self.traceColor);
-      //   svgRoot.appendChild(dot);
-      // }
   
       if (raw < 1) {
         self._rafId = requestAnimationFrame(animate);
@@ -1150,7 +1144,6 @@ const app = new Vue({
   
     this._rafId = requestAnimationFrame(animate);
   },
-
     /* =========================================================
  *  REPLAY — pre-simulate + slider scrub
  *  No changes to your existing runner functions.
@@ -1466,6 +1459,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
