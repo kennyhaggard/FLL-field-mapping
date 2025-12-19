@@ -954,7 +954,7 @@ const app = new Vue({
     svgRoot.appendChild(path);
   },
 
-  /* =========================================================
+  /* ========================================================
  *  START POSE (rear-left after rotation)
  *  startX/startY are rear-left corner of the robot AFTER startAngle
  *  currentX/currentY represent the robot CENTER
@@ -974,26 +974,25 @@ _computeStartPose(missionInput) {
   const r = (a * Math.PI) / 180;
 
   // Field coords: startX/startY are cm from bottom-left.
-  const rearLeftX = mission.startX * this.scaleX;
-  const rearLeftY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
+  // NEW DEFINITION:
+  //   startX/startY represent the *lower-left of the robot's rotated footprint*
+  //   (i.e., axis-aligned bounding box on the field) AFTER considering startAngle.
+  const anchorX = mission.startX * this.scaleX;
+  const anchorY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
 
-  // Forward unit vector in SVG coords (x right, y down)
-  // Matches your moveForward kinematics: endY = startY - dist*sin(a)
-  const fx = Math.cos(r);
-  const fy = -Math.sin(r);
+  const c = Math.cos(r);
+  const s = Math.sin(r);
 
-  // Left unit vector (perpendicular to forward; left of heading)
-  const lx = -Math.sin(r);
-  const ly = -Math.cos(r);
+  const halfW = (mission.robotWidthCm  * this.scaleX) / 2;
+  const halfL = (mission.robotLengthCm * this.scaleY) / 2;
 
-  const L = mission.robotLengthCm * this.scaleY;
-  const W = mission.robotWidthCm  * this.scaleX;
+  // Half-extents of the rotated rectangle's axis-aligned bounding box
+  const dx = Math.abs(c) * halfW + Math.abs(s) * halfL;
+  const dy = Math.abs(s) * halfW + Math.abs(c) * halfL;
 
-  // Vector from center to rear-left = (-forward)*(L/2) + (left)*(W/2)
-  // => center = rearLeft - vector
-  // => center = rearLeft + forward*(L/2) - left*(W/2)
-  const cx = rearLeftX + fx * (L / 2) - lx * (W / 2);
-  const cy = rearLeftY + fy * (L / 2) - ly * (W / 2);
+  // Center is lower-left + (dx, dy-up)
+  const cx = anchorX + dx;
+  const cy = anchorY - dy;
 
   return { x: cx, y: cy, angle: a, mission };
 },
@@ -1471,6 +1470,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
