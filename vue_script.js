@@ -1228,9 +1228,7 @@ rotateRobotStatic(angle, callback) {
   
     const mission = this.normalizeMission(this.mission);
   
-    // Make sure robot exists visually (we'll re-render anyway)
-    if (!this.robot) this.initializeMission(mission);
-  
+    // Ensure robot pose is computed exactly like live runner
     const pose0 = this._computeStartPose(mission);
     if (!pose0) return;
   
@@ -1240,7 +1238,7 @@ rotateRobotStatic(angle, callback) {
     const frames = [];
     let tMs = 0;
   
-    // current simulated pose
+    // 🔒 Canonical starting pose (CENTER of robot)
     let x = pose0.x;
     let y = pose0.y;
     let a = pose0.angle;
@@ -1473,6 +1471,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
