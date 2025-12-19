@@ -352,7 +352,7 @@
 <div class="field-controls" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 
   <!-- Existing controls -->
-  <button class="start-button" @click="buildReplayFrames; startMission" :disabled="!mission || isRunning">
+  <button class="start-button" @click="buildReplayFrames(); startMission()" :disabled="!mission || isRunning">
     Start Mission
   </button>
 
@@ -422,6 +422,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
