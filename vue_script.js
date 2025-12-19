@@ -998,6 +998,44 @@ const app = new Vue({
   /* =========================
    *  Kinematics
    * ========================= */
+
+  drawRotationArc(pivotX, pivotY, radius, startAngleDeg, endAngleDeg, color) {
+    const svgRoot = document.getElementById("mission-field");
+    if (!svgRoot) return;
+  
+    // Convert "heading degrees" into SVG math angle:
+    // Your kinematics use: x += cos(a), y -= sin(a)
+    // That's equivalent to standard math coords (y up), so we can use angle as-is,
+    // but we must convert to SVG screen coords (y down) when computing points.
+    const toRad = (d) => (d * Math.PI) / 180;
+  
+    const x1 = pivotX + radius * Math.cos(toRad(startAngleDeg));
+    const y1 = pivotY - radius * Math.sin(toRad(startAngleDeg));
+    const x2 = pivotX + radius * Math.cos(toRad(endAngleDeg));
+    const y2 = pivotY - radius * Math.sin(toRad(endAngleDeg));
+  
+    const delta = ((endAngleDeg - startAngleDeg) % 360 + 360) % 360; // 0..359
+    const largeArc = delta > 180 ? 1 : 0;
+  
+    // sweep-flag: 1 means arc goes "positive angle direction" in SVG coordinate system.
+    // Because SVG Y is down, the sign is flipped vs normal math. Easiest:
+    // If endAngle is greater (in your heading system), we want the arc to visually
+    // turn the same way your robot turns. Empirically this flag often needs inversion.
+    const sweep = 0; // try 0 first; if it draws the "other way", flip to 1
+  
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute(
+      "d",
+      `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${radius.toFixed(2)} ${radius.toFixed(2)} 0 ${largeArc} ${sweep} ${x2.toFixed(2)} ${y2.toFixed(2)}`
+    );
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", color || this.traceColor || "#ff00aa");
+    path.setAttribute("stroke-width", "2.5");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("vector-effect", "non-scaling-stroke");
+  
+    svgRoot.appendChild(path);
+  },
   moveForward(distance, callback) {
     const svgRoot = document.getElementById("mission-field");
     if (!svgRoot || !this.robot) return;
@@ -1077,6 +1115,11 @@ const app = new Vue({
       const off = self.offsetXY(a);
       const x = pivotX + off.ox;
       const y = pivotY + off.oy;
+
+      const radius = Math.abs(((this.mission && this.mission.offsetY) || 0) * this.scaleY);
+      if (radius > 0.0001) {
+        this.drawRotationArc(pivotX, pivotY, radius, startAngle, targetAngle, this.traceColor);
+      }
 
       self.robot.setAttribute(
         "transform",
@@ -1412,6 +1455,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
