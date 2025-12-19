@@ -992,7 +992,7 @@ _computeStartPose(missionInput) {
   // Vector from center to rear-left = (-forward)*(L/2) + (left)*(W/2)
   // => center = rearLeft - vector
   // => center = rearLeft + forward*(L/2) - left*(W/2)
-  const cx = rearLeftX - fx * (L / 2) + lx * (W / 2);
+  const cx = rearLeftX + fx * (L) - lx * (W);
   const cy = rearLeftY - fy * (L / 2) + ly * (W / 2);
 
   return { x: cx, y: cy, angle: a, mission };
@@ -1471,6 +1471,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
