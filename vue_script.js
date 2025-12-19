@@ -1369,7 +1369,7 @@ renderReplayTrace(uptoIndex) {
   pl.setAttribute("points", pts.join(" "));
   pl.setAttribute("fill", "none");
   pl.setAttribute("stroke", mission.traceColor || "#008000");
-  pl.setAttribute("stroke-width", "1.5");
+  pl.setAttribute("stroke-width", "3");
   pl.setAttribute("vector-effect", "non-scaling-stroke");
   pl.setAttribute("opacity", "0.9");
 
@@ -1464,6 +1464,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
