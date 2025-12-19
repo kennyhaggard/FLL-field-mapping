@@ -1422,7 +1422,6 @@ resetReplay() {
     this.buildReplayFrames();
   }
 }
-  },
     
 },   
 mounted() {
@@ -1465,6 +1464,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
