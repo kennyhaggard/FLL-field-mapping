@@ -806,84 +806,6 @@ const app = new Vue({
     }
   },
 
-  initializeMission(missionInput) {
-    const mission = this.normalizeMission(missionInput || this.mission);
-  
-    // keep canonical (and builder/json) aligned
-    this.mission = mission;
-    this.builderLoadFromSchema(mission);
-    this.missionJsonText = JSON.stringify(mission, null, 2);
-  
-    this.resetRobot();
-  
-    const svgRoot = document.getElementById("mission-field");
-    if (!svgRoot) return;
-  
-    this.scaleX = svgRoot.viewBox.baseVal.width / 200;
-    this.scaleY = this.scaleX;
-  
-    const thetaDeg = ((mission.startAngle % 360) + 360) % 360;
-    this.currentAngle = thetaDeg;
-    this.traceColor = mission.traceColor;
-  
-    // startX/startY are REAR-LEFT corner in cm (field coords: origin bottom-left)
-    const rearLeftX = mission.startX * this.scaleX;
-    const rearLeftY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
-  
-    // Convert rear-left -> robot center
-    // Forward unit (world): (cos(a), -sin(a))
-    // Right unit (world):   (sin(a),  cos(a))
-    const a = (thetaDeg * Math.PI) / 180;
-    const halfL = (mission.robotLengthCm / 2) * this.scaleY;
-    const halfW = (mission.robotWidthCm / 2) * this.scaleX;
-  
-    this.currentX = rearLeftX + halfL * Math.cos(a) + halfW * Math.sin(a);
-    this.currentY = rearLeftY - halfL * Math.sin(a) + halfW * Math.cos(a);
-  
-    // Optional: draw the very first trace point (trace = robotCenter - off)
-    if (this.tracePath) {
-      const off0 = this.offsetXY(this.currentAngle); // trace -> robot
-      const traceX0 = this.currentX - off0.ox;
-      const traceY0 = this.currentY - off0.oy;
-  
-      const dot0 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      dot0.setAttribute("cx", traceX0.toFixed(2));
-      dot0.setAttribute("cy", traceY0.toFixed(2));
-      dot0.setAttribute("r", 0.8);
-      dot0.setAttribute("fill", this.traceColor);
-      svgRoot.appendChild(dot0);
-    }
-  
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    g.setAttribute("id", "robot-group");
-  
-    const base = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    base.setAttribute("x", -mission.robotWidthCm * this.scaleX / 2);
-    base.setAttribute("y", -mission.robotLengthCm * this.scaleY / 2);
-    base.setAttribute("width",  mission.robotWidthCm * this.scaleX);
-    base.setAttribute("height", mission.robotLengthCm * this.scaleY);
-    base.setAttribute("fill", "blue");
-    base.setAttribute("fill-opacity", "0.6");
-    base.setAttribute("stroke", "red");
-    base.setAttribute("stroke-width", "3");
-    base.setAttribute("vector-effect", "non-scaling-stroke");
-    g.appendChild(base);
-  
-    const atts = Array.isArray(mission.attachments) ? mission.attachments : [];
-    for (let i = 0; i < atts.length; i++) {
-      const rect = this._makeAttachmentRect(atts[i], mission);
-      if (rect) g.appendChild(rect);
-    }
-  
-    g.setAttribute(
-      "transform",
-      "translate(" + this.currentX.toFixed(2) + ", " + this.currentY.toFixed(2) + ") rotate(" + (90 - this.currentAngle) + ")"
-    );
-  
-    svgRoot.appendChild(g);
-    this.robot = g;
-  },
-
   _makeAttachmentRect(att, mission) {
     const w   = Number(att.widthCm) || 0;
     const l   = Number(att.lengthCm) || 0;
@@ -991,20 +913,6 @@ const app = new Vue({
   },
 
   /* =========================
-   *  Offset helper
-   * ========================= */
-// Vector from ROBOT CENTER -> TRACE POINT (in SVG units)
-  offsetXY(angleDeg) {
-    const oCm = (this.mission && this.mission.offsetY) || 0;
-    const oSvg = oCm * this.scaleY;
-    const r = (angleDeg * Math.PI) / 180;
-    return {
-      ox:  oSvg * Math.cos(r),
-      oy: -oSvg * Math.sin(r)
-    };
-  },
-
-  /* =========================
    *  Kinematics
    * ========================= */
 
@@ -1045,109 +953,240 @@ const app = new Vue({
   
     svgRoot.appendChild(path);
   },
-  moveForward(distance, callback) {
-    const svgRoot = document.getElementById("mission-field");
-    if (!svgRoot || !this.robot) return;
-  
-    const distanceSvg = distance * this.scaleY;
-    const startX = this.currentX;
-    const startY = this.currentY;
-    const angleRad = (this.currentAngle * Math.PI) / 180;
-  
-    const endX = startX + distanceSvg * Math.cos(angleRad);
-    const endY = startY - distanceSvg * Math.sin(angleRad);
-  
-    const duration = this.moveDurationMs(distance);
-    const t0 = performance.now();
-    const self = this;
-  
-    function animate(t) {
-      if (self.stopRequested) { self._finishRun(); return; }
-  
-      const raw = Math.min((t - t0) / duration, 1);
-      const p = self.easeInOut(raw);
-  
-      self.currentX = startX + p * (endX - startX);
-      self.currentY = startY + p * (endY - startY);
-  
-      // off is TRACE -> ROBOT, so TRACE = ROBOT - off
-      const off = self.offsetXY(self.currentAngle);
-      const traceX = self.currentX - off.ox;
-      const traceY = self.currentY - off.oy;
-  
-      self.robot.setAttribute(
-        "transform",
-        "translate(" + self.currentX.toFixed(2) + ", " + self.currentY.toFixed(2) + ") rotate(" + (90 - self.currentAngle) + ")"
-      );
-  
-      if (self.tracePath) {
-        const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        dot.setAttribute("cx", traceX.toFixed(2));
-        dot.setAttribute("cy", traceY.toFixed(2));
-        dot.setAttribute("r", 0.8);
-        dot.setAttribute("fill", self.traceColor);
-        svgRoot.appendChild(dot);
-      }
-  
-      if (raw < 1) {
-        self._rafId = requestAnimationFrame(animate);
-      } else {
-        self.currentX = endX;
-        self.currentY = endY;
-        if (!self.stopRequested && typeof callback === "function") callback();
-      }
-    }
-  
-    this._rafId = requestAnimationFrame(animate);
-  },
 
-  rotateRobotStatic(angle, callback) {
-    const svgRoot = document.getElementById("mission-field");
-    if (!svgRoot || !this.robot) return;
-  
-    const startAngle = this.currentAngle;
-    const targetAngle = startAngle + angle;
-  
-    // off is TRACE -> ROBOT, so TRACE (pivot) = ROBOT - off
-    const off0 = this.offsetXY(startAngle);
-    const pivotX = this.currentX - off0.ox;
-    const pivotY = this.currentY - off0.oy;
-  
-    const duration = this.rotateDurationMs(angle);
-    const t0 = performance.now();
-    const self = this;
-  
-    function animate(t) {
-      if (self.stopRequested) { self._finishRun(); return; }
-  
-      const raw = Math.min((t - t0) / duration, 1);
-      const p = self.easeInOut(raw);
-      const a = startAngle + (targetAngle - startAngle) * p;
-  
-      const off = self.offsetXY(a);
-      const x = pivotX + off.ox; // ROBOT = TRACE + off
-      const y = pivotY + off.oy;
-  
-      self.robot.setAttribute(
-        "transform",
-        "translate(" + x.toFixed(2) + ", " + y.toFixed(2) + ") rotate(" + (90 - a) + ")"
-      );
-  
-      if (raw < 1) {
-        self._rafId = requestAnimationFrame(animate);
-      } else {
-        self.currentAngle = targetAngle;
-  
-        const offF = self.offsetXY(self.currentAngle);
-        self.currentX = pivotX + offF.ox;
-        self.currentY = pivotY + offF.oy;
-  
-        if (!self.stopRequested && typeof callback === "function") callback();
-      }
+  /* =========================================================
+ *  START POSE (rear-left after rotation)
+ *  startX/startY are rear-left corner of the robot AFTER startAngle
+ *  currentX/currentY represent the robot CENTER
+ * ========================================================= */
+
+_computeStartPose(missionInput) {
+  const svgRoot = document.getElementById("mission-field");
+  if (!svgRoot) return null;
+
+  const mission = this.normalizeMission(missionInput || this.mission);
+
+  // Ensure scale
+  this.scaleX = svgRoot.viewBox.baseVal.width / 200;
+  this.scaleY = this.scaleX;
+
+  const a = ((mission.startAngle % 360) + 360) % 360;
+  const r = (a * Math.PI) / 180;
+
+  // Field coords: startX/startY are cm from bottom-left.
+  const rearLeftX = mission.startX * this.scaleX;
+  const rearLeftY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
+
+  // Forward unit vector in SVG coords (x right, y down)
+  // Matches your moveForward kinematics: endY = startY - dist*sin(a)
+  const fx = Math.cos(r);
+  const fy = -Math.sin(r);
+
+  // Left unit vector (perpendicular to forward; left of heading)
+  const lx = -Math.sin(r);
+  const ly = -Math.cos(r);
+
+  const L = mission.robotLengthCm * this.scaleY;
+  const W = mission.robotWidthCm  * this.scaleX;
+
+  // Vector from center to rear-left = (-forward)*(L/2) + (left)*(W/2)
+  // => center = rearLeft - vector
+  // => center = rearLeft + forward*(L/2) - left*(W/2)
+  const cx = rearLeftX + fx * (L / 2) - lx * (W / 2);
+  const cy = rearLeftY + fy * (L / 2) - ly * (W / 2);
+
+  return { x: cx, y: cy, angle: a, mission };
+},
+
+initializeMission(missionInput) {
+  const svgRoot = document.getElementById("mission-field");
+  if (!svgRoot) return;
+
+  const pose0 = this._computeStartPose(missionInput || this.mission);
+  if (!pose0) return;
+
+  const mission = pose0.mission;
+
+  // keep canonical (and builder/json) aligned
+  this.mission = mission;
+  this.builderLoadFromSchema(mission);
+  this.missionJsonText = JSON.stringify(mission, null, 2);
+
+  this.resetRobot();
+
+  this.currentX     = pose0.x;
+  this.currentY     = pose0.y;
+  this.currentAngle = pose0.angle;
+  this.traceColor   = mission.traceColor;
+
+  // Draw initial trace point (the point you trace during moves)
+  if (this.tracePath) {
+    const off0 = this.offsetXY(this.currentAngle); // vector trace -> center
+    const traceX0 = this.currentX - off0.ox;
+    const traceY0 = this.currentY - off0.oy;
+
+    const dot0 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot0.setAttribute("cx", traceX0.toFixed(2));
+    dot0.setAttribute("cy", traceY0.toFixed(2));
+    dot0.setAttribute("r", 0.8);
+    dot0.setAttribute("fill", this.traceColor);
+    svgRoot.appendChild(dot0);
+  }
+
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.setAttribute("id", "robot-group");
+
+  const base = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  base.setAttribute("x", -mission.robotWidthCm * this.scaleX / 2);
+  base.setAttribute("y", -mission.robotLengthCm * this.scaleY / 2);
+  base.setAttribute("width",  mission.robotWidthCm * this.scaleX);
+  base.setAttribute("height", mission.robotLengthCm * this.scaleY);
+  base.setAttribute("fill", "blue");
+  base.setAttribute("fill-opacity", "0.6");
+  base.setAttribute("stroke", "red");
+  base.setAttribute("stroke-width", "3");
+  base.setAttribute("vector-effect", "non-scaling-stroke");
+  g.appendChild(base);
+
+  const atts = Array.isArray(mission.attachments) ? mission.attachments : [];
+  for (let i = 0; i < atts.length; i++) {
+    const rect = this._makeAttachmentRect(atts[i], mission);
+    if (rect) g.appendChild(rect);
+  }
+
+  g.setAttribute(
+    "transform",
+    "translate(" + this.currentX.toFixed(2) + ", " + this.currentY.toFixed(2) + ") rotate(" + (90 - this.currentAngle) + ")"
+  );
+
+  svgRoot.appendChild(g);
+  this.robot = g;
+},
+
+/* =========================
+ *  Offset helper (unchanged)
+ *  Returns vector from TRACE POINT -> ROBOT CENTER
+ * ========================= */
+offsetXY(angleDeg) {
+  const oCm = (this.mission && this.mission.offsetY) || 0;
+  const oSvg = oCm * this.scaleY;
+  const r = (angleDeg * Math.PI) / 180;
+  return {
+    ox:  oSvg * Math.cos(r),
+    oy: -oSvg * Math.sin(r)
+  };
+},
+
+/* =========================
+ *  Kinematics (trace is correct as long as currentX/Y are CENTER)
+ * ========================= */
+moveForward(distance, callback) {
+  const svgRoot = document.getElementById("mission-field");
+  if (!svgRoot || !this.robot) return;
+
+  const distanceSvg = distance * this.scaleY;
+
+  const startX = this.currentX;
+  const startY = this.currentY;
+
+  const angleRad = (this.currentAngle * Math.PI) / 180;
+  const endX = startX + distanceSvg * Math.cos(angleRad);
+  const endY = startY - distanceSvg * Math.sin(angleRad);
+
+  const duration = this.moveDurationMs(distance);
+  const t0 = performance.now();
+  const self = this;
+
+  function animate(t) {
+    if (self.stopRequested) { self._finishRun(); return; }
+
+    const raw = Math.min((t - t0) / duration, 1);
+    const p = self.easeInOut(raw);
+
+    self.currentX = startX + p * (endX - startX);
+    self.currentY = startY + p * (endY - startY);
+
+    const off = self.offsetXY(self.currentAngle); // trace -> center
+    const traceX = self.currentX - off.ox;
+    const traceY = self.currentY - off.oy;
+
+    self.robot.setAttribute(
+      "transform",
+      "translate(" + self.currentX.toFixed(2) + ", " + self.currentY.toFixed(2) + ") rotate(" + (90 - self.currentAngle) + ")"
+    );
+
+    if (self.tracePath) {
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", traceX.toFixed(2));
+      dot.setAttribute("cy", traceY.toFixed(2));
+      dot.setAttribute("r", 0.8);
+      dot.setAttribute("fill", self.traceColor);
+      svgRoot.appendChild(dot);
     }
-  
-    this._rafId = requestAnimationFrame(animate);
-  },
+
+    if (raw < 1) {
+      self._rafId = requestAnimationFrame(animate);
+    } else {
+      self.currentX = endX;
+      self.currentY = endY;
+      if (!self.stopRequested && typeof callback === "function") callback();
+    }
+  }
+
+  this._rafId = requestAnimationFrame(animate);
+},
+
+/* =========================
+ *  Rotation (pivot is TRACE POINT)
+ *  Note: tracing during rotation would not draw an arc because pivot stays fixed.
+ * ========================= */
+rotateRobotStatic(angle, callback) {
+  const svgRoot = document.getElementById("mission-field");
+  if (!svgRoot || !this.robot) return;
+
+  const startAngle = this.currentAngle;
+  const targetAngle = startAngle + angle;
+
+  // pivot = trace point (fixed)
+  const off0 = this.offsetXY(startAngle); // trace -> center
+  const pivotX = this.currentX - off0.ox;
+  const pivotY = this.currentY - off0.oy;
+
+  const duration = this.rotateDurationMs(angle);
+  const t0 = performance.now();
+  const self = this;
+
+  function animate(t) {
+    if (self.stopRequested) { self._finishRun(); return; }
+
+    const raw = Math.min((t - t0) / duration, 1);
+    const p = self.easeInOut(raw);
+    const a = startAngle + (targetAngle - startAngle) * p;
+
+    const off = self.offsetXY(a); // trace -> center (for new angle)
+    const x = pivotX + off.ox;
+    const y = pivotY + off.oy;
+
+    self.robot.setAttribute(
+      "transform",
+      "translate(" + x.toFixed(2) + ", " + y.toFixed(2) + ") rotate(" + (90 - a) + ")"
+    );
+
+    if (raw < 1) {
+      self._rafId = requestAnimationFrame(animate);
+    } else {
+      self.currentAngle = targetAngle;
+
+      const offF = self.offsetXY(self.currentAngle);
+      self.currentX = pivotX + offF.ox;
+      self.currentY = pivotY + offF.oy;
+
+      if (!self.stopRequested && typeof callback === "function") callback();
+    }
+  }
+
+  this._rafId = requestAnimationFrame(animate);
+}
     /* =========================================================
  *  REPLAY — pre-simulate + slider scrub
  *  No changes to your existing runner functions.
@@ -1176,35 +1215,6 @@ const app = new Vue({
     return svgRoot;
   },
   
-  // Computes your robot "center" start pose (same math as initializeMission)
-  _computeStartPose(mission) {
-    const svgRoot = document.getElementById("mission-field");
-    if (!svgRoot) return null;
-  
-    const thetaDeg = ((mission.startAngle % 360) + 360) % 360;
-    const c = Math.cos(thetaDeg * Math.PI / 180);
-    const s = Math.sin(thetaDeg * Math.PI / 180);
-  
-    const halfLx = (mission.robotLengthCm * this.scaleX) / 2;
-    const halfLy = (mission.robotLengthCm * this.scaleY) / 2;
-    const halfWx = (mission.robotWidthCm  * this.scaleX) / 2;
-    const halfWy = (mission.robotWidthCm  * this.scaleY) / 2;
-    const dx = Math.abs(c) * halfLx + Math.abs(s) * halfWx;
-    const dy = Math.abs(s) * halfLy + Math.abs(c) * halfWy;
-  
-    const x = mission.startX * this.scaleX + dx;
-    const y = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY) - dy;
-  
-    return { x, y, angle: thetaDeg };
-  },
-  
-  // Offset helper but for a provided mission + scale (no reliance on "current" state)
-  _offsetXYFor(mission, angleDeg) {
-    const oCm = Number(mission.offsetY) || 0;
-    const oSvg = oCm * this.scaleY;
-    const r = (angleDeg * Math.PI) / 180;
-    return { ox: oSvg * Math.cos(r), oy: -oSvg * Math.sin(r) };
-  },
   
   // Pre-simulate into frames in SVG coordinate space (x/y are robot center coords)
   buildReplayFrames() {
@@ -1463,6 +1473,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
