@@ -1372,6 +1372,8 @@ renderReplayTrace(uptoIndex) {
   pl.setAttribute("stroke-width", "3");
   pl.setAttribute("vector-effect", "non-scaling-stroke");
   pl.setAttribute("opacity", "0.9");
+  pl.setAttribute("stroke-linecap", "round");
+  pl.setAttribute("stroke-linejoin", "round");
 
   svgRoot.appendChild(pl);
   this.replayTracePolyline = pl;
@@ -1464,6 +1466,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
