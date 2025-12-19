@@ -826,22 +826,25 @@ const app = new Vue({
     this.currentAngle = thetaDeg;
     this.traceColor = mission.traceColor;
   
-    // --- startX/startY are REAR CENTER in cm (field coords: origin bottom-left)
-    const rearX = mission.startX * this.scaleX;
-    const rearY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
+    // startX/startY are REAR-LEFT corner in cm (field coords: origin bottom-left)
+    const rearLeftX = mission.startX * this.scaleX;
+    const rearLeftY = svgRoot.viewBox.baseVal.height - (mission.startY * this.scaleY);
   
-    // --- convert rear center -> robot center by moving forward half robot length
+    // Convert rear-left -> robot center
+    // Forward unit (world): (cos(a), -sin(a))
+    // Right unit (world):   (sin(a),  cos(a))
+    const a = (thetaDeg * Math.PI) / 180;
     const halfL = (mission.robotLengthCm / 2) * this.scaleY;
-    const r = (thetaDeg * Math.PI) / 180;
+    const halfW = (mission.robotWidthCm / 2) * this.scaleX;
   
-    this.currentX = rearX + halfL * Math.cos(r);
-    this.currentY = rearY - halfL * Math.sin(r);
+    this.currentX = rearLeftX + halfL * Math.cos(a) + halfW * Math.sin(a);
+    this.currentY = rearLeftY - halfL * Math.sin(a) + halfW * Math.cos(a);
   
-    // Optional: draw initial trace point (trace = robot center + offset)
+    // Optional: draw the very first trace point (trace = robotCenter - off)
     if (this.tracePath) {
-      const off0 = this.offsetXY(this.currentAngle); // robot -> trace
-      const traceX0 = this.currentX + off0.ox;
-      const traceY0 = this.currentY + off0.oy;
+      const off0 = this.offsetXY(this.currentAngle); // trace -> robot
+      const traceX0 = this.currentX - off0.ox;
+      const traceY0 = this.currentY - off0.oy;
   
       const dot0 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       dot0.setAttribute("cx", traceX0.toFixed(2));
@@ -1049,8 +1052,8 @@ const app = new Vue({
     const distanceSvg = distance * this.scaleY;
     const startX = this.currentX;
     const startY = this.currentY;
-  
     const angleRad = (this.currentAngle * Math.PI) / 180;
+  
     const endX = startX + distanceSvg * Math.cos(angleRad);
     const endY = startY - distanceSvg * Math.sin(angleRad);
   
@@ -1067,9 +1070,10 @@ const app = new Vue({
       self.currentX = startX + p * (endX - startX);
       self.currentY = startY + p * (endY - startY);
   
-      const off = self.offsetXY(self.currentAngle); // robot -> trace
-      const traceX = self.currentX + off.ox;
-      const traceY = self.currentY + off.oy;
+      // off is TRACE -> ROBOT, so TRACE = ROBOT - off
+      const off = self.offsetXY(self.currentAngle);
+      const traceX = self.currentX - off.ox;
+      const traceY = self.currentY - off.oy;
   
       self.robot.setAttribute(
         "transform",
@@ -1104,10 +1108,10 @@ const app = new Vue({
     const startAngle = this.currentAngle;
     const targetAngle = startAngle + angle;
   
-    // pivot is TRACE point = robot + offset
+    // off is TRACE -> ROBOT, so TRACE (pivot) = ROBOT - off
     const off0 = this.offsetXY(startAngle);
-    const pivotX = this.currentX + off0.ox;
-    const pivotY = this.currentY + off0.oy;
+    const pivotX = this.currentX - off0.ox;
+    const pivotY = this.currentY - off0.oy;
   
     const duration = this.rotateDurationMs(angle);
     const t0 = performance.now();
@@ -1121,8 +1125,8 @@ const app = new Vue({
       const a = startAngle + (targetAngle - startAngle) * p;
   
       const off = self.offsetXY(a);
-      const x = pivotX - off.ox;   // robot = trace - offset
-      const y = pivotY - off.oy;
+      const x = pivotX + off.ox; // ROBOT = TRACE + off
+      const y = pivotY + off.oy;
   
       self.robot.setAttribute(
         "transform",
@@ -1135,8 +1139,8 @@ const app = new Vue({
         self.currentAngle = targetAngle;
   
         const offF = self.offsetXY(self.currentAngle);
-        self.currentX = pivotX - offF.ox;
-        self.currentY = pivotY - offF.oy;
+        self.currentX = pivotX + offF.ox;
+        self.currentY = pivotY + offF.oy;
   
         if (!self.stopRequested && typeof callback === "function") callback();
       }
@@ -1459,6 +1463,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
