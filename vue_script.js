@@ -1186,7 +1186,7 @@ rotateRobotStatic(angle, callback) {
   }
 
   this._rafId = requestAnimationFrame(animate);
-}
+  },
     /* =========================================================
  *  REPLAY — pre-simulate + slider scrub
  *  No changes to your existing runner functions.
@@ -1471,6 +1471,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
