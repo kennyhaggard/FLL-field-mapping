@@ -1276,7 +1276,7 @@ rotateRobotStatic(angle, callback) {
         const delta = Number(act.value) || 0;
   
         // rotation in your current runner pivots around "trace point" (offsetY pivot)
-        const off0 = this._offsetXYFor(mission, a);
+        const off0 = this._offsetXY(mission, a);
         const pivotX = x - off0.ox;
         const pivotY = y - off0.oy;
   
@@ -1294,7 +1294,7 @@ rotateRobotStatic(angle, callback) {
           tMs += dtMs;
   
           // keep the pivot fixed while changing offset
-          const off = this._offsetXYFor(mission, aa);
+          const off = this._offsetXY(mission, aa);
           x = pivotX + off.ox;
           y = pivotY + off.oy;
   
@@ -1304,7 +1304,7 @@ rotateRobotStatic(angle, callback) {
         a = target;
   
         // final snap
-        const offF = this._offsetXYFor(mission, a);
+        const offF = this._offsetXY(mission, a);
         x = pivotX + offF.ox;
         y = pivotY + offF.oy;
   
@@ -1362,7 +1362,7 @@ rotateRobotStatic(angle, callback) {
     const pts = [];
     for (let i = 0; i <= end; i++) {
       const f = this.replayFrames[i];
-      const off = this._offsetXYFor(mission, f.angle);
+      const off = this._offsetXY(mission, f.angle);
       const tx = f.x - off.ox;
       const ty = f.y - off.oy;
       pts.push(tx.toFixed(2) + "," + ty.toFixed(2));
@@ -1466,6 +1466,7 @@ mounted() {
 
 // Make Vue accessible to Turnstile callbacks
 window.app = app;
+
 
 
 
