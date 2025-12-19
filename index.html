@@ -349,11 +349,70 @@
   </g>
 </svg>
 
-        <div class="field-controls">
-          <button class="start-button" @click="startMission" :disabled="!mission || isRunning">Start Mission</button>
-          <button class="clear-button" @click="clearField">Clear Field</button>
-          <button class="mission-button" @click="stopMission" :disabled="!isRunning">Stop Mission</button>
-        </div>
+<div class="field-controls" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+
+  <!-- Existing controls -->
+  <button class="start-button" @click="startMission" :disabled="!mission || isRunning">
+    Start Mission
+  </button>
+
+  <button class="clear-button" @click="clearField">
+    Clear Field
+  </button>
+
+  <button class="mission-button" @click="stopMission" :disabled="!isRunning">
+    Stop Mission
+  </button>
+
+  <!-- Optional divider -->
+  <span style="width:1px; height:28px; background:#e5e7eb; margin:0 6px;"></span>
+
+  <!-- Replay controls -->
+  <button class="demo-button"
+          type="button"
+          @click="buildReplayFrames"
+          :disabled="!mission">
+    Replay
+  </button>
+
+  <button class="start-button"
+          type="button"
+          @click="playReplay"
+          :disabled="!replayFrames.length || isReplaying">
+    ▶
+  </button>
+
+  <button class="mission-button"
+          type="button"
+          @click="stopReplay"
+          :disabled="!isReplaying">
+    ❚❚
+  </button>
+
+  <button class="neutral-button"
+          type="button"
+          @click="resetReplay"
+          :disabled="!replayFrames.length">
+    ⟲
+  </button>
+
+  <!-- Scrub slider -->
+  <div style="display:flex; align-items:center; gap:8px; min-width:240px;">
+    <input type="range"
+           min="0"
+           :max="Math.max(0, replayFrames.length - 1)"
+           step="1"
+           v-model.number="replayIndex"
+           @input="onReplaySliderInput"
+           :disabled="!replayFrames.length"
+           style="width:180px;" />
+
+    <span style="font-size:12px; color:#6b7280; min-width:60px; text-align:right;">
+      {{ replayIndex }} / {{ Math.max(0, replayFrames.length - 1) }}
+    </span>
+  </div>
+
+</div>
       </div>
     </div>
 
@@ -363,6 +422,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
