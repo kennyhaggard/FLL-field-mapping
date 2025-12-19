@@ -51,8 +51,15 @@
                    style="padding:4px 8px; border-radius:6px; border:1px solid #d1d5db; width:90px;">
           </label>
 
-          <button class="start-button" type="button" @click="connectTeam">
-            {{ isTeamAuthed ? 'Connected' : 'Connect' }}
+          <button class="start-button"
+                  type="button"
+                  @click="connectTeam"
+                  :disabled="isCloudBusy || isTeamAuthed">
+            {{
+              isTeamAuthed
+                ? 'Connected'
+                : (isCloudBusy ? 'Connecting…' : 'Connect')
+            }}
           </button>
 
           <button class="demo-button" type="button"
@@ -356,6 +363,7 @@
   <script src="vue_script.js"></script>
 </body>
 </html>
+
 
 
 
