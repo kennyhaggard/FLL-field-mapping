@@ -5,116 +5,51 @@
   <title>Team Signup</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="styles.css">
-
-  <!-- Identify page for shared Vue script -->
-  <script>
-    window.PAGE = "signup";
-    document.documentElement.classList.add("page-signup");
-  </script>
-
-  <!-- Cloudflare Turnstile -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
-
 <body>
-  <div id="app" class="page">
+  <div class="signup-wrapper">
+    <div class="panel signup-card">
+      <h1 style="margin-top:0;">Register a Team</h1>
+      <p>Create a team so missions and robots can be saved securely.</p>
+      <p><a href="index.html">Back to Mission Tool</a></p>
 
-    <!-- Centering wrapper -->
-    <div class="signup-wrapper">
-      <div class="editor-container signup-card">
-
-        <h1 style="margin-top:0;">Register a Team</h1>
-
-        <p style="margin-top:4px;">
-          Create a team so missions can be saved and shared securely.
-        </p>
-
-        <p style="margin-bottom:16px;">
-          <a href="./index.html">← Back to Mission Tool</a>
-        </p>
-
-        <h2>Team Info</h2>
-
-        <div class="builder-grid">
-          <label>
-            Team name
-            <input
-              type="text"
-              v-model.trim="teamName"
-              placeholder="e.g., Spring"
-            />
-          </label>
-
-          <label>
-            4-digit PIN
-            <input
-              type="text"
-              v-model.trim="teamPin"
-              inputmode="numeric"
-              maxlength="4"
-              placeholder="e.g., 1111"
-            />
-          </label>
-
-          <label>
-            Coach email
-            <input
-              type="email"
-              v-model.trim="coachEmail"
-              placeholder="coach@example.com"
-            />
-          </label>
-        </div>
-
-        <!-- Turnstile -->
-        <div style="margin-top:16px;">
-          <div
-            class="cf-turnstile"
-            data-sitekey="0x4AAAAAACGqPr5-hS0AsMjv"
-            data-callback="onTurnstileSuccess"
-            data-expired-callback="onTurnstileExpired"
-            data-error-callback="onTurnstileError">
-          </div>
-
-          <p style="margin:6px 0 0; font-size:12px; color:#6b7280;">
-            If the captcha doesn’t load, disable aggressive blockers and refresh.
-          </p>
-        </div>
-
-        <!-- Actions -->
-        <div style="margin-top:16px; display:flex; gap:10px; align-items:center;">
-          <button
-            class="start-button"
-            type="button"
-            @click="registerTeam"
-            :disabled="isCloudBusy">
-            {{ isCloudBusy ? "Registering..." : "Register Team" }}
-          </button>
-
-          <button
-            class="neutral-button"
-            type="button"
-            @click="resetSignupForm"
-            :disabled="isCloudBusy">
-            Reset
-          </button>
-        </div>
-
-        <!-- Feedback -->
-        <p v-if="cloudError" style="margin-top:12px; color:#991b1b;">
-          {{ cloudError }}
-        </p>
-
-        <p v-if="cloudSuccess" style="margin-top:12px; color:#065f46;">
-          {{ cloudSuccess }}
-        </p>
-
+      <div class="grid-2" style="margin-top:12px;">
+        <label>
+          Team name
+          <input id="team-name" type="text" placeholder="e.g., Spring" />
+        </label>
+        <label>
+          4-digit PIN
+          <input id="team-pin" type="text" inputmode="numeric" maxlength="4" placeholder="1111" />
+        </label>
+        <label style="grid-column: span 2;">
+          Coach email
+          <input id="coach-email" type="email" placeholder="coach@example.com" />
+        </label>
       </div>
+
+      <div style="margin-top:16px;">
+        <div
+          class="cf-turnstile"
+          data-sitekey="0x4AAAAAACGqPr5-hS0AsMjv"
+          data-callback="onTurnstileSuccess"
+          data-expired-callback="onTurnstileExpired"
+          data-error-callback="onTurnstileError">
+        </div>
+        <p class="notice">If the captcha does not load, disable blockers and refresh.</p>
+      </div>
+
+      <div class="button-row" style="margin-top:16px;">
+        <button class="btn-primary" id="register-team">Register Team</button>
+        <button class="btn-ghost" id="reset-form">Reset</button>
+      </div>
+
+      <p class="notice notice-error" id="signup-error" style="display:none;"></p>
+      <p class="notice notice-success" id="signup-success" style="display:none;"></p>
     </div>
   </div>
 
-  <!-- Vue + shared app script -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-  <script src="vue_script.js"></script>
+  <script type="module" src="js/signup.js"></script>
 </body>
 </html>

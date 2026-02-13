@@ -2,272 +2,167 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Mission Field + Builder</title>
+  <title>FLL Field Mapping</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-  <div id="app" class="page">
+  <header class="header">
+    <h1>FLL Field Mapping Studio</h1>
+    <p>Plan routes, simulate moves, and keep robot profiles ready for team practice.</p>
+    <nav class="nav">
+      <a href="introduction.html">How It Works</a>
+      <a href="robot_builder.html">Robot Builder</a>
+      <a href="team_signup.html">Team Signup</a>
+      <a href="https://kennyhaggard.github.io/FLL-field-mapping/" target="_blank" rel="noreferrer">Live Site</a>
+    </nav>
+  </header>
 
-    <!-- LEFT PANE -->
-    <div id="control-container">
-      <h1>First Lego League Field Mapping Tool</h1>
-      <p>
-        Check the
-        <a href="https://kennyhaggard.github.io/FLL-field-mapping/introduction.html">README file</a>
-        for instructions.
-      </p>
-
-      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-        <button class="demo-button" type="button" @click="loadDemoMission">
-          Load Demo Mission
-        </button>
-      <a href="./team_signup.html" class="demo-button secondary">
-        Register Team
-      </a>
-        
-      </div>
-
-      <!-- TEAM / CLOUD -->
-      <div style="margin-top:16px; padding-top:10px; border-top:1px solid #e5e7eb;">
-        <h3 style="margin:0 0 10px; font-size:14px;">Team Cloud</h3>
-
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-          <label style="display:flex; align-items:center; gap:6px;">
-            <span>Team</span>
-            <input type="text"
-                   v-model.trim="teamName"
-                   placeholder="public"
-                   style="padding:4px 8px; border-radius:6px; border:1px solid #d1d5db; min-width:140px;">
+  <main class="app-layout">
+    <section>
+      <div class="panel">
+        <div class="section-title">Mission Builder</div>
+        <div class="grid-2">
+          <label>
+            Mission name
+            <input id="mission-name" type="text" />
           </label>
-
-          <label style="display:flex; align-items:center; gap:6px;">
-            <span>PIN</span>
-            <input type="password"
-                   v-model.trim="teamPin"
-                   placeholder="1234"
-                   inputmode="numeric"
-                   style="padding:4px 8px; border-radius:6px; border:1px solid #d1d5db; width:90px;">
+          <label>
+            Trace color
+            <input id="trace-color" type="color" />
           </label>
-
-          <button class="start-button"
-                  type="button"
-                  @click="connectTeam"
-                  :disabled="isCloudBusy || isTeamAuthed">
-            {{
-              isTeamAuthed
-                ? 'Connected'
-                : (isCloudBusy ? 'Connecting…' : 'Connect')
-            }}
-          </button>
-
-          <button class="demo-button" type="button"
-                  @click="refreshTeamMissions"
-                  :disabled="!isTeamAuthed">
-            Refresh List
-          </button>
-        </div>
-
-        <!-- Cloud picker -->
-        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-          <label style="display:flex; align-items:center; gap:6px;">
-            <span>Saved</span>
-            <select v-model="selectedCloudMission"
-                    :disabled="!isTeamAuthed"
-                    style="padding:4px 8px; border-radius:6px; border:1px solid #d1d5db; min-width:220px;">
-              <option value="">-- select --</option>
-              <option v-for="m in cloudMissions" :key="m.name" :value="m.name">
-                {{ m.name }}
-              </option>
-            </select>
+          <label>
+            Start X (cm)
+            <input id="start-x" type="number" step="0.1" />
           </label>
-
-          <button class="demo-button" type="button"
-                  @click="loadMissionFromTeamCloud(selectedCloudMission)"
-                  :disabled="!isTeamAuthed || !selectedCloudMission">
-            Load Selected
-          </button>
-
-          <button class="start-button" type="button"
-                  @click="builderUseInTool; syncFromBuilder(); saveMissionToTeamCloud(builder.name)"
-                  :disabled="!isTeamAuthed || !builder.name">
-            Save Current
-          </button>
-          <button class="clear-button"
-            type="button"
-            @click="deleteSelectedMissionFromTeamCloud"
-            :disabled="!isTeamAuthed || !selectedCloudMission">
-            Delete Mission
-          </button>
-        </div>
-
-        <p style="margin:6px 0 0; font-size:12px; color:#6b7280;">
-          “Save Current” uses the Builder name as the mission name.
-        </p>
-      </div>
-
-      <!-- BUILDER -->
-      <div class="editor-container" style="margin-top:16px;">
-        <h2>Builder</h2>
-
-        <div class="builder-grid">
-          <label>Name
-            <input type="text" v-model="builder.name">
+          <label>
+            Start Y (cm)
+            <input id="start-y" type="number" step="0.1" />
           </label>
-
-          <label>traceColor
-            <span style="display:flex; align-items:center; gap:8px;">
-              <input type="color" v-model="builder.traceColor" />
-              <span :style="{width:'20px',height:'20px',border:'1px solid #ccc',borderRadius:'4px',background:builder.traceColor}"></span>
-            </span>
-          </label>
-
-          <label>startX (cm)
-            <input type="number" step="0.1" v-model.number="builder.startX">
-          </label>
-
-          <label>startY (cm)
-            <input type="number" step="0.1" v-model.number="builder.startY">
-          </label>
-
-          <label>startAngle (deg)
-            <input type="number" step="1" v-model.number="builder.startAngle">
-          </label>
-
-          <label>offsetY (cm)
-            <input type="number" step="0.1" v-model.number="builder.offsetY">
-          </label>
-
-          <label>robotWidthCm (cm)
-            <input type="number" step="0.1" v-model.number="builder.robotWidthCm">
-          </label>
-
-          <label>robotLengthCm (cm)
-            <input type="number" step="0.1" v-model.number="builder.robotLengthCm">
+          <label>
+            Start angle (deg)
+            <input id="start-angle" type="number" step="1" />
           </label>
         </div>
-
-        <!-- ATTACHMENTS -->
-        <div style="margin-top:12px; margin-bottom:12px">
-          <h2 style="margin-top:0;">Attachments</h2>
-
-          <div class="builder-actions" style="margin-top:6px;">
-            <button class="demo-button"
-                    @click="(builder.attachments = builder.attachments || []).push({ side:'front', widthCm:4, lengthCm:4, positionCm:0 })">
-              + Attachment
-            </button>
-          </div>
-
-          <div class="builder-list" v-if="builder.attachments && builder.attachments.length">
-            <div class="builder-item" v-for="(att, i) in builder.attachments" :key="'att-'+i">
-              <table class="attach-table">
-                <tbody>
-                  <tr>
-                    <td class="cell-tag"><span class="builder-tag">ATTACH</span></td>
-                    <td>
-                      <label>
-                        <span>Side</span>
-                        <select v-model="att.side">
-                          <option value="front">front</option>
-                          <option value="rear">rear</option>
-                          <option value="left">left</option>
-                          <option value="right">right</option>
-                        </select>
-                      </label>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>
-                      <label>
-                        <span>Width</span>
-                        <input class="narrow" type="number" step="0.1" v-model.number="att.widthCm">
-                      </label>
-                    </td>
-                    <td>
-                      <label>
-                        <span>Length</span>
-                        <input class="narrow" type="number" step="0.1" v-model.number="att.lengthCm">
-                      </label>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>
-                      <label>
-                        <span>Position</span>
-                        <input class="narrow" type="number" step="0.1" v-model.number="att.positionCm">
-                      </label>
-                    </td>
-                    <td>
-                      <button class="delete-btn" @click="builder.attachments.splice(i,1)">Delete</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <p v-else style="color:#6b7280; font-size:12px; margin:6px 0 0;">
-            No attachments yet. Click “+ Attachment” to add one.
-          </p>
-        </div>
-
-        <!-- ACTIONS -->
-        <div class="builder-list">
-          <div class="builder-item" v-for="(a,i) in builder.actions" :key="i">
-            <span class="builder-tag">{{ a.type }}</span>
-
-            <label style="display:flex; align-items:center; gap:6px;">
-              <span>value</span>
-              <input type="number" step="1" v-model.number="a.value">
-            </label>
-
-            <span style="flex:1"></span>
-
-            <button class="clear-button"
-                    @click="builderDelete(i)"
-                    style="background:#fff0f0;color:#b55050;border:1px solid #ffd6d6;">
-              Delete
-            </button>
-          </div>
-        </div>
-
-        <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
-          <button class="demo-button" @click="builderAdd('move')">+ Move</button>
-          <button class="demo-button" @click="builderAdd('rotate')">+ Rotate</button>
-          <button class="start-button" @click="builderUseInTool">Save Changes</button>
+        <div class="button-row" style="margin-top:12px;">
+          <button class="btn-secondary" id="load-demo">Load Demo Mission</button>
+          <button class="btn-ghost" id="reset-mission">Reset Mission</button>
         </div>
       </div>
 
-      <!-- JSON EDITOR -->
-      <div class="editor-container" style="margin-top:16px;">
-        <h2>Edit Mission JSON</h2>
+      <div class="panel">
+        <div class="section-title">Robot Profile</div>
+        <div class="grid-2">
+          <label>
+            Robot width (cm)
+            <input id="robot-width" type="number" step="0.1" />
+          </label>
+          <label>
+            Robot length (cm)
+            <input id="robot-length" type="number" step="0.1" />
+          </label>
+          <label>
+            Offset Y (cm)
+            <input id="robot-offset" type="number" step="0.1" />
+          </label>
+          <label>
+            Active robot
+            <input id="robot-name" type="text" placeholder="Default Robot" />
+          </label>
+        </div>
 
-        <textarea id="mission-json"
-                  v-model="missionJsonText"
-                  placeholder='Paste or edit your mission JSON here'></textarea>
+        <div class="divider"></div>
 
-        <p v-if="editorError" style="color:#b91c1c; margin:6px 0 0;">{{ editorError }}</p>
+        <div class="button-row">
+          <button class="btn-primary" id="save-robot-local">Save Robot (Local)</button>
+          <button class="btn-ghost" id="apply-local-robot">Apply Selected Robot</button>
+          <a class="btn-pill btn-ghost" href="robot_builder.html">Open Robot Builder</a>
+        </div>
 
-        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="start-button" @click="saveMissionAndInitialize">Apply JSON</button>
-          <button class="demo-button" @click="copyShareLink">Copy Link</button>
-          <button type="button" class="neutral-button" @click="emailShareLink">Email Mission Link</button>
+        <label style="margin-top:10px;">
+          Local robots
+          <select id="local-robot-select"></select>
+        </label>
+
+        <div class="divider"></div>
+
+        <div class="section-title">Attachments</div>
+        <div class="button-row">
+          <button class="btn-secondary" id="add-attachment">Add Attachment</button>
+          <span class="badge" id="attachment-count">0 attachments</span>
+        </div>
+        <div class="action-list" id="attachment-list" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">Mission Actions</div>
+        <div class="button-row">
+          <button class="btn-secondary" id="add-move">+ Move</button>
+          <button class="btn-secondary" id="add-rotate">+ Rotate</button>
+        </div>
+        <div class="action-list" id="action-list" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">Mission JSON</div>
+        <textarea id="mission-json"></textarea>
+        <p class="notice notice-error" id="json-error" style="display:none;"></p>
+        <div class="button-row">
+          <button class="btn-primary" id="apply-json">Apply JSON</button>
+          <button class="btn-ghost" id="copy-link">Copy Share Link</button>
+          <button class="btn-ghost" id="email-link">Email Link</button>
         </div>
       </div>
-    </div>
 
-    <!-- RIGHT PANE -->
-    <div id="field-view">
-      <div class="field-panel">
-        
-        <!-- SVG FIELD -->
-        <!-- Paste your real SVG content inside this <svg> -->
-        
-        <!-- SVG FIELD -->
-            <svg id="mission-field" viewBox="0 0 226.281 128.981" preserveAspectRatio="xMidYMid meet">
+      <div class="panel">
+        <div class="section-title">Team Cloud</div>
+        <div class="grid-2">
+          <label>
+            Team name
+            <input id="team-name" type="text" placeholder="public" />
+          </label>
+          <label>
+            PIN
+            <input id="team-pin" type="password" inputmode="numeric" placeholder="1234" />
+          </label>
+        </div>
+        <div class="button-row" style="margin-top:10px;">
+          <button class="btn-primary" id="connect-team">Connect Team</button>
+          <button class="btn-ghost" id="refresh-team" disabled>Refresh</button>
+        </div>
+        <p class="notice" id="team-status">Connect to save or load missions and robots.</p>
+
+        <div class="divider"></div>
+
+        <div class="section-title">Team Missions</div>
+        <label>
+          Saved missions
+          <select id="team-mission-select" disabled></select>
+        </label>
+        <div class="button-row" style="margin-top:10px;">
+          <button class="btn-secondary" id="load-team-mission" disabled>Load Mission</button>
+          <button class="btn-primary" id="save-team-mission" disabled>Save Mission</button>
+          <button class="btn-danger" id="delete-team-mission" disabled>Delete Mission</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title">Team Robots</div>
+        <label>
+          Saved robots
+          <select id="team-robot-select" disabled></select>
+        </label>
+        <div class="button-row" style="margin-top:10px;">
+          <button class="btn-secondary" id="load-team-robot" disabled>Load Robot</button>
+          <button class="btn-primary" id="save-team-robot" disabled>Save Robot</button>
+          <button class="btn-danger" id="delete-team-robot" disabled>Delete Robot</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="field-panel">
+      <div class="panel field-wrap">
+        <svg id="mission-field" viewBox="0 0 226.281 128.981" preserveAspectRatio="xMidYMid meet">
 <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
@@ -349,125 +244,25 @@
   </g>
 </svg>
 
-<div class="field-controls" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-
-  <!-- Existing controls -->
-  <button class="start-button" @click="buildReplayFrames(); startMission()" :disabled="!mission || isRunning">
-    Start Mission
-  </button>
-
-  <button class="clear-button" @click="clearField">
-    Clear Field
-  </button>
-
-  <button class="mission-button" @click="stopMission" :disabled="!isRunning">
-    Stop Mission
-  </button>
-
-  <!-- Optional divider -->
-  <span style="width:1px; height:28px; background:#e5e7eb; margin:0 6px;"></span>
-
-  <!-- Replay controls -->
-  <button class="demo-button"
-          type="button"
-          @click="buildReplayFrames"
-          :disabled="!mission">
-    Replay
-  </button>
-
-  <button class="start-button"
-          type="button"
-          @click="playReplay"
-          :disabled="!replayFrames.length || isReplaying">
-    ▶
-  </button>
-
-  <button class="mission-button"
-          type="button"
-          @click="stopReplay"
-          :disabled="!isReplaying">
-    ❚❚
-  </button>
-
-  <button class="neutral-button"
-          type="button"
-          @click="resetReplay"
-          :disabled="!replayFrames.length">
-    ⟲
-  </button>
-
-  <!-- Scrub slider -->
-  <div style="display:flex; align-items:center; gap:8px; min-width:240px;">
-    <input type="range"
-           min="0"
-           :max="Math.max(0, replayFrames.length - 1)"
-           step="1"
-           v-model.number="replayIndex"
-           @input="onReplaySliderInput"
-           :disabled="!replayFrames.length"
-           style="width:180px;" />
-
-    <span style="font-size:12px; color:#6b7280; min-width:60px; text-align:right;">
-      {{ replayIndex }} / {{ Math.max(0, replayFrames.length - 1) }}
-    </span>
-  </div>
-
-</div>
+        <div class="field-controls">
+          <button class="btn-primary" id="start-mission">Start Mission</button>
+          <button class="btn-warn" id="stop-mission" disabled>Stop</button>
+          <button class="btn-ghost" id="clear-field">Clear Field</button>
+          <span class="divider" style="width:1px;height:28px;"></span>
+          <button class="btn-secondary" id="build-replay">Replay</button>
+          <button class="btn-primary" id="play-replay" disabled>Play</button>
+          <button class="btn-ghost" id="pause-replay" disabled>Pause</button>
+          <button class="btn-ghost" id="reset-replay" disabled>Reset</button>
+          <label style="flex:1; min-width:200px;">
+            <span class="status">Frame</span>
+            <input id="replay-slider" type="range" min="0" max="0" value="0" />
+          </label>
+          <span class="status" id="replay-count">0 / 0</span>
+        </div>
       </div>
-    </div>
+    </section>
+  </main>
 
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-  <script src="vue_script.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

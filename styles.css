@@ -1,345 +1,379 @@
-/* ===============================
-   Root / Base
-=================================*/
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap');
+
 :root {
-  --bg: #f6f7fb;
-  --card: #fff;
-  --ink: #1c2233;
-  --muted: #6b7280;
-  --line: #e5e7eb;
-
-  --btn-green: #22c55e;
-  --btn-blue:  #3b82f6;
-  --btn-gray:  #6b7280;
-  --btn-orange:#efa444;
-  --btn-purple:#9d0d9d;
-
-  --input-border: #ccc;
+  --bg: #f2f1ed;
+  --ink: #1e232c;
+  --muted: #5d6777;
+  --panel: #ffffff;
+  --panel-2: #f8f6f1;
+  --line: #d9d3c7;
+  --accent: #0f766e;
+  --accent-2: #2563eb;
+  --accent-3: #f59e0b;
+  --danger: #b42318;
+  --shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
 }
 
-
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
-  font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
-  background: var(--bg);
+  font-family: "Instrument Sans", "Space Grotesk", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at top right, #f9efe5 0%, #f2f1ed 48%, #eef2f5 100%);
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent-2);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.header {
+  padding: 22px 28px;
+  border-bottom: 1px solid var(--line);
+  background: #fffdf8;
+}
+
+.header h1 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 28px;
+  letter-spacing: 0.2px;
+}
+
+.header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.nav {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nav a {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.app-layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 20px;
+  padding: 20px 22px 30px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.panel + .panel {
+  margin-top: 16px;
+}
+
+.section-title {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+label {
+  font-size: 12px;
+  color: var(--muted);
+  display: grid;
+  gap: 6px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  font-size: 14px;
+  font-family: "Instrument Sans", sans-serif;
+  background: #fff;
   color: var(--ink);
 }
 
-/* ===============================
-   Layout: sidebar + field
-=================================*/
-.page {
-  display: grid;
-  grid-template-columns: 420px 1fr;   /* fixed sidebar + flexible field */
-  min-height: 100vh;
-}
-
-/* Left Pane */
-#control-container {
-  overflow: auto;
-  padding: 12px;
-  background: var(--card);
-  border-right: 1px solid var(--line);
-}
-
-/* Right Pane */
-#field-view {
-  padding: 12px;
-  background: var(--bg);
-}
-
-#field-view .field-panel {
-  position: sticky;
-  top: 20px;
-  max-height: calc(100vh - 24px);
-  overflow: auto;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,.05);
-}
-
-/* Responsive: collapse to one column */
-@media (max-width: 900px) {
-  .page { grid-template-columns: 1fr; }
-  #control-container {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-}
-
-/* ===============================
-   Headings & Editor
-=================================*/
-h2 {
-  margin: 0 0 10px;
-  font-size: 14px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-}
-
-.editor-container {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 12px;
-}
-
 textarea {
-  width: 100%;
-  min-height: 220px;
+  min-height: 160px;
   resize: vertical;
 }
 
-/* ===============================
-   Buttons
-=================================*/
 button {
-  margin: 5px 5px 5px 0;
-  padding: 10px 12px;
-  font-size: 14px;
   border: none;
-  border-radius: 6px;
-  color: #fff;
-  cursor: pointer;
-}
-
-.demo-button {
-  display: inline-block;
-  background: var(--btn-blue);
-}
-
-.demo-button.secondary {
-  margin: 5px 5px 5px 0;
+  border-radius: 10px;
   padding: 10px 12px;
-  font-size: 14px;
-  border: none;
-  border-radius: 6px;
-  color: #fff;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 14px;
-  text-decoration: none;
-  background: var(--btn-green);   /* gray */
 }
 
-.start-button   { background: var(--btn-green); }
-.clear-button   { background: var(--btn-orange); }
-.neutral-button { background: var(--btn-gray); }
-.mission-button { background: var(--btn-purple); }
-
-.delete-btn {
-  background: #fff0f0;
-  color: #b55050;
-  border: 1px solid #ffd6d6;
-  border-radius: 6px;
-  height: 32px;
-  padding: 0 12px;
-  font-size: 14px;
-}
-
-/* ===============================
-   Form Controls
-=================================*/
-input[type="text"],
-input[type="number"],
-input[type="color"],
-select,
-textarea {
-  color: #111;
-  background: #fff;
-  border: 1px solid var(--input-border);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 14px;
-}
-
-input[type = "number"] {
-  width: 120px;
-}
-
-input[type="file"] {
-  margin: 5px 0;
-  padding: 8px;
-  font-size: 14px;
-  border-radius: 6px;
-  color: inherit;
-  cursor: pointer;
-  border: 1px solid var(--input-border);
-  background: #fff;
-}
-
-/* ===============================
-   Builder Layout
-=================================*/
-.builder-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.builder-grid label {
-  display: grid;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.builder-actions {
+.button-row {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  margin: 10px 0;
+  gap: 10px;
 }
 
-.builder-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
 }
 
-.builder-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 8px;
-  overflow: hidden;
+.btn-secondary {
+  background: var(--accent-2);
+  color: #fff;
 }
 
-.builder-item label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.builder-item label span {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.builder-tag {
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 12px;
-  background: #eef3ff;
-  color: #2749b6;
-  border-radius: 999px;
-  padding: 2px 8px;
-  white-space: nowrap;
-}
-
-/* ===============================
-   Attachment Table (2×3 grid)
-=================================*/
-.attach-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: none;
-  margin: 0;
-}
-
-.attach-table td {
-  padding: 4px 6px;
-  vertical-align: middle;
-  border: none;            /* invisible grid lines */
-}
-
-.attach-table label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.attach-table select,
-.attach-table input[type="number"] {
-  height: 32px;
-  padding: 4px 8px;
-  border: 1px solid var(--input-border);
-  border-radius: 6px;
+.btn-ghost {
   background: #fff;
-  color: #111;
-  font-size: 14px;
-  width: 120px;
+  border: 1px solid var(--line);
+  color: var(--ink);
 }
 
-.attach-table .builder-tag {
-  display: inline-block;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 12px;
-  background: #eef3ff;
-  color: #2749b6;
+.btn-warn {
+  background: var(--accent-3);
+  color: #1b1408;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-pill {
   border-radius: 999px;
-  padding: 2px 8px;
-  white-space: nowrap;
+  padding: 8px 14px;
 }
 
-/* ===============================
-   Field / SVG
-=================================*/
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e3f3f1;
+  color: #0f4c47;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.divider {
+  height: 1px;
+  background: var(--line);
+  margin: 14px 0;
+}
+
+.action-list {
+  display: grid;
+  gap: 8px;
+}
+
+.action-item,
+.attachment-item {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.attachment-item {
+  grid-template-columns: 80px repeat(3, minmax(0, 1fr)) auto;
+}
+
+.action-item select,
+.action-item input,
+.attachment-item input,
+.attachment-item select {
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.field-panel {
+  position: sticky;
+  top: 18px;
+  align-self: start;
+}
+
+.field-wrap {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 10px;
+}
+
 #mission-field {
-  display: block;
   width: 100%;
   height: auto;
-  background: #fafafa;
+  border-radius: 12px;
+  background: #fdfcf7;
+}
+
+#mission-field #layer1 path {
+  fill: #f7f4ec;
+  stroke: #111827;
+  stroke-width: 0.6;
+}
+
+#mission-field #layer2 path {
+  stroke: #6bb4ff;
+  stroke-width: 0.8;
 }
 
 .field-controls {
-  padding: 10px 0 0;
+  margin-top: 12px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* ===============================
-   Optional header
-=================================*/
-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--card);
-  border-bottom: 1px solid var(--line);
-  padding: 10px 12px;
-  display: flex;
+  gap: 10px;
   align-items: center;
-  gap: 12px;
 }
 
-header h1 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
+.status {
+  font-size: 12px;
+  color: var(--muted);
 }
 
-/* ===== Team signup page ===== */
-/* ===== Override layout for signup page ===== */
-.page-signup .page {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
+.notice {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 6px 0 0;
 }
 
-/* Existing signup styles stay the same */
-.signup-wrapper {
+.robot-preview {
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fffef8;
+}
+
+.robot-preview svg {
   width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 24px;
+  height: 220px;
+  display: block;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.kicker {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: #e7e9f8;
+  color: #30356b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.notice-error {
+  color: var(--danger);
+}
+
+.notice-success {
+  color: #0f766e;
+}
+
+.signup-wrapper {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 30px 20px;
 }
 
 .signup-card {
+  width: min(520px, 96vw);
+}
+
+.robot-canvas {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fdfcf7;
+}
+
+.robot-canvas svg {
   width: 100%;
-  max-width: 600px;
+  height: 320px;
+  display: block;
+}
+
+@media (max-width: 1100px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .field-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .action-item {
+    grid-template-columns: 1fr;
+  }
+
+  .attachment-item {
+    grid-template-columns: 1fr;
+  }
 }
