@@ -1,106 +1,104 @@
-# First Lego League Field Mapping
+# FLL Field Mapping Studio
 
-A tool to plot paths for First Lego League
+FLL Field Mapping Studio is a browser-based route planner for First LEGO League teams. It lets students sketch a mission, define the robot footprint, add attachments, and replay the resulting path before they spend time tuning code on the physical mat.
 
-Welcome! This tool is designed to help First Lego League teams plan their movement across the field.
+## What It Does
 
-## Overview
+- Build a mission with move and rotate actions
+- Set the starting pose in centimeters and degrees
+- Define robot width, length, and turn-center offset
+- Model simple front, rear, left, and right attachments
+- Replay a route directly on the field map
+- Save robot profiles locally in the browser
+- Share a mission through a URL payload
+- Sync missions and robots through hosted team endpoints
 
-This is a simple script that relies on providing a JSON text file with a set of missions. The tool helps visualize and trace the robot's movement on the field based on the mission data.
+## Project Structure
 
-### Assumptions
-1. **Zero Point Turns**: The robot's turns are centered at its midpoint. This may not always be accurate as wheelbases are typically offset.
-2. **Movement Timing**: Timing is not representative of the robot's actual speed; it only reflects the robot's path.
-3. **Accurate Turns**: The robot must turn accurately for the tool to be effective. This is best achieved by using the hub's yaw sensor. Implementation can be done in Python or block code.
-4. **Coordinate System**: (0,0) is the lower left corner of the map. You might have to experiment with placements to get the hang of how I have it programed. It is set so that the start position will be made respective of the orientation of the robot at start of the mission. Experimenet with different inputs!
-5. **Measurements** All measurements are in centimeters and degrees. In general, the coordinates follow the 0 degrees is in the positive x-axis and positive angles are counter-clockwise.
-6. **Shape** It is assumed the robot is a single rectangle, more complicated or even true boarders is not setup in this model.
+- `index.html`: main mission-planning interface
+- `robot_builder.html`: robot footprint and attachment editor
+- `team_signup.html`: hosted registration flow for team cloud access
+- `introduction.html`: user-facing explanation of the workflow and assumptions
+- `js/core.js`: shared normalization, storage, and cloud helpers
+- `js/app.js`: main planner state, rendering, replay, and team sync
+- `js/robot_builder.js`: robot builder interactions
+- `js/signup.js`: team signup flow
+- `field.svg`: field artwork loaded by the mission planner
+- `styles.css`: shared UI styling
 
-## Mission Format
-There is a builder tool that allows move and rotate blocks to be added. There is also a JSON format that is used to run the app.
-The JSON upload can be used to load several missions to showcase different potential paths or a full set of mission plans. 
+## How To Run
 
-Below is an example, also in the repository there is a missions.json file with this code:
+No build step is required.
+
+1. Open the repo with any static file server.
+2. Serve the site root.
+3. Open `index.html`.
+
+Examples:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then browse to `http://localhost:8000/`.
+
+## Mission Model
+
+Each mission is a single JSON object with:
+
+- `name`
+- `startX`
+- `startY`
+- `startAngle`
+- `robotWidthCm`
+- `robotLengthCm`
+- `traceColor`
+- `offsetY`
+- `attachments`
+- `actions`
+
+Example:
 
 ```json
-[
-    {
-        "name": "Mission 1",
-        "startX": 0,
-        "startY": 0,
-        "startAngle": 90,
-        "robotWidthCm": 30,
-        "robotLengthCm": 13,
-        "traceColor": "green",
-        "offsetY": -3.2,
-        "actions": [
-            { "type": "move", "value": 17 },
-            { "type": "rotate", "value": -24 },
-            { "type": "move", "value": 30 },
-            { "type": "move", "value": -30 },
-            { "type": "rotate", "value": 24 },
-            { "type": "move", "value": -17 }
-        ]
-    },
-    {
-        "name": "Mission 2",
-        "startX": 0,
-        "startY": 30,
-        "startAngle": 0,
-        "robotWidthCm": 30,
-        "robotLengthCm": 12,
-        "traceColor": "red",
-        "offsetY": -3.2,
-        "actions": [
-            { "type": "move", "value": 50 },
-            { "type": "rotate", "value": 90 },
-            { "type": "move", "value": 10 }
-        ]
-    },
-    {
-        "name": "Mission 3",
-        "startX": 150,
-        "startY": 30,
-        "startAngle": 180,
-        "robotWidthCm": 10,
-        "robotLengthCm": 12,
-        "traceColor": "yellow",
-        "offsetY": -3.2,
-        "actions": [
-            { "type": "move", "value": 50 },
-            { "type": "rotate", "value": -90 },
-            { "type": "move", "value": 10 }
-        ]
-    },
-    {
-        "name": "Mission 4",
-        "startX": 150,
-        "startY": 30,
-        "startAngle": 180,
-        "robotWidthCm": 10,
-        "robotLengthCm": 12,
-        "traceColor": "blue",
-        "offsetY": -3.2,
-        "actions": [
-            { "type": "move", "value": 50 },
-            { "type": "rotate", "value": -90 },
-            { "type": "move", "value": 10 }
-        ]
-    },
-    {
-        "name": "Mission 5",
-        "startX": 150,
-        "startY": 30,
-        "startAngle": 180,
-        "robotWidthCm": 10,
-        "robotLengthCm": 12,
-        "traceColor": "purple",
-        "offsetY": -3.2,
-        "actions": [
-            { "type": "move", "value": 50 },
-            { "type": "rotate", "value": -90 },
-            { "type": "move", "value": 10 }
-        ]
-    }
-]
+{
+  "name": "Coral Sweep",
+  "startX": 11.5,
+  "startY": 0,
+  "startAngle": 90,
+  "robotWidthCm": 17,
+  "robotLengthCm": 15,
+  "traceColor": "#108368",
+  "offsetY": 1.8,
+  "attachments": [
+    { "side": "front", "widthCm": 6, "lengthCm": 4, "positionCm": 0 }
+  ],
+  "actions": [
+    { "type": "move", "value": 17 },
+    { "type": "rotate", "value": -24 },
+    { "type": "move", "value": 50 },
+    { "type": "move", "value": -50 },
+    { "type": "rotate", "value": 24 },
+    { "type": "move", "value": -17 }
+  ]
+}
 ```
+
+## Modeling Assumptions
+
+- Motion is a planning aid, not a physics simulation.
+- Rotations are treated as in-place turns around a configurable center offset.
+- Coordinates use centimeters, with `(0,0)` at the lower-left of the field.
+- `0` degrees points along positive X and positive angles rotate counter-clockwise.
+- The robot body is modeled as a rectangle with optional rectangular attachments.
+- Accurate real-world results still depend on calibration, sensor usage, traction, and field setup.
+
+## Notes On Team Cloud
+
+The cloud features depend on hosted Supabase edge functions and are intended for the deployed site. Local development can still use the full local-planning workflow, but team sync and signup are intentionally limited when the site is running from a local origin.
+
+## Recommended Next Work
+
+- Improve kinematics beyond simple in-place rotation
+- Add field obstacles, scoring zones, or collision checks
+- Add import/export for multiple missions as a bundle
+- Add lightweight automated checks for mission normalization and replay generation

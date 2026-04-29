@@ -15,6 +15,7 @@ import {
 } from "./core.js";
 
 const dom = {
+  fieldHost: document.getElementById("mission-field-host"),
   missionName: document.getElementById("mission-name"),
   traceColor: document.getElementById("trace-color"),
   startX: document.getElementById("start-x"),
@@ -62,7 +63,7 @@ const dom = {
   resetReplay: document.getElementById("reset-replay"),
   replaySlider: document.getElementById("replay-slider"),
   replayCount: document.getElementById("replay-count"),
-  svg: document.getElementById("mission-field")
+  svg: null
 };
 
 const state = {
@@ -92,6 +93,31 @@ const state = {
     frameIndex: 0
   }
 };
+
+async function loadFieldSvg() {
+  if (!dom.fieldHost) return false;
+
+  try {
+    const res = await fetch("./field.svg");
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    dom.fieldHost.innerHTML = await res.text();
+    dom.svg = dom.fieldHost.querySelector("#mission-field");
+
+    if (!dom.svg) {
+      throw new Error("Mission field SVG is missing its root id.");
+    }
+
+    dom.fieldHost.removeAttribute("data-state");
+    return true;
+  } catch (e) {
+    dom.fieldHost.dataset.state = "error";
+    dom.fieldHost.textContent = "Could not load the field artwork. Refresh the page and try again.";
+    return false;
+  }
+}
 
 function getScale(svgRoot) {
   const width = svgRoot.viewBox.baseVal.width || svgRoot.clientWidth || 0;
@@ -518,6 +544,14 @@ function applyLocalRobot() {
   const idx = parseInt(dom.localRobotSelect.value, 10);
   const robot = state.localRobots[idx];
   if (!robot) return;
+  applyRobotToMission(robot);
+  syncMissionToInputs();
+  renderMission();
+  setLocal(STORAGE_KEYS.mission, state.mission);
+}
+
+function applyRobotToMission(robotLike) {
+  const robot = normalizeRobot(robotLike);
   state.mission = normalizeMission({
     ...state.mission,
     robotWidthCm: robot.robotWidthCm,
@@ -526,9 +560,18 @@ function applyLocalRobot() {
     attachments: robot.attachments,
     robotName: robot.name
   });
+}
+
+function applyTransferredRobotIfPresent() {
+  const transferRobot = getLocal(STORAGE_KEYS.robotTransfer, null);
+  if (!transferRobot) return false;
+
+  applyRobotToMission(transferRobot);
   syncMissionToInputs();
   renderMission();
   setLocal(STORAGE_KEYS.mission, state.mission);
+  setLocal(STORAGE_KEYS.robotTransfer, null);
+  return true;
 }
 
 function attachEventHandlers() {
@@ -1020,20 +1063,7 @@ function initFromStorage() {
   const fromUrl = readMissionFromUrl();
   const fromStorage = getLocal(STORAGE_KEYS.mission, null);
   state.mission = fromUrl ? normalizeMission(fromUrl) : normalizeMission(fromStorage || createDefaultMission());
-
-  const transferRobot = getLocal(STORAGE_KEYS.robotTransfer, null);
-  if (transferRobot) {
-    const robot = normalizeRobot(transferRobot);
-    state.mission = normalizeMission({
-      ...state.mission,
-      robotWidthCm: robot.robotWidthCm,
-      robotLengthCm: robot.robotLengthCm,
-      offsetY: robot.offsetY,
-      attachments: robot.attachments,
-      robotName: robot.name
-    });
-    setLocal(STORAGE_KEYS.robotTransfer, null);
-  }
+  applyTransferredRobotIfPresent();
 
   const team = getLocal(STORAGE_KEYS.team, null);
   if (team && team.name) {
@@ -1044,13 +1074,21 @@ function initFromStorage() {
   }
 }
 
-function init() {
+async function init() {
+  const fieldLoaded = await loadFieldSvg();
+  if (!fieldLoaded) return;
+
   initFromStorage();
   loadLocalRobots();
   syncMissionToInputs();
   renderMission();
   attachEventHandlers();
   updateTeamControls();
+
+  window.addEventListener("pageshow", () => {
+    if (!applyTransferredRobotIfPresent()) return;
+    updateTeamControls();
+  });
 }
 
 init();

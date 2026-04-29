@@ -1,153 +1,114 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>First Lego League Field Mapping</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1, h2, h3 {
-            color: #333;
-        }
-        p {
-            color: #555;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        ul li {
-            margin-bottom: 10px;
-        }
-        pre {
-            background-color: #f4f4f4;
-            padding: 10px;
-            border-left: 3px solid #333;
-            overflow-x: auto;
-            font-family: "Courier New", Courier, monospace;
-        }
-	img {
-		max-width:300px;
-	}
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-        }
-
-	  .fab-back {
-    position: fixed;
-    right: 16px;
-    bottom: calc(16px + env(safe-area-inset-bottom)); /* iOS safe area friendly */
-    z-index: 9999;
-
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-
-    padding: 12px 14px;
-    border-radius: 999px;
-    background: #2563eb; /* blue */
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 15px;
-    box-shadow: 0 6px 20px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12);
-    transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease;
-  }
-  .fab-back:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,.22), 0 3px 8px rgba(0,0,0,.14); }
-  .fab-back:active { transform: translateY(0); box-shadow: 0 4px 14px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12); }
-  .fab-back__icon {
-    display: inline-block;
-    width: 18px; height: 18px; line-height: 1;
-    filter: brightness(0) invert(1); /* ensure icon stays white if using an image/SVG */
-  }
-
-  /* Mobile tweaks: smaller + slightly translucent so it’s less in the way */
-  @media (max-width: 600px) {
-    .fab-back {
-      right: 12px;
-      bottom: calc(12px + env(safe-area-inset-bottom));
-      padding: 10px 12px;
-      font-size: 14px;
-      opacity: 0.95;
-    }
-    .fab-back__icon { width: 16px; height: 16px; }
-  }
-
-    </style>
+  <meta charset="utf-8" />
+  <title>How It Works | FLL Field Mapping Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div class="container">
-        <h1>First Lego League Field Mapping</h1>
-        <p>A tool to plot paths for First Lego League</p>
+  <header class="header">
+    <h1>How It Works</h1>
+    <p>Use the planner to test route ideas, compare starts, and talk through strategy before a practice run.</p>
+    <nav class="nav">
+      <a href="index.html">Mission Tool</a>
+      <a href="robot_builder.html">Robot Builder</a>
+      <a href="team_signup.html">Team Signup</a>
+    </nav>
+  </header>
 
-        <p>Welcome! This tool is designed to help First Lego League teams plan their movement across the field.</p>
+  <main class="app-layout">
+    <section>
+      <div class="panel">
+        <div class="section-title">Workflow</div>
+        <p>Start in the Mission Tool and define the mission name, start position, heading, and action list. Use the Robot Builder if you want to model the actual footprint of the chassis and any mission attachments.</p>
+        <p>When the mission looks right, run it directly on the field map or use replay mode to scrub through the route frame by frame. If you are working with a team, save missions and robot profiles through the hosted team cloud.</p>
+      </div>
 
-        <h2>Overview</h2>
-        <p>This is a simple script that relies on providing a JSON text file with a set of missions. The tool helps visualize and trace the robot's movement on the field based on the mission data. Importantly, it is intended to be used by students to help assist coding. I intentionally don't want to make it overly complicated so students can drive the development!</p>
+      <div class="panel">
+        <div class="section-title">What The Model Assumes</div>
+        <p>The simulator is meant for planning, not for precise drivetrain prediction. It helps students reason about geometry and sequencing, but it does not model wheel slip, acceleration, backlash, collision physics, or sensor drift.</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Topic</th>
+              <th>Current behavior</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Units</td>
+              <td>Centimeters for distance, degrees for heading</td>
+            </tr>
+            <tr>
+              <td>Origin</td>
+              <td>Lower-left corner of the field</td>
+            </tr>
+            <tr>
+              <td>Heading</td>
+              <td><code>0</code> degrees points along positive X, positive angles turn counter-clockwise</td>
+            </tr>
+            <tr>
+              <td>Robot shape</td>
+              <td>One rectangle plus optional rectangular attachments</td>
+            </tr>
+            <tr>
+              <td>Turning</td>
+              <td>In-place turns around a configurable front/back offset</td>
+            </tr>
+            <tr>
+              <td>Timing</td>
+              <td>Replay timing is illustrative rather than measured from a real robot</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-        <h3>Assumptions</h3>
-        <ul>
-            <li><strong>Zero Point Turns</strong>: The robot's turns are assumed to be zero point or in place. Wheelbases are typically offset from the center so I have included the ability to define the offset. A positive offset pushes the center of rotation towards the back of the robot.</li>
-            <li><strong>Movement Timing</strong>: Timing is not representative of the robot's actual speed; it only reflects the robot's path.</li>
-            <li><strong>Accurate Turns</strong>: The robot must turn accurately for the tool to be effective. This is best achieved by using the hub's yaw sensor. Implementation can be done in Python or block code.</li>
-			<li><strong>Coordinate System</strong>: (0,0) is the lower left corner of the map. You might have to experiment with placements to get the hang of how I have it programed. It is set so that the start position will be made respective of the orientation of the robot at start of the mission. Experimenet with different inputs!</li>
-			<li><strong>Measurements</strong>: All measurements are in centimeters and degrees. In general, the coordinates follow the 0 degrees is in the positive x-axis and positive angles are counter-clockwise.</strong>
-			<li><strong>Shape</strong>:It is assumed the robot is a single rectangle, more complicated or even true boarders is not setup in this model.</li>
-			<li>Orienting the robot left or right, would shift the (0,0) start position from being stricktly in the lower left corner. This might take some experimenting to get a hang of how it is programmed.</li>
-        </ul>
+      <div class="panel">
+        <div class="section-title">Practical Tips</div>
+        <p>Keep the mission model simple enough that students can understand why the path changes. If a path only works in the simulator when the start pose is extremely exact, that is usually a sign the real robot will need a more reliable alignment method or a better recovery plan.</p>
+        <p>Using the hub yaw sensor for turns will generally make the simulated route more meaningful, because the visual plan assumes the robot can hit the commanded heading consistently.</p>
+      </div>
 
-	<h3>Explanation of Offset:</h3>
-	<img src='https://raw.githubusercontent.com/kennyhaggard/FLL-field-mapping/refs/heads/main/offset_diagram.png'>
-	<p>Positive offset is shown here where the rotational center is skewed towards the rear of the geometric center. Negative offset would be skewed towards the front of the robot relative to the geometric center.</p>
+      <div class="panel">
+        <div class="section-title">Mission JSON</div>
+        <p>The planner also accepts mission JSON directly. This is useful when you want to share a route, keep versions in source control, or generate paths outside the editor.</p>
+        <pre><code>{
+  "name": "Coral Sweep",
+  "startX": 11.5,
+  "startY": 0,
+  "startAngle": 90,
+  "robotWidthCm": 17,
+  "robotLengthCm": 15,
+  "traceColor": "#108368",
+  "offsetY": 1.8,
+  "attachments": [
+    { "side": "front", "widthCm": 6, "lengthCm": 4, "positionCm": 0 }
+  ],
+  "actions": [
+    { "type": "move", "value": 17 },
+    { "type": "rotate", "value": -24 },
+    { "type": "move", "value": 50 },
+    { "type": "move", "value": -50 },
+    { "type": "rotate", "value": 24 },
+    { "type": "move", "value": -17 }
+  ]
+}</code></pre>
+      </div>
+    </section>
 
-	<h3>Field Orientation</h3>
-	<img src='https://github.com/kennyhaggard/FLL-field-mapping/blob/main/field_orientation.png?raw=true'>
-	<p>This helps to explain the orientation of the robot on the playing field.</p>
-
-        <h2>Mission Format</h2>
-        <p>There is a builder tool that allows move and rotate blocks to be added. There is also a JSON format that is used to run the app.</p>
-		<p>Below is an example: </p>
-
-        <pre>
-    {
-        "name": "Coral Sweep",
-        "startX": 11.5,
-        "startY": 0,
-        "startAngle": 90,
-        "robotWidthCm": 17,
-        "robotLengthCm": 15,
-	"traceColor": "green",
-	"offsetY":1.8,
-        "actions": [
-            { "type": "move", "value": 17},
-            { "type": "rotate", "value": -24 },
-            { "type": "move", "value": 50 },
-            { "type": "move", "value": -50 },
-            { "type": "rotate", "value": 24 },
-	    { "type": "move", "value": -17}
-        ]
-    }
-        </pre>
-		<p>I've also built in the capability for team's to save their missions to a database. It requires a team name and a unique 4-digit pin. Register your team with a name, pin and a coaches email contact.</p>
-
-        <p>Good luck, and have fun plotting your robot’s paths!</p>
-		<p> <a href = "https://kennyhaggard.github.io/FLL-field-mapping/">Back to Mapping Tool</a></p>
-    </div>
-	<a class="fab-back" href="https://kennyhaggard.github.io/FLL-field-mapping/" aria-label="Back to Mapping Tool">
-  <!-- Simple arrow icon via emoji to avoid extra assets; swap for an SVG if you prefer -->
-  <span class="fab-back__icon" aria-hidden="true">↩︎</span>
-  Back to Mapping Tool
-	</a>
+    <section class="field-panel">
+      <div class="panel">
+        <div class="section-title">Reference Images</div>
+        <p class="notice">These diagrams explain how the turn-center offset and field orientation are interpreted by the planner.</p>
+        <div class="robot-preview" style="margin-top:12px;">
+          <img src="offset_diagram.png" alt="Offset diagram" style="width:100%;height:auto;display:block;border-radius:10px;" />
+        </div>
+        <div class="robot-preview" style="margin-top:16px;">
+          <img src="field_orientation.png" alt="Field orientation diagram" style="width:100%;height:auto;display:block;border-radius:10px;" />
+        </div>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
