@@ -1,0 +1,8 @@
+{
+  "name": "fll-field-mapping",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

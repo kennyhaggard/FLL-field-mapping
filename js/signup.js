@@ -1,4 +1,5 @@
-import { cloudPost, isLocalOrigin } from "./core.js";
+import { createCloudClient } from "./domain/cloud.js";
+import { detectRuntimeMode, validateTeamPin } from "./domain/runtime.js";
 
 const dom = {
   teamName: document.getElementById("team-name"),
@@ -6,9 +7,13 @@ const dom = {
   coachEmail: document.getElementById("coach-email"),
   register: document.getElementById("register-team"),
   reset: document.getElementById("reset-form"),
+  runtimeNote: document.getElementById("runtime-note"),
   error: document.getElementById("signup-error"),
   success: document.getElementById("signup-success")
 };
+
+const runtime = detectRuntimeMode(window.location);
+const cloud = createCloudClient({ runtime });
 
 const state = {
   turnstileToken: ""
@@ -36,6 +41,17 @@ function setMessage(el, text) {
   el.textContent = text;
 }
 
+function resetTurnstile() {
+  state.turnstileToken = "";
+  try {
+    if (window.turnstile && typeof window.turnstile.reset === "function") {
+      window.turnstile.reset();
+    }
+  } catch (error) {
+    // ignore
+  }
+}
+
 async function registerTeam() {
   setMessage(dom.error, "");
   setMessage(dom.success, "");
@@ -48,7 +64,7 @@ async function registerTeam() {
     setMessage(dom.error, "Enter team name, PIN, and coach email.");
     return;
   }
-  if (!/^\d{4}$/.test(pin)) {
+  if (!validateTeamPin(pin)) {
     setMessage(dom.error, "PIN must be exactly 4 digits.");
     return;
   }
@@ -56,8 +72,8 @@ async function registerTeam() {
     setMessage(dom.error, "Complete the Turnstile check first.");
     return;
   }
-  if (isLocalOrigin()) {
-    setMessage(dom.error, "Team signup requires the hosted site because of CORS.");
+  if (!runtime.allowsCloudSync) {
+    setMessage(dom.error, "Team signup requires the hosted site.");
     return;
   }
 
@@ -65,27 +81,23 @@ async function registerTeam() {
   dom.register.textContent = "Registering...";
 
   try {
-    const data = await cloudPost("/register_team", {
+    const data = await cloud.registerTeam({
       teamName,
       pin,
       coachEmail,
       turnstileToken: state.turnstileToken
     });
-    if (!data || !data.ok) {
+    if (!data?.ok) {
       setMessage(dom.error, data?.error || "Registration failed.");
       return;
     }
+
     setMessage(dom.success, `Team "${teamName}" registered successfully. Connect from the Mission Tool.`);
-    state.turnstileToken = "";
-    try {
-      if (window.turnstile && typeof window.turnstile.reset === "function") {
-        window.turnstile.reset();
-      }
-    } catch (e) {}
-  } catch (e) {
+    resetTurnstile();
+  } catch (error) {
     setMessage(dom.error, "Network error registering team.");
   } finally {
-    dom.register.disabled = false;
+    dom.register.disabled = !runtime.allowsCloudSync;
     dom.register.textContent = "Register Team";
   }
 }
@@ -96,15 +108,12 @@ function resetForm() {
   dom.coachEmail.value = "";
   setMessage(dom.error, "");
   setMessage(dom.success, "");
-  state.turnstileToken = "";
-  try {
-    if (window.turnstile && typeof window.turnstile.reset === "function") {
-      window.turnstile.reset();
-    }
-  } catch (e) {}
+  resetTurnstile();
 }
 
 function init() {
+  dom.runtimeNote.textContent = runtime.detail;
+  dom.register.disabled = !runtime.allowsCloudSync;
   dom.register.addEventListener("click", registerTeam);
   dom.reset.addEventListener("click", resetForm);
 }

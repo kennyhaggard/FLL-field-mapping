@@ -1,12 +1,17 @@
+import { createCloudClient } from "./domain/cloud.js";
 import {
-  STORAGE_KEYS,
   createDefaultRobot,
-  cloudPost,
-  getLocal,
   normalizeRobot,
-  safeNum,
-  setLocal
-} from "./core.js";
+  safeNum
+} from "./domain/model.js";
+import { detectRuntimeMode } from "./domain/runtime.js";
+import {
+  loadRobotLibrary,
+  loadTeamSession,
+  saveRobotLibrary,
+  stageRobotTransfer
+} from "./domain/storage.js";
+import { RobotCanvas } from "./ui/robot_canvas.js";
 
 const dom = {
   robotName: document.getElementById("robot-name"),
@@ -19,261 +24,218 @@ const dom = {
   saveLocal: document.getElementById("save-local"),
   applyToMission: document.getElementById("apply-to-mission"),
   saveTeam: document.getElementById("save-team"),
+  runtimeNote: document.getElementById("builder-runtime-note"),
   robotStatus: document.getElementById("robot-status"),
   canvas: document.getElementById("robot-canvas")
 };
 
+const runtime = detectRuntimeMode(window.location);
+const cloud = createCloudClient({ runtime });
+const canvas = new RobotCanvas(dom.canvas);
+
 const state = {
   robot: createDefaultRobot(),
-  dragging: null
+  draggingIndex: null,
+  teamSession: loadTeamSession(window.localStorage)
 };
+
+function setStatus(message) {
+  dom.robotStatus.textContent = message;
+}
+
+function upsertRobot(list, robotLike) {
+  const robot = normalizeRobot(robotLike);
+  const next = [...list];
+  const existingIndex = next.findIndex(
+    (candidate) => candidate.name.trim().toLowerCase() === robot.name.trim().toLowerCase()
+  );
+  if (existingIndex >= 0) {
+    next[existingIndex] = robot;
+  } else {
+    next.push(robot);
+  }
+  return next;
+}
 
 function syncRobotToInputs() {
   dom.robotName.value = state.robot.name || "";
-  dom.robotOffset.value = state.robot.offsetY;
-  dom.robotWidth.value = state.robot.robotWidthCm;
-  dom.robotLength.value = state.robot.robotLengthCm;
+  dom.robotOffset.value = String(state.robot.offsetY);
+  dom.robotWidth.value = String(state.robot.robotWidthCm);
+  dom.robotLength.value = String(state.robot.robotLengthCm);
+}
+
+function commitRobot(nextRobot) {
+  state.robot = normalizeRobot(nextRobot);
+  syncRobotToInputs();
+  renderAttachmentList();
+  canvas.setRobot(state.robot);
 }
 
 function updateRobotFromInputs() {
-  state.robot = normalizeRobot({
+  commitRobot({
     ...state.robot,
     name: dom.robotName.value.trim() || "Untitled Robot",
     offsetY: safeNum(dom.robotOffset.value, 0),
     robotWidthCm: safeNum(dom.robotWidth.value, 0),
     robotLengthCm: safeNum(dom.robotLength.value, 0)
   });
-  drawRobot();
-  renderAttachmentList();
-}
-
-function attachmentRect(att) {
-  const halfW = state.robot.robotWidthCm / 2;
-  const halfL = state.robot.robotLengthCm / 2;
-  const w = att.widthCm;
-  const l = att.lengthCm;
-
-  if (att.side === "front") {
-    return { x: att.positionCm - w / 2, y: halfL, width: w, height: l };
-  }
-  if (att.side === "rear") {
-    return { x: att.positionCm - w / 2, y: -halfL - l, width: w, height: l };
-  }
-  if (att.side === "left") {
-    return { x: -halfW - l, y: att.positionCm - w / 2, width: l, height: w };
-  }
-  if (att.side === "right") {
-    return { x: halfW, y: att.positionCm - w / 2, width: l, height: w };
-  }
-  return null;
-}
-
-function drawRobot() {
-  const svg = dom.canvas;
-  svg.innerHTML = "";
-
-  const base = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-  base.setAttribute("x", -state.robot.robotWidthCm / 2);
-  base.setAttribute("y", -state.robot.robotLengthCm / 2);
-  base.setAttribute("width", state.robot.robotWidthCm);
-  base.setAttribute("height", state.robot.robotLengthCm);
-  base.setAttribute("fill", "rgba(16, 131, 104, 0.18)");
-  base.setAttribute("stroke", "#0f766e");
-  base.setAttribute("stroke-width", "1.6");
-  svg.appendChild(base);
-
-  state.robot.attachments.forEach((att, idx) => {
-    const rect = attachmentRect(att);
-    if (!rect) return;
-    const el = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    el.setAttribute("x", rect.x);
-    el.setAttribute("y", rect.y);
-    el.setAttribute("width", rect.width);
-    el.setAttribute("height", rect.height);
-    el.setAttribute("fill", "rgba(37, 99, 235, 0.18)");
-    el.setAttribute("stroke", "#1e3a8a");
-    el.setAttribute("stroke-width", "1.2");
-    el.setAttribute("data-index", idx);
-    el.setAttribute("cursor", "grab");
-    svg.appendChild(el);
-  });
 }
 
 function renderAttachmentList() {
   dom.attachmentList.innerHTML = "";
-  state.robot.attachments.forEach((att, idx) => {
+  state.robot.attachments.forEach((attachment, index) => {
     const row = document.createElement("div");
     row.className = "attachment-item";
 
     const side = document.createElement("select");
-    ["front", "rear", "left", "right"].forEach((t) => {
-      const opt = document.createElement("option");
-      opt.value = t;
-      opt.textContent = t;
-      if (att.side === t) opt.selected = true;
-      side.appendChild(opt);
+    ["front", "rear", "left", "right"].forEach((type) => {
+      const option = document.createElement("option");
+      option.value = type;
+      option.textContent = type;
+      if (attachment.side === type) option.selected = true;
+      side.appendChild(option);
     });
     side.addEventListener("change", () => {
-      att.side = side.value;
-      drawRobot();
-      renderAttachmentList();
+      const attachments = [...state.robot.attachments];
+      attachments[index] = { ...attachments[index], side: side.value };
+      commitRobot({ ...state.robot, attachments });
     });
 
     const width = document.createElement("input");
     width.type = "number";
     width.step = "0.1";
-    width.value = att.widthCm;
+    width.value = String(attachment.widthCm);
     width.addEventListener("input", () => {
-      att.widthCm = safeNum(width.value, 0);
-      drawRobot();
+      const attachments = [...state.robot.attachments];
+      attachments[index] = { ...attachments[index], widthCm: safeNum(width.value, 0) };
+      commitRobot({ ...state.robot, attachments });
     });
 
     const length = document.createElement("input");
     length.type = "number";
     length.step = "0.1";
-    length.value = att.lengthCm;
+    length.value = String(attachment.lengthCm);
     length.addEventListener("input", () => {
-      att.lengthCm = safeNum(length.value, 0);
-      drawRobot();
+      const attachments = [...state.robot.attachments];
+      attachments[index] = { ...attachments[index], lengthCm: safeNum(length.value, 0) };
+      commitRobot({ ...state.robot, attachments });
     });
 
     const position = document.createElement("input");
     position.type = "number";
     position.step = "0.1";
-    position.value = att.positionCm;
+    position.value = String(attachment.positionCm);
     position.addEventListener("input", () => {
-      att.positionCm = safeNum(position.value, 0);
-      drawRobot();
+      const attachments = [...state.robot.attachments];
+      attachments[index] = { ...attachments[index], positionCm: safeNum(position.value, 0) };
+      commitRobot({ ...state.robot, attachments });
     });
 
-    const del = document.createElement("button");
-    del.className = "btn-ghost";
-    del.textContent = "Delete";
-    del.addEventListener("click", () => {
-      state.robot.attachments.splice(idx, 1);
-      drawRobot();
-      renderAttachmentList();
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "btn-ghost";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => {
+      const attachments = state.robot.attachments.filter(
+        (_, attachmentIndex) => attachmentIndex !== index
+      );
+      commitRobot({ ...state.robot, attachments });
     });
 
-    row.appendChild(side);
-    row.appendChild(width);
-    row.appendChild(length);
-    row.appendChild(position);
-    row.appendChild(del);
+    row.append(side, width, length, position, deleteButton);
     dom.attachmentList.appendChild(row);
   });
 }
 
 function addAttachment() {
-  state.robot.attachments.push({
-    side: "front",
-    widthCm: 4,
-    lengthCm: 4,
-    positionCm: 0
+  commitRobot({
+    ...state.robot,
+    attachments: [
+      ...state.robot.attachments,
+      { side: "front", widthCm: 4, lengthCm: 4, positionCm: 0 }
+    ]
   });
-  drawRobot();
-  renderAttachmentList();
 }
 
-function getSvgPoint(evt) {
-  const svg = dom.canvas;
-  const pt = svg.createSVGPoint();
-  pt.x = evt.clientX;
-  pt.y = evt.clientY;
-  const ctm = svg.getScreenCTM();
-  if (!ctm) return { x: 0, y: 0 };
-  const p = pt.matrixTransform(ctm.inverse());
-  return { x: p.x, y: p.y };
+function copyRobotJson() {
+  navigator.clipboard.writeText(JSON.stringify(state.robot, null, 2)).then(
+    () => setStatus("Robot JSON copied to the clipboard."),
+    () => setStatus("Copy failed. Check browser permissions.")
+  );
+}
+
+function saveLocalRobot() {
+  const robots = upsertRobot(loadRobotLibrary(window.localStorage), state.robot);
+  saveRobotLibrary(window.localStorage, robots);
+  setStatus(`Saved "${state.robot.name}" locally.`);
+}
+
+function applyToMission() {
+  stageRobotTransfer(window.localStorage, state.robot);
+  setStatus("Robot staged for the Mission Tool. Return to the mission page to apply it.");
+}
+
+async function saveTeamRobot() {
+  if (!runtime.allowsCloudSync) {
+    setStatus("Cloud save is disabled in local mode.");
+    return;
+  }
+  if (!state.teamSession.connected || !state.teamSession.name || !state.teamSession.pin) {
+    setStatus("Connect a team in the Mission Tool first.");
+    return;
+  }
+
+  try {
+    const result = await cloud.saveRobot(state.teamSession, state.robot);
+    if (!result?.ok) {
+      throw new Error("save-failed");
+    }
+    setStatus(`Saved "${state.robot.name}" to team ${state.teamSession.name}.`);
+  } catch (error) {
+    setStatus("Could not save the robot to the team cloud.");
+  }
 }
 
 function onPointerDown(evt) {
   const target = evt.target;
   if (!(target instanceof SVGRectElement)) return;
-  const idx = target.getAttribute("data-index");
-  if (idx === null) return;
-  state.dragging = { idx: parseInt(idx, 10) };
+  const index = target.getAttribute("data-index");
+  if (index === null) return;
+  state.draggingIndex = parseInt(index, 10);
   target.setAttribute("cursor", "grabbing");
 }
 
 function onPointerMove(evt) {
-  if (!state.dragging) return;
-  const att = state.robot.attachments[state.dragging.idx];
-  if (!att) return;
-  const point = getSvgPoint(evt);
-  if (att.side === "front" || att.side === "rear") {
-    att.positionCm = point.x;
-  } else {
-    att.positionCm = point.y;
-  }
+  if (state.draggingIndex === null) return;
+  state.robot = canvas.updateDraggedAttachment(state.draggingIndex, evt);
   renderAttachmentList();
-  drawRobot();
 }
 
 function onPointerUp() {
-  state.dragging = null;
+  state.draggingIndex = null;
+  canvas.setRobot(state.robot);
 }
 
-function copyRobotJson() {
-  const payload = {
-    robotWidthCm: state.robot.robotWidthCm,
-    robotLengthCm: state.robot.robotLengthCm,
-    offsetY: state.robot.offsetY,
-    attachments: state.robot.attachments
-  };
-  const json = JSON.stringify(payload, null, 2);
-  navigator.clipboard.writeText(json).then(
-    () => {
-      dom.robotStatus.textContent = "Robot JSON copied to clipboard.";
-    },
-    () => {
-      dom.robotStatus.textContent = "Copy failed. Check browser permissions.";
-    }
-  );
-}
-
-function saveLocalRobot() {
-  const robots = getLocal(STORAGE_KEYS.robots, []).map(normalizeRobot);
-  const robot = normalizeRobot(state.robot);
-  robots.push(robot);
-  setLocal(STORAGE_KEYS.robots, robots);
-  dom.robotStatus.textContent = `Saved "${robot.name}" locally.`;
-}
-
-function applyToMission() {
-  const robot = normalizeRobot(state.robot);
-  setLocal(STORAGE_KEYS.robotTransfer, robot);
-  dom.robotStatus.textContent = "Robot sent to Mission Tool. Open the mission page to apply it.";
-}
-
-async function saveTeamRobot() {
-  const team = getLocal(STORAGE_KEYS.team, null);
-  if (!team || !team.name || !team.pin) {
-    dom.robotStatus.textContent = "Connect a team in the Mission Tool first.";
+function updateRuntimeMessage() {
+  if (!runtime.allowsCloudSync) {
+    dom.runtimeNote.textContent = runtime.detail;
+    dom.saveTeam.disabled = true;
+    setStatus("Local mode: save local robots or stage one for the Mission Tool.");
     return;
   }
-  try {
-    const robot = normalizeRobot(state.robot);
-    const data = await cloudPost("/save_robot", {
-      teamName: team.name,
-      teamPin: team.pin,
-      pin: team.pin,
-      robotName: robot.name,
-      robot
-    });
-    if (!data || !data.ok) throw new Error("save failed");
-    dom.robotStatus.textContent = `Saved "${robot.name}" to team cloud.`;
-  } catch (e) {
-    dom.robotStatus.textContent = "Robots endpoint not ready yet.";
+
+  if (state.teamSession.connected && state.teamSession.name) {
+    dom.runtimeNote.textContent = `Hosted mode. Team save is available for ${state.teamSession.name}.`;
+    dom.saveTeam.disabled = false;
+    setStatus(`Team save ready for ${state.teamSession.name}.`);
+    return;
   }
+
+  dom.runtimeNote.textContent = "Hosted mode. Connect a team in the Mission Tool to enable team save.";
+  dom.saveTeam.disabled = true;
+  setStatus("Local save and mission handoff are ready.");
 }
 
-function init() {
-  syncRobotToInputs();
-  drawRobot();
-  renderAttachmentList();
-  const team = getLocal(STORAGE_KEYS.team, null);
-  dom.saveTeam.disabled = !(team && team.name && team.pin);
-
+function attachEvents() {
   [dom.robotName, dom.robotOffset, dom.robotWidth, dom.robotLength].forEach((input) => {
     input.addEventListener("input", updateRobotFromInputs);
   });
@@ -285,8 +247,14 @@ function init() {
   dom.saveTeam.addEventListener("click", saveTeamRobot);
 
   dom.canvas.addEventListener("pointerdown", onPointerDown);
-  dom.canvas.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointermove", onPointerMove);
   window.addEventListener("pointerup", onPointerUp);
+}
+
+function init() {
+  commitRobot(state.robot);
+  updateRuntimeMessage();
+  attachEvents();
 }
 
 init();

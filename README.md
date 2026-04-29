@@ -19,10 +19,12 @@ FLL Field Mapping Studio is a browser-based route planner for First LEGO League 
 - `robot_builder.html`: robot footprint and attachment editor
 - `team_signup.html`: hosted registration flow for team cloud access
 - `introduction.html`: user-facing explanation of the workflow and assumptions
-- `js/core.js`: shared normalization, storage, and cloud helpers
-- `js/app.js`: main planner state, rendering, replay, and team sync
-- `js/robot_builder.js`: robot builder interactions
-- `js/signup.js`: team signup flow
+- `js/domain/`: pure mission, robot, replay, storage, share, and runtime modules
+- `js/ui/`: field and robot canvas renderers
+- `js/app.js`: mission planner controller
+- `js/robot_builder.js`: robot builder controller
+- `js/signup.js`: team signup controller
+- `tests/`: Node-based tests for replay math and storage migration
 - `field.svg`: field artwork loaded by the mission planner
 - `styles.css`: shared UI styling
 
@@ -41,6 +43,12 @@ python3 -m http.server 8000
 ```
 
 Then browse to `http://localhost:8000/`.
+
+Automated checks:
+
+```bash
+npm test
+```
 
 ## Mission Model
 
@@ -98,7 +106,7 @@ The cloud features depend on hosted Supabase edge functions and are intended for
 
 ## Recommended Next Work
 
-- Improve kinematics beyond simple in-place rotation
 - Add field obstacles, scoring zones, or collision checks
 - Add import/export for multiple missions as a bundle
-- Add lightweight automated checks for mission normalization and replay generation
+- Add browser-level smoke tests for the three page flows
+- Decide whether team cloud should stay as lightweight Supabase edge functions or move to a fuller API model
