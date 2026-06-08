@@ -2,7 +2,7 @@ import { DEFAULT_REPLAY_OPTIONS } from "./constants.js";
 
 /**
  * @typedef {{side:"front"|"rear"|"left"|"right", widthCm:number, lengthCm:number, positionCm:number}} Attachment
- * @typedef {{type:"move"|"rotate", value:number}} MissionAction
+ * @typedef {{type:"move"|"rotate"|"pause", value:number}} MissionAction
  * @typedef {{id:string, name:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[]}} RobotProfile
  * @typedef {{name:string, robotName:string, startX:number, startY:number, startAngle:number, traceColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[], actions:MissionAction[]}} Mission
  * @typedef {{x:number, y:number, headingDeg:number, turnCenterX:number, turnCenterY:number}} Pose
@@ -22,7 +22,7 @@ function normalizeAngle(angleDeg) {
   return ((value % 360) + 360) % 360;
 }
 
-function normalizeColorToHex(colorStr, fallback = "#108368") {
+function normalizeColorToHex(colorStr, fallback = "#0066b3") {
   const raw = String(colorStr || "").trim();
   if (!raw) return fallback;
 
@@ -69,7 +69,7 @@ function normalizeActions(list) {
       type: String(action?.type || "").toLowerCase(),
       value: safeNum(action?.value, 0)
     }))
-    .filter((action) => action.type === "move" || action.type === "rotate");
+    .filter((action) => action.type === "move" || action.type === "rotate" || action.type === "pause");
 }
 
 function normalizeRobot(raw) {
@@ -93,7 +93,7 @@ function normalizeMission(raw) {
     startX: safeNum(source.startX, 0),
     startY: safeNum(source.startY, 0),
     startAngle: normalizeAngle(source.startAngle),
-    traceColor: normalizeColorToHex(source.traceColor, "#108368"),
+    traceColor: normalizeColorToHex(source.traceColor, "#0066b3"),
     robotWidthCm: safeNum(source.robotWidthCm ?? robotSource.robotWidthCm, 12.7),
     robotLengthCm: safeNum(source.robotLengthCm ?? robotSource.robotLengthCm, 20.5),
     offsetY: safeNum(source.offsetY ?? robotSource.offsetY, 0),
@@ -108,7 +108,7 @@ function createDefaultMission() {
     startX: 0,
     startY: 0,
     startAngle: 90,
-    traceColor: "#108368",
+    traceColor: "#0066b3",
     robotWidthCm: 12.7,
     robotLengthCm: 20.5,
     offsetY: 6.1,
@@ -119,6 +119,7 @@ function createDefaultMission() {
     actions: [
       { type: "move", value: 50 },
       { type: "rotate", value: -90 },
+      { type: "pause", value: 3 },
       { type: "move", value: 30 }
     ]
   });
@@ -130,7 +131,7 @@ function createBlankMission() {
     startX: 0,
     startY: 0,
     startAngle: 90,
-    traceColor: "#108368",
+    traceColor: "#0066b3",
     robotWidthCm: 12.7,
     robotLengthCm: 20.5,
     offsetY: 0,
@@ -311,7 +312,7 @@ function buildReplayFrames(missionLike, options = {}) {
   let current = computeStartPoseCm(mission);
   frames.push({ ...current });
 
-  mission.actions.forEach((action) => {
+  mission.actions.forEach((action, actionIndex) => {
     if (action.type === "move") {
       const distanceCm = safeNum(action.value, 0);
       const durationMs = (Math.abs(distanceCm) / moveSpeed) * 1000;
@@ -330,6 +331,14 @@ function buildReplayFrames(missionLike, options = {}) {
         });
       }
       current = frames[frames.length - 1];
+    }
+
+    if (action.type === "pause") {
+      const pauseSeconds = Math.max(0, safeNum(action.value, 0));
+      const steps = Math.max(1, Math.round((pauseSeconds * 1000) / dtMs));
+      for (let step = 1; step <= steps; step += 1) {
+        frames.push({ ...current, pauseActionIndex: actionIndex });
+      }
     }
 
     if (action.type === "rotate") {

@@ -42,6 +42,7 @@ const dom = {
   attachmentCount: document.getElementById("attachment-count"),
   addMove: document.getElementById("add-move"),
   addRotate: document.getElementById("add-rotate"),
+  addPause: document.getElementById("add-pause"),
   actionList: document.getElementById("action-list"),
   missionJson: document.getElementById("mission-json"),
   jsonError: document.getElementById("json-error"),
@@ -141,6 +142,17 @@ function resetReplayState() {
   dom.replaySlider.max = "0";
   updateReplayControls();
   dom.replayCount.textContent = "0 / 0";
+}
+
+function setReplayFrames(frames) {
+  state.replay.frames = Array.isArray(frames) ? frames : [];
+  state.replay.index = 0;
+  dom.replaySlider.value = "0";
+  dom.replaySlider.max = String(Math.max(0, state.replay.frames.length - 1));
+  updateReplayControls();
+  dom.replayCount.textContent = state.replay.frames.length
+    ? `0 / ${Math.max(0, state.replay.frames.length - 1)}`
+    : "0 / 0";
 }
 
 function persistMission() {
@@ -254,7 +266,7 @@ function renderReplayFrame(index) {
   renderer.renderFrameSequence(state.mission, state.replay.frames, safeIndex);
 }
 
-function syncMissionToInputs() {
+function syncMissionToInputs({ skipActions = false } = {}) {
   const mission = state.mission;
   dom.missionName.value = mission.name;
   dom.traceColor.value = mission.traceColor;
@@ -271,21 +283,23 @@ function syncMissionToInputs() {
   }
 
   renderAttachments();
-  renderActions();
+  if (!skipActions) {
+    renderActions();
+  }
 }
 
 function renderMission() {
   renderer.renderMission(state.mission);
 }
 
-function commitMission(nextMission, { preserveReplay = false } = {}) {
+function commitMission(nextMission, { preserveReplay = false, skipActions = false } = {}) {
   state.mission = normalizeMission(nextMission);
   persistMission();
   if (!preserveReplay) {
     stopMissionRun();
     resetReplayState();
   }
-  syncMissionToInputs();
+  syncMissionToInputs({ skipActions });
   renderMission();
 }
 
@@ -312,7 +326,7 @@ function renderActions() {
     row.className = "action-item";
 
     const typeSelect = document.createElement("select");
-    ["move", "rotate"].forEach((type) => {
+    ["move", "rotate", "pause"].forEach((type) => {
       const option = document.createElement("option");
       option.value = type;
       option.textContent = type.toUpperCase();
@@ -332,7 +346,10 @@ function renderActions() {
     valueInput.addEventListener("input", () => {
       const actions = [...state.mission.actions];
       actions[index] = { ...actions[index], value: safeNum(valueInput.value, 0) };
-      commitMission({ ...state.mission, actions });
+      commitMission({ ...state.mission, actions }, { skipActions: true });
+    });
+    valueInput.addEventListener("blur", () => {
+      renderActions();
     });
 
     const deleteButton = document.createElement("button");
@@ -445,13 +462,8 @@ function applyTransferredRobotIfPresent() {
 function buildReplay() {
   stopMissionRun();
   stopReplay();
-  state.replay.frames = buildReplayFrames(state.mission, { fps: state.replay.fps });
-  state.replay.index = 0;
-  dom.replaySlider.max = String(Math.max(0, state.replay.frames.length - 1));
-  dom.replaySlider.value = "0";
-  updateReplayControls();
+  setReplayFrames(buildReplayFrames(state.mission, { fps: state.replay.fps }));
   if (!state.replay.frames.length) {
-    dom.replayCount.textContent = "0 / 0";
     return;
   }
   renderReplayFrame(0);
@@ -497,6 +509,7 @@ function startMissionRun() {
   stopReplay();
   state.run.frames = buildReplayFrames(state.mission, { fps: state.run.fps });
   if (!state.run.frames.length) return;
+  setReplayFrames(state.run.frames);
   state.run.active = true;
   state.run.startTime = performance.now();
   dom.stopMission.disabled = false;
@@ -507,7 +520,7 @@ function startMissionRun() {
       state.run.frames.length - 1,
       Math.floor(((now - state.run.startTime) / 1000) * state.run.fps)
     );
-    renderer.renderFrameSequence(state.mission, state.run.frames, index);
+    renderReplayFrame(index);
     if (index >= state.run.frames.length - 1) {
       stopMissionRun();
       return;
@@ -750,6 +763,13 @@ function attachEventHandlers() {
     });
   });
 
+  dom.addPause.addEventListener("click", () => {
+    commitMission({
+      ...state.mission,
+      actions: [...state.mission.actions, { type: "pause", value: 5 }]
+    });
+  });
+
   dom.addAttachment.addEventListener("click", () => {
     commitMission({
       ...state.mission,
@@ -809,7 +829,10 @@ function attachEventHandlers() {
   });
   dom.resetReplay.addEventListener("click", resetReplay);
   dom.replaySlider.addEventListener("input", () => {
+    stopMissionRun();
+    stopReplay();
     renderReplayFrame(parseInt(dom.replaySlider.value, 10) || 0);
+    updateReplayControls();
   });
 
   dom.connectTeam.addEventListener("click", connectTeam);

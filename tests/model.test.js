@@ -54,6 +54,41 @@ test("buildReplayFrames keeps turn center fixed during rotation", () => {
   assert.equal(Number(end.y.toFixed(3)), Number((start.turnCenterY + 6).toFixed(3)));
 });
 
+test("normalizeMission keeps pause actions", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    actions: [
+      { type: "pause", value: 2 },
+      { type: "bad", value: 99 }
+    ]
+  });
+
+  assert.deepEqual(mission.actions, [{ type: "pause", value: 2 }]);
+});
+
+test("buildReplayFrames holds pose and tags frames during pause", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    actions: [
+      { type: "move", value: 10 },
+      { type: "pause", value: 2 },
+      { type: "move", value: 10 }
+    ]
+  });
+
+  const frames = buildReplayFrames(mission, { fps: 2, moveSpeedCmPerSec: 10 });
+  const pauseFrames = frames.filter((frame) => frame.pauseActionIndex === 1);
+
+  assert.equal(pauseFrames.length, 4);
+  pauseFrames.forEach((frame) => {
+    assert.equal(frame.x, pauseFrames[0].x);
+    assert.equal(frame.y, pauseFrames[0].y);
+    assert.equal(frame.headingDeg, pauseFrames[0].headingDeg);
+    assert.equal(frame.turnCenterX, pauseFrames[0].turnCenterX);
+    assert.equal(frame.turnCenterY, pauseFrames[0].turnCenterY);
+  });
+});
+
 test("poseToTracePointCm resolves to turn center", () => {
   const mission = normalizeMission({
     ...createBlankMission(),

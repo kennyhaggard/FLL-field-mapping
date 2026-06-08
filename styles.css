@@ -1,17 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap');
 
 :root {
-  --bg: #f2f1ed;
-  --ink: #1e232c;
-  --muted: #5d6777;
+  --bg: #f4f7fb;
+  --ink: #172033;
+  --muted: #5f6f86;
   --panel: #ffffff;
-  --panel-2: #f8f6f1;
-  --line: #d9d3c7;
-  --accent: #0f766e;
-  --accent-2: #2563eb;
-  --accent-3: #f59e0b;
-  --danger: #b42318;
-  --shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  --panel-2: #f6f9ff;
+  --line: #d6deeb;
+  --accent: #0066b3;
+  --accent-2: #ed1c24;
+  --accent-3: #ffd200;
+  --accent-4: #7d3c98;
+  --danger: #b00020;
+  --shadow: 0 18px 40px rgba(23, 32, 51, 0.12);
 }
 
 * {
@@ -22,7 +23,7 @@ body {
   margin: 0;
   font-family: "Instrument Sans", "Space Grotesk", sans-serif;
   color: var(--ink);
-  background: radial-gradient(circle at top right, #f9efe5 0%, #f2f1ed 48%, #eef2f5 100%);
+  background: radial-gradient(circle at top right, #fff4c9 0%, #f4f7fb 42%, #eaf2ff 100%);
   min-height: 100vh;
 }
 
@@ -38,7 +39,7 @@ a:hover {
 .header {
   padding: 22px 28px;
   border-bottom: 1px solid var(--line);
-  background: #fffdf8;
+  background: #ffffff;
 }
 
 .header h1 {
@@ -194,8 +195,8 @@ textarea:disabled {
   gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #e3f3f1;
-  color: #0f4c47;
+  background: #eaf2ff;
+  color: #004f9e;
   font-size: 12px;
   font-weight: 600;
 }
@@ -206,8 +207,8 @@ textarea:disabled {
 }
 
 .badge-mode[data-mode="hosted"] {
-  background: #dff5ea;
-  color: #0f4c47;
+  background: #fff3b0;
+  color: #6b4a00;
 }
 
 .mode-banner {
@@ -267,7 +268,7 @@ textarea:disabled {
 .field-wrap {
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 10px;
 }
 
@@ -281,7 +282,7 @@ textarea:disabled {
   padding: 24px;
   border: 1px dashed var(--line);
   border-radius: 12px;
-  background: #fffef8;
+  background: #fff8d6;
   color: var(--danger);
   text-align: center;
   font-size: 14px;
@@ -290,18 +291,18 @@ textarea:disabled {
 #mission-field {
   width: 100%;
   height: auto;
-  border-radius: 12px;
-  background: #fdfcf7;
+  border-radius: 0;
+  background: #ffffff;
 }
 
 #mission-field #layer1 path {
-  fill: #f7f4ec;
+  fill: #f8fbff;
   stroke: #111827;
   stroke-width: 0.6;
 }
 
 #mission-field #layer2 path {
-  stroke: #6bb4ff;
+  stroke: #0066b3;
   stroke-width: 0.8;
 }
 
@@ -374,7 +375,7 @@ textarea:disabled {
 }
 
 .notice-success {
-  color: #0f766e;
+  color: #0066b3;
 }
 
 .signup-wrapper {

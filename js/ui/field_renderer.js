@@ -68,6 +68,7 @@ class FieldRenderer {
     }
 
     this.renderTrace(mission, frames, safeIndex);
+    this.renderPauseOutlines(mission, frames, safeIndex);
   }
 
   getScale() {
@@ -103,7 +104,7 @@ class FieldRenderer {
     const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
     polyline.setAttribute("data-dynamic", "1");
     polyline.setAttribute("fill", "none");
-    polyline.setAttribute("stroke", color || "#108368");
+    polyline.setAttribute("stroke", color || "#0066b3");
     polyline.setAttribute("stroke-width", "2.4");
     polyline.setAttribute("stroke-linecap", "round");
     polyline.setAttribute("stroke-linejoin", "round");
@@ -127,6 +128,68 @@ class FieldRenderer {
     trace.setAttribute("points", points.join(" "));
   }
 
+  renderPauseOutlines(mission, frames, frameIndex) {
+    if (!this.svg) return;
+
+    Array.from(this.svg.querySelectorAll('[data-pause-outline="1"]')).forEach((node) => node.remove());
+
+    const safeIndex = typeof frameIndex === "number" ? frameIndex : frames.length - 1;
+    const pausePoses = new Map();
+    for (let index = 0; index <= safeIndex; index += 1) {
+      const frame = frames[index];
+      if (!Number.isInteger(frame?.pauseActionIndex)) continue;
+      if (!pausePoses.has(frame.pauseActionIndex)) {
+        pausePoses.set(frame.pauseActionIndex, frame);
+      }
+    }
+
+    pausePoses.forEach((pose) => {
+      this.drawRobotOutline(mission, pose, "#7d3c98");
+    });
+  }
+
+  drawRobotOutline(mission, pose, color) {
+    const { scaleX, scaleY } = this.getScale();
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    group.setAttribute("data-dynamic", "1");
+    group.setAttribute("data-pause-outline", "1");
+    group.setAttribute("fill", "none");
+    group.setAttribute("stroke", color);
+    group.setAttribute("stroke-width", "2.4");
+    group.setAttribute("stroke-linejoin", "round");
+    group.setAttribute("vector-effect", "non-scaling-stroke");
+    group.setAttribute("opacity", "0.9");
+
+    const baseRect = this.rectToSvg({
+      xMin: -mission.robotWidthCm / 2,
+      yMin: -mission.robotLengthCm / 2,
+      width: mission.robotWidthCm,
+      height: mission.robotLengthCm
+    });
+    const base = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    base.setAttribute("x", baseRect.x);
+    base.setAttribute("y", baseRect.y);
+    base.setAttribute("width", baseRect.width);
+    base.setAttribute("height", baseRect.height);
+    group.appendChild(base);
+
+    mission.attachments.forEach((attachment) => {
+      const rectCm = getAttachmentRectCm(attachment, mission);
+      if (!rectCm) return;
+      const rect = this.rectToSvg(rectCm);
+      const attachmentEl = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      attachmentEl.setAttribute("x", rect.x);
+      attachmentEl.setAttribute("y", rect.y);
+      attachmentEl.setAttribute("width", rect.width);
+      attachmentEl.setAttribute("height", rect.height);
+      attachmentEl.setAttribute("stroke-width", String(Math.max(1.6, Math.min(scaleX, scaleY) * 0.45)));
+      group.appendChild(attachmentEl);
+    });
+
+    this.svg.insertBefore(group, this.robotEl || null);
+    this.updateGroupTransform(group, pose);
+  }
+
   drawRobot(mission, pose) {
     if (!this.svg) return;
 
@@ -145,7 +208,7 @@ class FieldRenderer {
     base.setAttribute("y", baseRect.y);
     base.setAttribute("width", baseRect.width);
     base.setAttribute("height", baseRect.height);
-    base.setAttribute("fill", "rgba(16, 131, 104, 0.24)");
+    base.setAttribute("fill", "rgba(0, 102, 179, 0.22)");
     base.setAttribute("stroke", mission.traceColor);
     base.setAttribute("stroke-width", "2");
     group.appendChild(base);
@@ -172,10 +235,15 @@ class FieldRenderer {
 
   updateRobotTransform(poseLike) {
     if (!this.robotEl) return;
+    this.updateGroupTransform(this.robotEl, poseLike);
+  }
+
+  updateGroupTransform(group, poseLike) {
+    if (!group) return;
     const pose = poseLike || {};
     const svgPoint = this.fieldToSvgPoint(pose.x || 0, pose.y || 0);
     const headingDeg = Number.isFinite(pose.headingDeg) ? pose.headingDeg : pose.angle || 0;
-    this.robotEl.setAttribute(
+    group.setAttribute(
       "transform",
       `translate(${svgPoint.x.toFixed(2)}, ${svgPoint.y.toFixed(2)}) rotate(${(90 - headingDeg).toFixed(2)})`
     );

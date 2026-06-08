@@ -34,8 +34,8 @@ class RobotCanvas {
     base.setAttribute("y", String(-this.robot.robotLengthCm / 2));
     base.setAttribute("width", String(this.robot.robotWidthCm));
     base.setAttribute("height", String(this.robot.robotLengthCm));
-    base.setAttribute("fill", "rgba(16, 131, 104, 0.18)");
-    base.setAttribute("stroke", "#0f766e");
+    base.setAttribute("fill", "rgba(0, 102, 179, 0.18)");
+    base.setAttribute("stroke", "#0066b3");
     base.setAttribute("stroke-width", "1.6");
     this.svg.appendChild(base);
 
