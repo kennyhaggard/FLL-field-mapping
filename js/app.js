@@ -318,6 +318,12 @@ function updateMissionFromInputs() {
   });
 }
 
+function getActionUnit(type) {
+  if (type === "rotate") return "°";
+  if (type === "pause") return "sec";
+  return "cm";
+}
+
 function renderActions() {
   dom.actionList.innerHTML = "";
 
@@ -352,6 +358,13 @@ function renderActions() {
       renderActions();
     });
 
+    const valueField = document.createElement("div");
+    valueField.className = "action-value-field";
+    const unitLabel = document.createElement("span");
+    unitLabel.className = "action-unit";
+    unitLabel.textContent = getActionUnit(action.type);
+    valueField.append(valueInput, unitLabel);
+
     const deleteButton = document.createElement("button");
     deleteButton.className = "btn-ghost";
     deleteButton.textContent = "Delete";
@@ -360,7 +373,7 @@ function renderActions() {
       commitMission({ ...state.mission, actions });
     });
 
-    row.append(typeSelect, valueInput, deleteButton);
+    row.append(typeSelect, valueField, deleteButton);
     dom.actionList.appendChild(row);
   });
 }
