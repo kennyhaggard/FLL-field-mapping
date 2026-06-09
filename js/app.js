@@ -117,6 +117,10 @@ function setTeamStatus(message) {
   dom.teamStatus.textContent = message;
 }
 
+function getCloudErrorMessage(result, fallback) {
+  return String(result?.error || fallback || "Cloud request failed.");
+}
+
 function stopReplay() {
   state.replay.playing = false;
   if (state.replay.rafId) {
@@ -611,35 +615,57 @@ async function connectTeam() {
   }
 
   setTeamStatus(`Connected as ${name}. Syncing...`);
-  await refreshTeamData();
+  const loaded = await refreshTeamData();
+  if (!loaded) {
+    state.teamSession = {
+      ...state.teamSession,
+      connected: false
+    };
+    persistTeamSession();
+    updateTeamControls();
+  }
 }
 
 async function refreshTeamData() {
-  if (!state.teamSession.connected) return;
+  if (!state.teamSession.connected) return false;
   if (!runtime.allowsCloudSync) {
     setTeamStatus("Cloud sync is disabled in local mode.");
-    return;
+    return false;
   }
 
   try {
     const [missionsResult, robotsResult] = await Promise.all([
       cloud.listMissions(state.teamSession),
-      cloud.listRobots(state.teamSession).catch(() => ({ robots: [] }))
+      cloud.listRobots(state.teamSession).catch((error) => ({
+        ok: false,
+        error: error.message || "Could not load robots."
+      }))
     ]);
+
+    if (!missionsResult?.ok) {
+      throw new Error(getCloudErrorMessage(missionsResult, "Could not load missions."));
+    }
 
     state.teamData.missions = (missionsResult?.missions || []).map((mission) => ({
       name: mission.name || mission.missionName || "Untitled"
     }));
-    state.teamData.robots = (robotsResult?.robots || []).map((robot) => ({
+    state.teamData.robots = robotsResult?.ok ? (robotsResult?.robots || []).map((robot) => ({
       name: robot.name || robot.robotName || "Untitled"
-    }));
+    })) : [];
     renderTeamMissions();
     renderTeamRobots();
-    setTeamStatus(
-      `Loaded ${state.teamData.missions.length} missions and ${state.teamData.robots.length} robots.`
-    );
+    const robotNote = robotsResult?.ok
+      ? `${state.teamData.robots.length} robots`
+      : `robot sync unavailable: ${getCloudErrorMessage(robotsResult, "Could not load robots.")}`;
+    setTeamStatus(`Loaded ${state.teamData.missions.length} missions and ${robotNote}.`);
+    return true;
   } catch (error) {
-    setTeamStatus("Could not load team data.");
+    state.teamData.missions = [];
+    state.teamData.robots = [];
+    renderTeamMissions();
+    renderTeamRobots();
+    setTeamStatus(`Could not load team data: ${error.message}`);
+    return false;
   }
 }
 
@@ -649,13 +675,13 @@ async function loadTeamMission() {
 
   try {
     const data = await cloud.getMission(state.teamSession, missionName);
-    if (!data?.mission) {
-      throw new Error("missing-mission");
+    if (!data?.ok || !data?.mission) {
+      throw new Error(getCloudErrorMessage(data, "Mission not found."));
     }
     commitMission(data.mission);
     setTeamStatus(`Loaded mission "${missionName}".`);
   } catch (error) {
-    setTeamStatus("Could not load mission.");
+    setTeamStatus(`Could not load mission: ${error.message}`);
   }
 }
 
@@ -669,13 +695,13 @@ async function saveTeamMission() {
   try {
     const result = await cloud.saveMission(state.teamSession, state.mission);
     if (!result?.ok) {
-      throw new Error("save-failed");
+      throw new Error(getCloudErrorMessage(result, "Save failed."));
     }
     await refreshTeamData();
     dom.teamMissionSelect.value = missionName;
     setTeamStatus(`Saved mission "${missionName}".`);
   } catch (error) {
-    setTeamStatus("Could not save mission.");
+    setTeamStatus(`Could not save mission: ${error.message}`);
   }
 }
 
@@ -687,12 +713,12 @@ async function deleteTeamMission() {
   try {
     const result = await cloud.deleteMission(state.teamSession, missionName);
     if (!result?.ok) {
-      throw new Error("delete-failed");
+      throw new Error(getCloudErrorMessage(result, "Delete failed."));
     }
     await refreshTeamData();
     setTeamStatus(`Deleted mission "${missionName}".`);
   } catch (error) {
-    setTeamStatus("Could not delete mission.");
+    setTeamStatus(`Could not delete mission: ${error.message}`);
   }
 }
 
@@ -702,13 +728,13 @@ async function loadTeamRobot() {
 
   try {
     const data = await cloud.getRobot(state.teamSession, robotName);
-    if (!data?.robot) {
-      throw new Error("missing-robot");
+    if (!data?.ok || !data?.robot) {
+      throw new Error(getCloudErrorMessage(data, "Robot not found."));
     }
     applyRobotProfile(data.robot);
     setTeamStatus(`Loaded robot "${robotName}".`);
   } catch (error) {
-    setTeamStatus("Could not load robot.");
+    setTeamStatus(`Could not load robot: ${error.message}`);
   }
 }
 
@@ -722,13 +748,13 @@ async function saveTeamRobot() {
   try {
     const result = await cloud.saveRobot(state.teamSession, robot);
     if (!result?.ok) {
-      throw new Error("save-failed");
+      throw new Error(getCloudErrorMessage(result, "Save failed."));
     }
     await refreshTeamData();
     dom.teamRobotSelect.value = robot.name;
     setTeamStatus(`Saved robot "${robot.name}".`);
   } catch (error) {
-    setTeamStatus("Could not save robot.");
+    setTeamStatus(`Could not save robot: ${error.message}`);
   }
 }
 
@@ -740,12 +766,12 @@ async function deleteTeamRobot() {
   try {
     const result = await cloud.deleteRobot(state.teamSession, robotName);
     if (!result?.ok) {
-      throw new Error("delete-failed");
+      throw new Error(getCloudErrorMessage(result, "Delete failed."));
     }
     await refreshTeamData();
     setTeamStatus(`Deleted robot "${robotName}".`);
   } catch (error) {
-    setTeamStatus("Could not delete robot.");
+    setTeamStatus(`Could not delete robot: ${error.message}`);
   }
 }
 

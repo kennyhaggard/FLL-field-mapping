@@ -37,12 +37,20 @@ Deno.serve(async (req) => {
       .eq("team_name", teamName)
       .maybeSingle();
 
-    if (teamErr || !team) return json({ ok: false, error: "Team not found" }, 404);
+    if (teamErr) {
+      console.error("Team lookup error:", teamErr);
+      return json({ ok: false, error: `DB error loading team: ${teamErr.message}` }, 500);
+    }
+    if (!team) return json({ ok: false, error: "Team not found" }, 404);
 
     const { data: pinOk, error: pinErr } = await supabaseAdmin
       .rpc("verify_team_pin", { team_id_in: team.id, pin_in: pin });
 
-    if (pinErr || !pinOk) return json({ ok: false, error: "Invalid PIN" }, 401);
+    if (pinErr) {
+      console.error("PIN verification error:", pinErr);
+      return json({ ok: false, error: `DB error verifying PIN: ${pinErr.message}` }, 500);
+    }
+    if (!pinOk) return json({ ok: false, error: "Invalid PIN" }, 401);
 
     const { error: delErr, count } = await supabaseAdmin
       .from("robots")
@@ -50,7 +58,10 @@ Deno.serve(async (req) => {
       .eq("team_id", team.id)
       .eq("name", robotName);
 
-    if (delErr) return json({ ok: false, error: "DB error deleting robot" }, 500);
+    if (delErr) {
+      console.error("Delete robot error:", delErr);
+      return json({ ok: false, error: `DB error deleting robot: ${delErr.message}` }, 500);
+    }
     if (!count || count === 0) return json({ ok: false, error: "Robot not found" }, 404);
 
     return json({ ok: true, deleted: count, name: robotName });

@@ -42,13 +42,21 @@ Deno.serve(async (req) => {
       .eq("team_name", teamName)
       .maybeSingle();
 
-    if (teamErr || !team) return json({ ok: false, error: "Team not found" }, 404);
+    if (teamErr) {
+      console.error("Team lookup error:", teamErr);
+      return json({ ok: false, error: `DB error loading team: ${teamErr.message}` }, 500);
+    }
+    if (!team) return json({ ok: false, error: "Team not found" }, 404);
 
     // 2) Verify pin (same RPC as list_missions)
     const { data: pinOk, error: pinErr } = await supabaseAdmin
       .rpc("verify_team_pin", { team_id_in: team.id, pin_in: pin });
 
-    if (pinErr || !pinOk) return json({ ok: false, error: "Invalid PIN" }, 401);
+    if (pinErr) {
+      console.error("PIN verification error:", pinErr);
+      return json({ ok: false, error: `DB error verifying PIN: ${pinErr.message}` }, 500);
+    }
+    if (!pinOk) return json({ ok: false, error: "Invalid PIN" }, 401);
 
     // 3) Delete mission by team_id + name
     const { error: delErr, count } = await supabaseAdmin
@@ -57,7 +65,10 @@ Deno.serve(async (req) => {
       .eq("team_id", team.id)
       .eq("name", missionName);
 
-    if (delErr) return json({ ok: false, error: "DB error deleting mission" }, 500);
+    if (delErr) {
+      console.error("Delete mission error:", delErr);
+      return json({ ok: false, error: `DB error deleting mission: ${delErr.message}` }, 500);
+    }
     if (!count || count === 0) return json({ ok: false, error: "Mission not found" }, 404);
 
     return json({ ok: true, deleted: count, name: missionName });

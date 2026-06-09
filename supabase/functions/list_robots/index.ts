@@ -34,12 +34,20 @@ Deno.serve(async (req) => {
       .eq("team_name", teamName)
       .maybeSingle();
 
-    if (teamErr || !team) return json({ ok: false, error: "Team not found" }, 404);
+    if (teamErr) {
+      console.error("Team lookup error:", teamErr);
+      return json({ ok: false, error: `DB error loading team: ${teamErr.message}` }, 500);
+    }
+    if (!team) return json({ ok: false, error: "Team not found" }, 404);
 
     const { data: pinOk, error: pinErr } = await supabaseAdmin
       .rpc("verify_team_pin", { team_id_in: team.id, pin_in: pin });
 
-    if (pinErr || !pinOk) return json({ ok: false, error: "Invalid PIN" }, 401);
+    if (pinErr) {
+      console.error("PIN verification error:", pinErr);
+      return json({ ok: false, error: `DB error verifying PIN: ${pinErr.message}` }, 500);
+    }
+    if (!pinOk) return json({ ok: false, error: "Invalid PIN" }, 401);
 
     const { data: robots, error } = await supabaseAdmin
       .from("robots")
@@ -47,7 +55,10 @@ Deno.serve(async (req) => {
       .eq("team_id", team.id)
       .order("updated_at", { ascending: false });
 
-    if (error) return json({ ok: false, error: "DB error listing robots" }, 500);
+    if (error) {
+      console.error("List robots error:", error);
+      return json({ ok: false, error: `DB error listing robots: ${error.message}` }, 500);
+    }
 
     return json({ ok: true, robots: robots ?? [] });
   } catch (e) {

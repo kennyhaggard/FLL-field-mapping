@@ -31,17 +31,25 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { data: team } = await supabaseAdmin
+    const { data: team, error: teamErr } = await supabaseAdmin
       .from("teams")
       .select("id")
       .eq("team_name", teamName)
       .maybeSingle();
 
+    if (teamErr) {
+      console.error("Team lookup error:", teamErr);
+      return json({ ok: false, error: `DB error loading team: ${teamErr.message}` }, 500);
+    }
     if (!team) return json({ ok: false, error: "Team not found" }, 404);
 
-    const { data: pinOk } = await supabaseAdmin
+    const { data: pinOk, error: pinErr } = await supabaseAdmin
       .rpc("verify_team_pin", { team_id_in: team.id, pin_in: pin });
 
+    if (pinErr) {
+      console.error("PIN verification error:", pinErr);
+      return json({ ok: false, error: `DB error verifying PIN: ${pinErr.message}` }, 500);
+    }
     if (!pinOk) return json({ ok: false, error: "Invalid PIN" }, 401);
 
     const { data: row, error } = await supabaseAdmin
@@ -51,7 +59,11 @@ Deno.serve(async (req) => {
       .eq("name", missionName)
       .maybeSingle();
 
-    if (error || !row) return json({ ok: false, error: "Mission not found" }, 404);
+    if (error) {
+      console.error("Get mission error:", error);
+      return json({ ok: false, error: `DB error loading mission: ${error.message}` }, 500);
+    }
+    if (!row) return json({ ok: false, error: "Mission not found" }, 404);
 
     return json({ ok: true, mission: row.mission, updatedAt: row.updated_at });
   } catch (e) {
