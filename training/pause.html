@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Pause Blocks | Field Mapping Training</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body data-lesson-id="pause">
+  <header class="header">
+    <h1 id="lesson-title">Training Lesson</h1>
+    <p id="lesson-objective"></p>
+    <nav class="nav">
+      <a href="../training.html">Training</a>
+      <a href="../index.html">Mission Tool</a>
+      <a href="../robot_builder.html">Robot Builder</a>
+    </nav>
+  </header>
+  <main class="training-layout">
+    <section class="panel training-lesson-panel">
+      <div class="section-title" id="lesson-eyebrow"></div>
+      <h2>Guided Setup</h2>
+      <ol id="lesson-steps"></ol>
+      <h2>Try It</h2>
+      <ul id="lesson-try-it"></ul>
+      <div class="divider"></div>
+      <div class="button-row training-nav-row">
+        <a class="btn-pill btn-ghost" id="lesson-prev" href="../training.html">Training Hub</a>
+        <a class="btn-pill btn-secondary" id="lesson-next" href="../training.html">Next</a>
+      </div>
+    </section>
+    <section class="panel training-sandbox-panel">
+      <div class="section-title">Sandbox</div>
+      <div class="training-controls" id="lesson-controls"></div>
+      <div class="button-row" style="margin-top:12px;">
+        <button class="btn-ghost" id="lesson-reset">Reset Lesson</button>
+      </div>
+      <div class="training-preview-grid">
+        <div id="lesson-field-panel">
+          <div id="lesson-field-host" class="mission-field-host"></div>
+          <div class="training-replay-controls" id="lesson-replay-controls">
+            <div class="button-row">
+              <button class="btn-ghost" id="lesson-show-start">Show Start</button>
+              <button class="btn-primary" id="lesson-show-finish">Show Finish</button>
+            </div>
+            <label>
+              Frame
+              <input id="lesson-frame-slider" type="range" min="0" max="0" value="0" />
+            </label>
+            <span class="status" id="lesson-frame-count">0 / 0</span>
+          </div>
+        </div>
+        <div id="lesson-robot-panel">
+          <svg id="lesson-robot-canvas" class="training-robot-canvas" viewBox="-80 -80 160 160" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="../js/training/lesson_page.js"></script>
+</body>
+</html>

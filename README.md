@@ -17,6 +17,8 @@ FLL Field Mapping Studio is a browser-based route planner for First LEGO League 
 
 - `index.html`: main mission-planning interface
 - `robot_builder.html`: robot footprint and attachment editor
+- `training.html`: student-facing lesson hub for focused field mapping practice
+- `training/`: guided lesson pages with purpose-built sandboxes
 - `team_signup.html`: hosted registration flow for team cloud access
 - `introduction.html`: user-facing explanation of the workflow and assumptions
 - `js/domain/`: pure mission, robot, replay, storage, share, and runtime modules
