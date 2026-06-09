@@ -4,7 +4,7 @@ import { DEFAULT_REPLAY_OPTIONS } from "./constants.js";
  * @typedef {{side:"front"|"rear"|"left"|"right", widthCm:number, lengthCm:number, positionCm:number}} Attachment
  * @typedef {{type:"move"|"rotate"|"pause", value:number}} MissionAction
  * @typedef {{id:string, name:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[]}} RobotProfile
- * @typedef {{name:string, robotName:string, startX:number, startY:number, startAngle:number, traceColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[], actions:MissionAction[]}} Mission
+ * @typedef {{name:string, robotName:string, robot:RobotProfile, startX:number, startY:number, startAngle:number, traceColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[], actions:MissionAction[]}} Mission
  * @typedef {{x:number, y:number, headingDeg:number, turnCenterX:number, turnCenterY:number}} Pose
  */
 
@@ -87,17 +87,32 @@ function normalizeRobot(raw) {
 function normalizeMission(raw) {
   const source = raw || {};
   const robotSource = source.robot || {};
+  const robotName = String(source.robotName || robotSource.name || "");
+  const robotWidthCm = safeNum(source.robotWidthCm ?? robotSource.robotWidthCm, 12.7);
+  const robotLengthCm = safeNum(source.robotLengthCm ?? robotSource.robotLengthCm, 20.5);
+  const offsetY = safeNum(source.offsetY ?? robotSource.offsetY, 0);
+  const attachments = normalizeAttachments(source.attachments || robotSource.attachments || []);
+  const robot = normalizeRobot({
+    ...robotSource,
+    name: robotName || robotSource.name || "Mission Robot",
+    robotWidthCm,
+    robotLengthCm,
+    offsetY,
+    attachments
+  });
+
   return {
     name: String(source.name || "Untitled Mission"),
-    robotName: String(source.robotName || robotSource.name || ""),
+    robotName: robot.name,
+    robot,
     startX: safeNum(source.startX, 0),
     startY: safeNum(source.startY, 0),
     startAngle: normalizeAngle(source.startAngle),
     traceColor: normalizeColorToHex(source.traceColor, "#0066b3"),
-    robotWidthCm: safeNum(source.robotWidthCm ?? robotSource.robotWidthCm, 12.7),
-    robotLengthCm: safeNum(source.robotLengthCm ?? robotSource.robotLengthCm, 20.5),
-    offsetY: safeNum(source.offsetY ?? robotSource.offsetY, 0),
-    attachments: normalizeAttachments(source.attachments || robotSource.attachments || []),
+    robotWidthCm: robot.robotWidthCm,
+    robotLengthCm: robot.robotLengthCm,
+    offsetY: robot.offsetY,
+    attachments: robot.attachments,
     actions: normalizeActions(source.actions || [])
   };
 }
@@ -156,6 +171,7 @@ function applyRobotToMission(missionLike, robotLike) {
   return normalizeMission({
     ...mission,
     robotName: robot.name,
+    robot,
     robotWidthCm: robot.robotWidthCm,
     robotLengthCm: robot.robotLengthCm,
     offsetY: robot.offsetY,

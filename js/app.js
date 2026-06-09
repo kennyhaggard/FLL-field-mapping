@@ -187,6 +187,27 @@ function createRobotFromMission() {
   });
 }
 
+function withMissionRobot(nextMission) {
+  const robot = normalizeRobot({
+    ...(nextMission.robot || {}),
+    name: nextMission.robotName || nextMission.robot?.name || "Mission Robot",
+    robotWidthCm: nextMission.robotWidthCm,
+    robotLengthCm: nextMission.robotLengthCm,
+    offsetY: nextMission.offsetY,
+    attachments: nextMission.attachments
+  });
+
+  return {
+    ...nextMission,
+    robotName: robot.name,
+    robot,
+    robotWidthCm: robot.robotWidthCm,
+    robotLengthCm: robot.robotLengthCm,
+    offsetY: robot.offsetY,
+    attachments: robot.attachments
+  };
+}
+
 function updateRuntimeBanner() {
   dom.runtimeBadge.textContent = runtime.label;
   dom.runtimeBadge.dataset.mode = runtime.kind;
@@ -304,18 +325,20 @@ function commitMission(nextMission, { preserveReplay = false, skipActions = fals
 }
 
 function updateMissionFromInputs() {
-  commitMission({
-    ...state.mission,
-    name: dom.missionName.value.trim() || "Untitled Mission",
-    traceColor: dom.traceColor.value,
-    startX: safeNum(dom.startX.value, 0),
-    startY: safeNum(dom.startY.value, 0),
-    startAngle: safeNum(dom.startAngle.value, 0),
-    robotWidthCm: safeNum(dom.robotWidth.value, 0),
-    robotLengthCm: safeNum(dom.robotLength.value, 0),
-    offsetY: safeNum(dom.robotOffset.value, 0),
-    robotName: dom.robotName.value.trim()
-  });
+  commitMission(
+    withMissionRobot({
+      ...state.mission,
+      name: dom.missionName.value.trim() || "Untitled Mission",
+      traceColor: dom.traceColor.value,
+      startX: safeNum(dom.startX.value, 0),
+      startY: safeNum(dom.startY.value, 0),
+      startAngle: safeNum(dom.startAngle.value, 0),
+      robotWidthCm: safeNum(dom.robotWidth.value, 0),
+      robotLengthCm: safeNum(dom.robotLength.value, 0),
+      offsetY: safeNum(dom.robotOffset.value, 0),
+      robotName: dom.robotName.value.trim()
+    })
+  );
 }
 
 function getActionUnit(type) {
@@ -398,7 +421,7 @@ function renderAttachments() {
     side.addEventListener("change", () => {
       const attachmentsNext = [...state.mission.attachments];
       attachmentsNext[index] = { ...attachmentsNext[index], side: side.value };
-      commitMission({ ...state.mission, attachments: attachmentsNext });
+      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
     });
 
     const width = document.createElement("input");
@@ -408,7 +431,7 @@ function renderAttachments() {
     width.addEventListener("input", () => {
       const attachmentsNext = [...state.mission.attachments];
       attachmentsNext[index] = { ...attachmentsNext[index], widthCm: safeNum(width.value, 0) };
-      commitMission({ ...state.mission, attachments: attachmentsNext });
+      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
     });
 
     const length = document.createElement("input");
@@ -418,7 +441,7 @@ function renderAttachments() {
     length.addEventListener("input", () => {
       const attachmentsNext = [...state.mission.attachments];
       attachmentsNext[index] = { ...attachmentsNext[index], lengthCm: safeNum(length.value, 0) };
-      commitMission({ ...state.mission, attachments: attachmentsNext });
+      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
     });
 
     const position = document.createElement("input");
@@ -428,7 +451,7 @@ function renderAttachments() {
     position.addEventListener("input", () => {
       const attachmentsNext = [...state.mission.attachments];
       attachmentsNext[index] = { ...attachmentsNext[index], positionCm: safeNum(position.value, 0) };
-      commitMission({ ...state.mission, attachments: attachmentsNext });
+      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
     });
 
     const deleteButton = document.createElement("button");
@@ -438,7 +461,7 @@ function renderAttachments() {
       const attachmentsNext = state.mission.attachments.filter(
         (_, attachmentIndex) => attachmentIndex !== index
       );
-      commitMission({ ...state.mission, attachments: attachmentsNext });
+      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
     });
 
     row.append(side, width, length, position, deleteButton);

@@ -25,8 +25,28 @@ test("normalize mission uses nested robot profile values", () => {
   });
 
   assert.equal(mission.robotName, "Nested Bot");
+  assert.equal(mission.robot.name, "Nested Bot");
   assert.equal(mission.robotWidthCm, 14);
+  assert.equal(mission.robot.robotWidthCm, 14);
   assert.equal(mission.attachments.length, 1);
+  assert.equal(mission.robot.attachments.length, 1);
+});
+
+test("normalizeMission preserves a robot snapshot for flat mission fields", () => {
+  const mission = normalizeMission({
+    name: "Flat",
+    robotName: "Flat Bot",
+    robotWidthCm: 15,
+    robotLengthCm: 20,
+    offsetY: 2,
+    attachments: [{ side: "rear", widthCm: 4, lengthCm: 5, positionCm: 1 }]
+  });
+
+  assert.equal(mission.robot.name, "Flat Bot");
+  assert.equal(mission.robot.robotWidthCm, 15);
+  assert.equal(mission.robot.robotLengthCm, 20);
+  assert.equal(mission.robot.offsetY, 2);
+  assert.deepEqual(mission.robot.attachments, mission.attachments);
 });
 
 test("normalizeColorToHex keeps hex stable and expands rgb values", () => {
@@ -116,6 +136,9 @@ test("applyRobotToMission replaces robot geometry and attachments", () => {
 
   const nextMission = applyRobotToMission(mission, robot);
   assert.equal(nextMission.robotName, "Sweeper");
+  assert.equal(nextMission.robot.name, "Sweeper");
   assert.equal(nextMission.robotWidthCm, 16);
+  assert.equal(nextMission.robot.robotWidthCm, 16);
   assert.equal(nextMission.attachments[0].side, "left");
+  assert.equal(nextMission.robot.attachments[0].side, "left");
 });
