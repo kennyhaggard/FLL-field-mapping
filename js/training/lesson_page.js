@@ -308,7 +308,7 @@ function startPlayback() {
   playback.rafId = requestAnimationFrame(step);
 }
 
-function updatePreview(mode = "finish") {
+function updatePreview(mode = "start") {
   stopPlayback();
 
   if (robotCanvas) {
@@ -323,7 +323,13 @@ function updatePreview(mode = "finish") {
     dom.frameSlider.max = String(Math.max(0, frames.length - 1));
     if (dom.start) dom.start.disabled = !frames.length;
     const current = Number(dom.frameSlider.value || 0);
-    setFrame(mode === "current" ? current : frames.length - 1);
+    if (mode === "finish") {
+      setFrame(frames.length - 1);
+    } else if (mode === "current") {
+      setFrame(current);
+    } else {
+      setFrame(0);
+    }
   } else {
     dom.replayControls.style.display = "none";
     if (dom.start) dom.start.disabled = true;
@@ -339,7 +345,7 @@ function resetLesson() {
   mission = lesson.starterMission ? normalizeMission(clone(lesson.starterMission)) : null;
   robot = lesson.starterRobot ? normalizeRobot(clone(lesson.starterRobot)) : normalizeRobot(mission?.robot);
   renderControls();
-  updatePreview("finish");
+  updatePreview("start");
 }
 
 async function init() {
