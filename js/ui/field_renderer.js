@@ -118,6 +118,15 @@ class FieldRenderer {
     const trace = this.ensureTrace(mission.traceColor);
     if (!trace) return;
 
+    trace.setAttribute("stroke", mission.traceColor || "#0066b3");
+    trace.setAttribute("opacity", "1");
+    trace.setAttribute("stroke-dasharray", "");
+    trace.setAttribute("data-active-trace", "1");
+    trace.setAttribute("data-training-trace", "");
+    this.setTracePoints(trace, mission, frames, frameIndex);
+  }
+
+  setTracePoints(trace, mission, frames, frameIndex) {
     const safeIndex = typeof frameIndex === "number" ? frameIndex : frames.length - 1;
     const points = [];
     for (let index = 0; index <= safeIndex; index += 1) {
@@ -126,6 +135,29 @@ class FieldRenderer {
       points.push(`${svgPoint.x.toFixed(2)},${svgPoint.y.toFixed(2)}`);
     }
     trace.setAttribute("points", points.join(" "));
+  }
+
+  addTraceOverlay(missionLike, frames, frameIndex, color = "#0066b3") {
+    const mission = normalizeMission(missionLike);
+    if (!this.svg || !Array.isArray(frames) || !frames.length) return null;
+
+    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    polyline.setAttribute("data-training-trace", "1");
+    polyline.setAttribute("fill", "none");
+    polyline.setAttribute("stroke", color);
+    polyline.setAttribute("stroke-width", "3");
+    polyline.setAttribute("stroke-linecap", "round");
+    polyline.setAttribute("stroke-linejoin", "round");
+    polyline.setAttribute("vector-effect", "non-scaling-stroke");
+    polyline.setAttribute("opacity", "0.82");
+    this.setTracePoints(polyline, mission, frames, frameIndex);
+    this.svg.insertBefore(polyline, this.robotEl || null);
+    return polyline;
+  }
+
+  clearTraceOverlays() {
+    if (!this.svg) return;
+    Array.from(this.svg.querySelectorAll('[data-training-trace="1"]')).forEach((node) => node.remove());
   }
 
   renderPauseOutlines(mission, frames, frameIndex) {

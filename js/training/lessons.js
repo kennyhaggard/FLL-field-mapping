@@ -202,21 +202,24 @@ const lessons = [
       startAngle: 90,
       offsetY: 0,
       robot: { ...baseRobot, offsetY: 0 },
-      actions: [{ type: "rotate", value: 90 }]
+      actions: [
+        { type: "move", value: 30 },
+        { type: "rotate", value: -45 },
+        { type: "move", value: 30 }
+      ]
     }),
     controls: [
       { type: "missionNumber", key: "offsetY", label: "Offset Y", unit: "cm", step: 0.5 },
-      { type: "preset", label: "Compare offsets", key: "offsetY", values: [0, 4, 8], unit: "cm" },
-      { type: "actionNumber", actionIndex: 0, label: "Rotation", unit: "degrees", step: 1 }
+      { type: "preset", label: "Compare offsets", key: "offsetY", values: [0, 4, 8], unit: "cm" }
     ],
     steps: [
-      "Start at 0 cm.",
-      "Try 4 cm and 8 cm.",
-      "Offset is center to turn point."
+      "Route: move 30, rotate -45, move 30.",
+      "Run offset 0, 4, and 8 cm.",
+      "Clear traces to restart."
     ],
     tryIt: [
-      "Make the front swing wider.",
-      "Return to 0 cm."
+      "Compare the three traces.",
+      "Find the widest swing."
     ]
   },
   {

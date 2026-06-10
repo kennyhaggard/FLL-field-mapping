@@ -3,7 +3,7 @@ import {
   normalizeMission,
   normalizeRobot
 } from "../domain/model.js";
-import { FieldRenderer } from "../ui/field_renderer.js?v=front-indicator";
+import { FieldRenderer } from "../ui/field_renderer.js?v=offset-traces";
 import { RobotCanvas } from "../ui/robot_canvas.js?v=front-indicator";
 import { getLesson, lessons } from "./lessons.js";
 
@@ -28,6 +28,7 @@ const dom = {
   frameSlider: document.getElementById("lesson-frame-slider"),
   frameCount: document.getElementById("lesson-frame-count"),
   start: document.getElementById("lesson-start"),
+  clearTraces: document.getElementById("lesson-clear-traces"),
   showStart: document.getElementById("lesson-show-start"),
   showFinish: document.getElementById("lesson-show-finish")
 };
@@ -42,6 +43,7 @@ let playback = {
   rafId: null,
   fps: 20
 };
+const isOffsetLesson = lesson?.id === "offset";
 
 function refreshTrainingStylesheet() {
   const link = document.querySelector("link[rel='stylesheet'][href*='styles.css']");
@@ -156,7 +158,7 @@ function renderControls() {
         button.addEventListener("click", () => {
           setMissionValue(control.key, value);
           renderControls();
-          updatePreview("finish");
+          updatePreview(isOffsetLesson ? "start" : "finish");
         });
         row.appendChild(button);
       });
@@ -240,6 +242,21 @@ function ensureStartButton() {
   dom.start = button;
 }
 
+function ensureClearTracesButton() {
+  if (!isOffsetLesson || dom.clearTraces || !dom.replayControls) return;
+
+  const buttonRow = dom.replayControls.querySelector(".button-row");
+  if (!buttonRow) return;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn-ghost";
+  button.id = "lesson-clear-traces";
+  button.textContent = "Clear Traces";
+  buttonRow.appendChild(button);
+  dom.clearTraces = button;
+}
+
 function renderNav() {
   const index = lessons.findIndex((candidate) => candidate.id === lesson.id);
   const prev = lessons[index - 1];
@@ -260,6 +277,19 @@ function renderNav() {
     dom.next.href = "../training.html";
     dom.next.textContent = "Training Hub";
   }
+}
+
+function offsetTraceColor(offsetY) {
+  const rounded = Math.round(Number(offsetY || 0) * 10) / 10;
+  if (rounded === 0) return "#0066b3";
+  if (rounded === 4) return "#ed1c24";
+  if (rounded === 8) return "#7d3c98";
+  return "#f58220";
+}
+
+function persistOffsetTrace() {
+  if (!isOffsetLesson || !fieldRenderer || !mission || !frames.length) return;
+  fieldRenderer.addTraceOverlay(mission, frames, frames.length - 1, offsetTraceColor(mission.offsetY));
 }
 
 function setFrame(index) {
@@ -298,6 +328,7 @@ function startPlayback() {
     setFrame(frameIndex);
 
     if (frameIndex >= frames.length - 1) {
+      persistOffsetTrace();
       stopPlayback();
       return;
     }
@@ -364,6 +395,7 @@ async function init() {
   renderNav();
   simplifyLessonLayout();
   ensureStartButton();
+  ensureClearTracesButton();
 
   const usesField = lesson.preview === "field" || lesson.preview === "robotAndField";
   const usesRobot = lesson.preview === "robot" || lesson.preview === "robotAndField";
@@ -385,6 +417,11 @@ async function init() {
     setFrame(Number(dom.frameSlider.value || 0));
   });
   if (dom.start) dom.start.addEventListener("click", startPlayback);
+  if (dom.clearTraces) {
+    dom.clearTraces.addEventListener("click", () => {
+      fieldRenderer?.clearTraceOverlays();
+    });
+  }
   dom.showStart.addEventListener("click", () => {
     stopPlayback();
     setFrame(0);
@@ -392,6 +429,7 @@ async function init() {
   dom.showFinish.addEventListener("click", () => {
     stopPlayback();
     setFrame(frames.length - 1);
+    persistOffsetTrace();
   });
 
   resetLesson();
