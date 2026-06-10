@@ -27,6 +27,7 @@ const dom = {
   replayControls: document.getElementById("lesson-replay-controls"),
   frameSlider: document.getElementById("lesson-frame-slider"),
   frameCount: document.getElementById("lesson-frame-count"),
+  start: document.getElementById("lesson-start"),
   showStart: document.getElementById("lesson-show-start"),
   showFinish: document.getElementById("lesson-show-finish")
 };
@@ -36,6 +37,11 @@ let robot = lesson?.starterRobot ? normalizeRobot(lesson.starterRobot) : normali
 let frames = [];
 let fieldRenderer = null;
 let robotCanvas = null;
+let playback = {
+  playing: false,
+  rafId: null,
+  fps: 20
+};
 
 function refreshTrainingStylesheet() {
   const link = document.querySelector("link[rel='stylesheet'][href*='styles.css']");
@@ -219,6 +225,21 @@ function simplifyLessonLayout() {
   }
 }
 
+function ensureStartButton() {
+  if (dom.start || !dom.replayControls) return;
+
+  const buttonRow = dom.replayControls.querySelector(".button-row");
+  if (!buttonRow) return;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn-primary";
+  button.id = "lesson-start";
+  button.textContent = "Start";
+  buttonRow.insertBefore(button, buttonRow.firstChild);
+  dom.start = button;
+}
+
 function renderNav() {
   const index = lessons.findIndex((candidate) => candidate.id === lesson.id);
   const prev = lessons[index - 1];
@@ -249,7 +270,47 @@ function setFrame(index) {
   fieldRenderer.renderFrameSequence(mission, frames, safeIndex);
 }
 
+function stopPlayback() {
+  playback.playing = false;
+  if (playback.rafId) {
+    cancelAnimationFrame(playback.rafId);
+  }
+  playback.rafId = null;
+  if (dom.start) dom.start.disabled = !frames.length;
+}
+
+function startPlayback() {
+  if (!fieldRenderer || !mission || !frames.length || playback.playing) return;
+
+  setFrame(0);
+  playback.playing = true;
+  dom.start.disabled = true;
+  const startedAt = performance.now();
+
+  function step(now) {
+    if (!playback.playing) return;
+
+    const elapsedMs = now - startedAt;
+    const frameIndex = Math.min(
+      frames.length - 1,
+      Math.floor((elapsedMs / 1000) * playback.fps)
+    );
+    setFrame(frameIndex);
+
+    if (frameIndex >= frames.length - 1) {
+      stopPlayback();
+      return;
+    }
+
+    playback.rafId = requestAnimationFrame(step);
+  }
+
+  playback.rafId = requestAnimationFrame(step);
+}
+
 function updatePreview(mode = "finish") {
+  stopPlayback();
+
   if (robotCanvas) {
     robotCanvas.setRobot(robot);
   }
@@ -260,10 +321,12 @@ function updatePreview(mode = "finish") {
   if (mission.actions.length) {
     dom.replayControls.style.display = "grid";
     dom.frameSlider.max = String(Math.max(0, frames.length - 1));
+    if (dom.start) dom.start.disabled = !frames.length;
     const current = Number(dom.frameSlider.value || 0);
     setFrame(mode === "current" ? current : frames.length - 1);
   } else {
     dom.replayControls.style.display = "none";
+    if (dom.start) dom.start.disabled = true;
     dom.frameSlider.value = "0";
     dom.frameSlider.max = "0";
     dom.frameCount.textContent = "0 / 0";
@@ -272,6 +335,7 @@ function updatePreview(mode = "finish") {
 }
 
 function resetLesson() {
+  stopPlayback();
   mission = lesson.starterMission ? normalizeMission(clone(lesson.starterMission)) : null;
   robot = lesson.starterRobot ? normalizeRobot(clone(lesson.starterRobot)) : normalizeRobot(mission?.robot);
   renderControls();
@@ -293,6 +357,7 @@ async function init() {
   renderList(dom.tryIt, lesson.tryIt);
   renderNav();
   simplifyLessonLayout();
+  ensureStartButton();
 
   const usesField = lesson.preview === "field" || lesson.preview === "robotAndField";
   const usesRobot = lesson.preview === "robot" || lesson.preview === "robotAndField";
@@ -309,9 +374,19 @@ async function init() {
   }
 
   dom.reset.addEventListener("click", resetLesson);
-  dom.frameSlider.addEventListener("input", () => setFrame(Number(dom.frameSlider.value || 0)));
-  dom.showStart.addEventListener("click", () => setFrame(0));
-  dom.showFinish.addEventListener("click", () => setFrame(frames.length - 1));
+  dom.frameSlider.addEventListener("input", () => {
+    stopPlayback();
+    setFrame(Number(dom.frameSlider.value || 0));
+  });
+  if (dom.start) dom.start.addEventListener("click", startPlayback);
+  dom.showStart.addEventListener("click", () => {
+    stopPlayback();
+    setFrame(0);
+  });
+  dom.showFinish.addEventListener("click", () => {
+    stopPlayback();
+    setFrame(frames.length - 1);
+  });
 
   resetLesson();
 }
