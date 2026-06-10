@@ -42,7 +42,7 @@ const lessons = [
     id: "orientation",
     title: "Field Orientation And Headings",
     shortTitle: "Orientation",
-    objective: "Learn how headings point on the field: 0 degrees points right, 90 degrees points up, 180 degrees points left, and 270 degrees points down.",
+    objective: "Headings: 0 right, 90 up, 180 left, 270 down.",
     preview: "field",
     starterMission: mission({ name: "Orientation Practice", startX: 30, startY: 24, startAngle: 90 }),
     controls: [
@@ -50,20 +50,20 @@ const lessons = [
       { type: "preset", label: "Heading presets", key: "startAngle", values: [0, 90, 180, 270], unit: "degrees" }
     ],
     steps: [
-      "Set the heading to 90 degrees and notice that the robot points toward the top of the field.",
-      "Try 0, 180, and 270 degrees using the preset buttons.",
-      "Watch the robot rotate in place; only its direction changes."
+      "Set heading to 90 degrees.",
+      "Try 0, 180, and 270.",
+      "Only direction changes."
     ],
     tryIt: [
-      "Set the robot so it points toward the right side of the field.",
-      "Set the robot so it points toward the left side of the field."
+      "Point right.",
+      "Point left."
     ]
   },
   {
     id: "movement",
     title: "Movement Blocks",
     shortTitle: "Movement",
-    objective: "Use move blocks to drive forward or backward along the robot heading.",
+    objective: "Move along the robot heading.",
     preview: "field",
     starterMission: mission({
       name: "Movement Practice",
@@ -77,20 +77,20 @@ const lessons = [
       { type: "missionNumber", key: "startAngle", label: "Starting heading", unit: "degrees", step: 1 }
     ],
     steps: [
-      "Start with a move of 45 cm.",
-      "Drag the replay slider from start to finish to see the trace grow.",
-      "Change the move distance to a negative number to practice backing up."
+      "Start at 45 cm.",
+      "Drag the replay slider.",
+      "Use a negative number to back up."
     ],
     tryIt: [
-      "Make the robot move 30 cm forward.",
-      "Change the heading to 0 degrees and replay the move."
+      "Move 30 cm.",
+      "Set heading to 0 degrees."
     ]
   },
   {
     id: "rotation",
     title: "Rotation Blocks",
     shortTitle: "Rotations",
-    objective: "Use rotation blocks to turn the robot around its configured turn center.",
+    objective: "Turn around the robot turn center.",
     preview: "field",
     starterMission: mission({
       name: "Rotation Practice",
@@ -104,20 +104,20 @@ const lessons = [
       { type: "missionNumber", key: "startAngle", label: "Starting heading", unit: "degrees", step: 1 }
     ],
     steps: [
-      "Start with a -90 degree rotation.",
-      "Use the replay slider to see the heading change frame by frame.",
-      "Change the rotation to 90 degrees and compare the turn direction."
+      "Start at -90 degrees.",
+      "Drag the replay slider.",
+      "Try 90 degrees."
     ],
     tryIt: [
-      "Turn from 90 degrees to 180 degrees.",
-      "Turn from 90 degrees to 0 degrees."
+      "Turn to 180 degrees.",
+      "Turn to 0 degrees."
     ]
   },
   {
     id: "pause",
     title: "Pause Blocks",
     shortTitle: "Pause",
-    objective: "Use pause blocks to represent time spent working on a mission model while the robot stays in place.",
+    objective: "Pause while the robot works in place.",
     preview: "field",
     starterMission: mission({
       name: "Pause Practice",
@@ -136,20 +136,20 @@ const lessons = [
       { type: "actionNumber", actionIndex: 2, label: "Second move", unit: "cm", step: 1 }
     ],
     steps: [
-      "Replay the route and look for the purple outline at the pause position.",
-      "Increase the pause time and notice that the robot holds position longer.",
-      "The trace continues after the pause when the next move begins."
+      "Replay the route.",
+      "Find the purple pause outline.",
+      "Increase pause time."
     ],
     tryIt: [
-      "Make the pause 5 seconds long.",
-      "Move the pause location by changing the first move distance."
+      "Pause 5 seconds.",
+      "Move the pause location."
     ]
   },
   {
     id: "placement",
     title: "Robot Placement: X, Y, And Orientation",
     shortTitle: "Placement",
-    objective: "Place the robot by choosing the lower-left field position and starting orientation.",
+    objective: "Set X, Y, and orientation.",
     preview: "field",
     starterMission: mission({ name: "Placement Practice", startX: 20, startY: 20, startAngle: 90 }),
     controls: [
@@ -158,20 +158,20 @@ const lessons = [
       { type: "missionNumber", key: "startAngle", label: "Orientation", unit: "degrees", step: 1 }
     ],
     steps: [
-      "Change Start X to move the robot left or right.",
-      "Change Start Y to move the robot up or down.",
-      "Change Orientation to aim the robot before the first action starts."
+      "Change Start X.",
+      "Change Start Y.",
+      "Change Orientation."
     ],
     tryIt: [
-      "Place the robot near the lower-left corner and point it upfield.",
-      "Move it toward the center and point it to the right."
+      "Place lower-left, point up.",
+      "Place center, point right."
     ]
   },
   {
     id: "robot-base",
     title: "Robot Builder: Base Robot",
     shortTitle: "Base Robot",
-    objective: "Build the base robot rectangle before adding attachments or mission actions.",
+    objective: "Size the base robot.",
     preview: "robot",
     starterRobot: { ...baseRobot, name: "Base Bot", robotWidthCm: 14, robotLengthCm: 18 },
     controls: [
@@ -180,20 +180,20 @@ const lessons = [
       { type: "robotNumber", key: "robotLengthCm", label: "Length", unit: "cm", step: 0.5 }
     ],
     steps: [
-      "Measure the robot width from left side to right side.",
-      "Measure the robot length from front to back.",
-      "Enter those values and watch the base rectangle resize."
+      "Enter width.",
+      "Enter length.",
+      "Watch the base resize."
     ],
     tryIt: [
-      "Make a short, wide robot.",
-      "Make a long, narrow robot."
+      "Make it short and wide.",
+      "Make it long and narrow."
     ]
   },
   {
     id: "offset",
     title: "Turn-Center Offset",
     shortTitle: "Offset",
-    objective: "See why turn-center offset matters and how changing it affects a rotation.",
+    objective: "Compare turn-center offsets.",
     preview: "field",
     starterMission: mission({
       name: "Offset Practice",
@@ -210,20 +210,20 @@ const lessons = [
       { type: "actionNumber", actionIndex: 0, label: "Rotation", unit: "degrees", step: 1 }
     ],
     steps: [
-      "Start with offset 0 cm and replay the turn.",
-      "Try 4 cm and 8 cm. The robot body moves differently because the turn center is not in the same place.",
-      "To estimate offset, measure from the robot center to the point the robot turns around."
+      "Start at 0 cm.",
+      "Try 4 cm and 8 cm.",
+      "Offset is center to turn point."
     ],
     tryIt: [
-      "Find an offset where the front of the robot swings around a wider arc.",
-      "Set the offset back to 0 cm and compare."
+      "Make the front swing wider.",
+      "Return to 0 cm."
     ]
   },
   {
     id: "attachments",
     title: "Attachment Builder",
     shortTitle: "Attachments",
-    objective: "Add and position an attachment, then see how the robot footprint changes on the field.",
+    objective: "Add an attachment to the footprint.",
     preview: "robotAndField",
     starterMission: mission({
       name: "Attachment Practice",
@@ -245,14 +245,14 @@ const lessons = [
       { type: "attachmentNumber", index: 0, key: "positionCm", label: "Side position", unit: "cm", step: 0.5 }
     ],
     steps: [
-      "Start with a front attachment.",
-      "Change the width and length to match a mission tool.",
-      "Change the side position to slide it along the selected side.",
-      "Use the field preview to see the full footprint on the mat."
+      "Start on the front.",
+      "Change width and length.",
+      "Slide the side position.",
+      "Check the field footprint."
     ],
     tryIt: [
-      "Move the attachment to the left side.",
-      "Make the attachment wider and replay the short move."
+      "Move it left.",
+      "Make it wider."
     ]
   }
 ];

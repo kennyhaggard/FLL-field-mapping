@@ -16,6 +16,41 @@ class RobotCanvas {
     this.render();
   }
 
+  drawFrontIndicator() {
+    const halfWidth = this.robot.robotWidthCm / 2;
+    const halfLength = this.robot.robotLengthCm / 2;
+    const frontY = -halfLength;
+    const markerSize = Math.max(1.6, Math.min(this.robot.robotWidthCm, this.robot.robotLengthCm) * 0.12);
+
+    const frontEdge = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    frontEdge.setAttribute("data-front-indicator", "edge");
+    frontEdge.setAttribute("x1", String(-halfWidth));
+    frontEdge.setAttribute("y1", String(frontY));
+    frontEdge.setAttribute("x2", String(halfWidth));
+    frontEdge.setAttribute("y2", String(frontY));
+    frontEdge.setAttribute("stroke", "#ed1c24");
+    frontEdge.setAttribute("stroke-width", "2.2");
+    frontEdge.setAttribute("stroke-linecap", "square");
+    frontEdge.setAttribute("vector-effect", "non-scaling-stroke");
+    this.svg.appendChild(frontEdge);
+
+    const pointer = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    pointer.setAttribute("data-front-indicator", "pointer");
+    pointer.setAttribute(
+      "points",
+      [
+        `0,${(frontY - markerSize).toFixed(2)}`,
+        `${(-markerSize * 0.75).toFixed(2)},${(frontY + markerSize * 0.45).toFixed(2)}`,
+        `${(markerSize * 0.75).toFixed(2)},${(frontY + markerSize * 0.45).toFixed(2)}`
+      ].join(" ")
+    );
+    pointer.setAttribute("fill", "#ed1c24");
+    pointer.setAttribute("stroke", "#ffffff");
+    pointer.setAttribute("stroke-width", "0.45");
+    pointer.setAttribute("vector-effect", "non-scaling-stroke");
+    this.svg.appendChild(pointer);
+  }
+
   render() {
     if (!this.svg) return;
 
@@ -55,6 +90,8 @@ class RobotCanvas {
       rect.setAttribute("cursor", "grab");
       this.svg.appendChild(rect);
     });
+
+    this.drawFrontIndicator();
   }
 
   getLocalPoint(evt) {

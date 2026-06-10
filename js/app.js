@@ -19,7 +19,7 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js";
-import { FieldRenderer } from "./ui/field_renderer.js";
+import { FieldRenderer } from "./ui/field_renderer.js?v=front-indicator";
 
 const dom = {
   fieldHost: document.getElementById("mission-field-host"),

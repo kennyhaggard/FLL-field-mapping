@@ -3,8 +3,8 @@ import {
   normalizeMission,
   normalizeRobot
 } from "../domain/model.js";
-import { FieldRenderer } from "../ui/field_renderer.js";
-import { RobotCanvas } from "../ui/robot_canvas.js";
+import { FieldRenderer } from "../ui/field_renderer.js?v=front-indicator";
+import { RobotCanvas } from "../ui/robot_canvas.js?v=front-indicator";
 import { getLesson, lessons } from "./lessons.js";
 
 const lessonId = document.body.dataset.lessonId;
@@ -36,6 +36,20 @@ let robot = lesson?.starterRobot ? normalizeRobot(lesson.starterRobot) : normali
 let frames = [];
 let fieldRenderer = null;
 let robotCanvas = null;
+
+function refreshTrainingStylesheet() {
+  const link = document.querySelector("link[rel='stylesheet'][href*='styles.css']");
+  if (!link || link.href.includes("training-pane-2")) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    const done = () => resolve();
+    link.addEventListener("load", done, { once: true });
+    link.addEventListener("error", done, { once: true });
+    setTimeout(done, 600);
+    const baseHref = link.getAttribute("href").split("?")[0];
+    link.href = `${baseHref}?v=training-pane-2`;
+  });
+}
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -190,6 +204,21 @@ function renderList(target, items) {
   });
 }
 
+function simplifyLessonLayout() {
+  const lessonPanel = document.querySelector(".training-lesson-panel");
+  const sandboxTitle = document.querySelector(".training-sandbox-panel .section-title");
+  const headings = lessonPanel ? Array.from(lessonPanel.querySelectorAll("h2")) : [];
+  const resetRow = dom.reset?.closest(".button-row");
+
+  if (sandboxTitle) sandboxTitle.textContent = "Effects";
+  if (headings[0]) headings[0].textContent = "Steps";
+  if (headings[1]) headings[1].textContent = "Try";
+  if (lessonPanel && headings[1]) {
+    lessonPanel.insertBefore(dom.controls, headings[1]);
+    if (resetRow) lessonPanel.insertBefore(resetRow, headings[1]);
+  }
+}
+
 function renderNav() {
   const index = lessons.findIndex((candidate) => candidate.id === lesson.id);
   const prev = lessons[index - 1];
@@ -255,12 +284,15 @@ async function init() {
     return;
   }
 
-  dom.eyebrow.textContent = "Training Lesson";
+  await refreshTrainingStylesheet();
+
+  dom.eyebrow.textContent = "Task";
   dom.title.textContent = lesson.title;
-  dom.objective.textContent = lesson.objective;
+  dom.objective.textContent = "";
   renderList(dom.steps, lesson.steps);
   renderList(dom.tryIt, lesson.tryIt);
   renderNav();
+  simplifyLessonLayout();
 
   const usesField = lesson.preview === "field" || lesson.preview === "robotAndField";
   const usesRobot = lesson.preview === "robot" || lesson.preview === "robotAndField";
