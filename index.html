@@ -102,6 +102,14 @@
           <button class="btn-secondary" id="add-rotate">+ Rotate</button>
           <button class="btn-secondary" id="add-pause">+ Pause</button>
         </div>
+        <div class="insert-action-row" style="margin-top:10px;">
+          <select id="insert-action-top-type" aria-label="Action type to insert at top">
+            <option value="move">MOVE</option>
+            <option value="rotate">ROTATE</option>
+            <option value="pause">PAUSE</option>
+          </select>
+          <button class="btn-ghost" id="insert-action-top">Insert at Top</button>
+        </div>
         <div class="action-list" id="action-list" style="margin-top:10px;"></div>
       </div>
 
@@ -189,6 +197,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=cloud-diagnostics"></script>
+  <script type="module" src="js/app.js?v=action-insert"></script>
 </body>
 </html>

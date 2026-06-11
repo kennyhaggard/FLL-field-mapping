@@ -158,6 +158,13 @@ textarea:disabled {
   gap: 10px;
 }
 
+.insert-action-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
 .btn-primary {
   background: var(--accent);
   color: #fff;
@@ -238,7 +245,7 @@ textarea:disabled {
 .action-item,
 .attachment-item {
   display: grid;
-  grid-template-columns: 90px 1fr auto;
+  grid-template-columns: 90px minmax(90px, 1fr) auto auto;
   gap: 8px;
   align-items: center;
   background: var(--panel-2);
@@ -274,6 +281,13 @@ textarea:disabled {
 .action-value-field:focus-within {
   outline: 2px solid rgba(0, 102, 179, 0.22);
   outline-offset: 1px;
+}
+
+.action-insert-controls {
+  display: grid;
+  grid-template-columns: 86px auto;
+  gap: 6px;
+  align-items: center;
 }
 
 .action-unit {
@@ -619,8 +633,13 @@ body[data-lesson-id] .header p {
     grid-template-columns: 1fr;
   }
 
+  .insert-action-row,
   .action-item {
     grid-template-columns: 1fr;
+  }
+
+  .action-insert-controls {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .attachment-item {

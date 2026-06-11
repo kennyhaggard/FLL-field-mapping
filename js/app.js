@@ -43,6 +43,8 @@ const dom = {
   addMove: document.getElementById("add-move"),
   addRotate: document.getElementById("add-rotate"),
   addPause: document.getElementById("add-pause"),
+  insertActionTopType: document.getElementById("insert-action-top-type"),
+  insertActionTop: document.getElementById("insert-action-top"),
   actionList: document.getElementById("action-list"),
   missionJson: document.getElementById("mission-json"),
   jsonError: document.getElementById("json-error"),
@@ -352,6 +354,18 @@ function getActionUnit(type) {
   return "cm";
 }
 
+function createAction(type) {
+  if (type === "rotate") return { type: "rotate", value: -90 };
+  if (type === "pause") return { type: "pause", value: 5 };
+  return { type: "move", value: 50 };
+}
+
+function insertActionAt(index, type) {
+  const actions = [...state.mission.actions];
+  actions.splice(index, 0, createAction(type));
+  commitMission({ ...state.mission, actions });
+}
+
 function renderActions() {
   dom.actionList.innerHTML = "";
 
@@ -393,6 +407,28 @@ function renderActions() {
     unitLabel.textContent = getActionUnit(action.type);
     valueField.append(valueInput, unitLabel);
 
+    const insertControls = document.createElement("div");
+    insertControls.className = "action-insert-controls";
+
+    const insertTypeSelect = document.createElement("select");
+    insertTypeSelect.setAttribute("aria-label", `Action type to insert after action ${index + 1}`);
+    ["move", "rotate", "pause"].forEach((type) => {
+      const option = document.createElement("option");
+      option.value = type;
+      option.textContent = type.toUpperCase();
+      insertTypeSelect.appendChild(option);
+    });
+
+    const insertButton = document.createElement("button");
+    insertButton.className = "btn-ghost";
+    insertButton.type = "button";
+    insertButton.textContent = "Insert";
+    insertButton.addEventListener("click", () => {
+      insertActionAt(index + 1, insertTypeSelect.value);
+    });
+
+    insertControls.append(insertTypeSelect, insertButton);
+
     const deleteButton = document.createElement("button");
     deleteButton.className = "btn-ghost";
     deleteButton.textContent = "Delete";
@@ -401,7 +437,7 @@ function renderActions() {
       commitMission({ ...state.mission, actions });
     });
 
-    row.append(typeSelect, valueField, deleteButton);
+    row.append(typeSelect, valueField, insertControls, deleteButton);
     dom.actionList.appendChild(row);
   });
 }
@@ -815,22 +851,26 @@ function attachEventHandlers() {
   dom.addMove.addEventListener("click", () => {
     commitMission({
       ...state.mission,
-      actions: [...state.mission.actions, { type: "move", value: 50 }]
+      actions: [...state.mission.actions, createAction("move")]
     });
   });
 
   dom.addRotate.addEventListener("click", () => {
     commitMission({
       ...state.mission,
-      actions: [...state.mission.actions, { type: "rotate", value: -90 }]
+      actions: [...state.mission.actions, createAction("rotate")]
     });
   });
 
   dom.addPause.addEventListener("click", () => {
     commitMission({
       ...state.mission,
-      actions: [...state.mission.actions, { type: "pause", value: 5 }]
+      actions: [...state.mission.actions, createAction("pause")]
     });
+  });
+
+  dom.insertActionTop.addEventListener("click", () => {
+    insertActionAt(0, dom.insertActionTopType.value);
   });
 
   dom.addAttachment.addEventListener("click", () => {
