@@ -293,7 +293,7 @@ function renderReplayFrame(index) {
   renderer.renderFrameSequence(state.mission, state.replay.frames, safeIndex);
 }
 
-function syncMissionToInputs({ skipActions = false } = {}) {
+function syncMissionToInputs({ skipActions = false, skipAttachments = false } = {}) {
   const mission = state.mission;
   dom.missionName.value = mission.name;
   dom.traceColor.value = mission.traceColor;
@@ -309,7 +309,9 @@ function syncMissionToInputs({ skipActions = false } = {}) {
     dom.missionJson.value = JSON.stringify(mission, null, 2);
   }
 
-  renderAttachments();
+  if (!skipAttachments) {
+    renderAttachments();
+  }
   if (!skipActions) {
     renderActions();
   }
@@ -319,14 +321,17 @@ function renderMission() {
   renderer.renderMission(state.mission);
 }
 
-function commitMission(nextMission, { preserveReplay = false, skipActions = false } = {}) {
+function commitMission(
+  nextMission,
+  { preserveReplay = false, skipActions = false, skipAttachments = false } = {}
+) {
   state.mission = normalizeMission(nextMission);
   persistMission();
   if (!preserveReplay) {
     stopMissionRun();
     resetReplayState();
   }
-  syncMissionToInputs({ skipActions });
+  syncMissionToInputs({ skipActions, skipAttachments });
   renderMission();
 }
 
@@ -470,7 +475,12 @@ function renderAttachments() {
     width.addEventListener("input", () => {
       const attachmentsNext = [...state.mission.attachments];
       attachmentsNext[index] = { ...attachmentsNext[index], widthCm: safeNum(width.value, 0) };
-      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
+      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }), {
+        skipAttachments: true
+      });
+    });
+    width.addEventListener("blur", () => {
+      renderAttachments();
     });
 
     const length = document.createElement("input");
@@ -480,7 +490,12 @@ function renderAttachments() {
     length.addEventListener("input", () => {
       const attachmentsNext = [...state.mission.attachments];
       attachmentsNext[index] = { ...attachmentsNext[index], lengthCm: safeNum(length.value, 0) };
-      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
+      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }), {
+        skipAttachments: true
+      });
+    });
+    length.addEventListener("blur", () => {
+      renderAttachments();
     });
 
     const position = document.createElement("input");
@@ -490,7 +505,12 @@ function renderAttachments() {
     position.addEventListener("input", () => {
       const attachmentsNext = [...state.mission.attachments];
       attachmentsNext[index] = { ...attachmentsNext[index], positionCm: safeNum(position.value, 0) };
-      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
+      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }), {
+        skipAttachments: true
+      });
+    });
+    position.addEventListener("blur", () => {
+      renderAttachments();
     });
 
     const deleteButton = document.createElement("button");
