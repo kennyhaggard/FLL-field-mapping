@@ -380,6 +380,26 @@ function createIconButton({ label, title, icon }) {
   return button;
 }
 
+function createLabeledNumberField({ label, input, unit = "cm" }) {
+  const field = document.createElement("label");
+  field.className = "compact-number-field";
+
+  const labelText = document.createElement("span");
+  labelText.className = "compact-field-label";
+  labelText.textContent = label;
+
+  const valueField = document.createElement("div");
+  valueField.className = "action-value-field";
+
+  const unitLabel = document.createElement("span");
+  unitLabel.className = "action-unit";
+  unitLabel.textContent = unit;
+
+  valueField.append(input, unitLabel);
+  field.append(labelText, valueField);
+  return field;
+}
+
 function renderActions() {
   dom.actionList.innerHTML = "";
 
@@ -482,6 +502,7 @@ function renderAttachments() {
     width.addEventListener("blur", () => {
       renderAttachments();
     });
+    const widthField = createLabeledNumberField({ label: "Width", input: width });
 
     const length = document.createElement("input");
     length.type = "number";
@@ -497,6 +518,7 @@ function renderAttachments() {
     length.addEventListener("blur", () => {
       renderAttachments();
     });
+    const lengthField = createLabeledNumberField({ label: "Length", input: length });
 
     const position = document.createElement("input");
     position.type = "number";
@@ -512,10 +534,13 @@ function renderAttachments() {
     position.addEventListener("blur", () => {
       renderAttachments();
     });
+    const positionField = createLabeledNumberField({ label: "Position", input: position });
 
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "btn-ghost";
-    deleteButton.textContent = "Delete";
+    const deleteButton = createIconButton({
+      label: `Delete attachment ${index + 1}`,
+      title: "Delete attachment",
+      icon: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg>`
+    });
     deleteButton.addEventListener("click", () => {
       const attachmentsNext = state.mission.attachments.filter(
         (_, attachmentIndex) => attachmentIndex !== index
@@ -523,7 +548,7 @@ function renderAttachments() {
       commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
     });
 
-    row.append(side, width, length, position, deleteButton);
+    row.append(side, widthField, lengthField, positionField, deleteButton);
     dom.attachmentList.appendChild(row);
   });
 }

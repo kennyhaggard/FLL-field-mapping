@@ -274,7 +274,7 @@ textarea:disabled {
 }
 
 .attachment-item {
-  grid-template-columns: 80px repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: 80px repeat(3, minmax(0, 1fr)) 34px;
 }
 
 .action-value-field {
@@ -287,19 +287,34 @@ textarea:disabled {
   overflow: hidden;
 }
 
-.action-item .action-value-field input {
+.action-item .action-value-field input,
+.attachment-item .action-value-field input {
   border: 0;
   border-radius: 0;
   min-width: 0;
 }
 
-.action-item .action-value-field input:focus {
+.action-item .action-value-field input:focus,
+.attachment-item .action-value-field input:focus {
   outline: none;
 }
 
 .action-value-field:focus-within {
   outline: 2px solid rgba(0, 102, 179, 0.22);
   outline-offset: 1px;
+}
+
+.compact-number-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.compact-field-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .action-unit {
