@@ -1,4 +1,4 @@
-import { createCloudClient } from "./domain/cloud.js";
+import { createCloudClient } from "./domain/cloud.js?v=cloud-diagnostics";
 import { detectRuntimeMode, validateTeamPin } from "./domain/runtime.js";
 
 const dom = {

@@ -1,4 +1,4 @@
-import { createCloudClient } from "./domain/cloud.js";
+import { createCloudClient } from "./domain/cloud.js?v=cloud-diagnostics";
 import {
   applyRobotToMission,
   buildReplayFrames,
@@ -118,7 +118,8 @@ function setTeamStatus(message) {
 }
 
 function getCloudErrorMessage(result, fallback) {
-  return String(result?.error || fallback || "Cloud request failed.");
+  const message = String(result?.error || fallback || "Cloud request failed.");
+  return result?.status ? `${message} (${result.status})` : message;
 }
 
 function stopReplay() {

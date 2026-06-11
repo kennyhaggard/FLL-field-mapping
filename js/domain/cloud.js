@@ -17,17 +17,38 @@ function createCloudClient({
       throw new Error("fetch-unavailable");
     }
 
-    const response = await fetchImpl(`${baseUrl}${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`
-      },
-      body: JSON.stringify(payload || {})
-    });
+    try {
+      const response = await fetchImpl(`${baseUrl}${path}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: anonKey
+        },
+        body: JSON.stringify(payload || {})
+      });
 
-    return response.json();
+      const text = await response.text();
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (error) {
+        return {
+          ok: false,
+          status: response.status,
+          error: `Cloud function returned a non-JSON response (${response.status}).`
+        };
+      }
+
+      if (!response.ok && data && typeof data === "object" && !data.status) {
+        data.status = response.status;
+      }
+      return data;
+    } catch (error) {
+      return {
+        ok: false,
+        error: error?.message || "Network error contacting cloud function."
+      };
+    }
   }
 
   function teamPayload(session) {

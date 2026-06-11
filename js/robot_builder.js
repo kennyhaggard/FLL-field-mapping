@@ -1,4 +1,4 @@
-import { createCloudClient } from "./domain/cloud.js";
+import { createCloudClient } from "./domain/cloud.js?v=cloud-diagnostics";
 import {
   createDefaultRobot,
   normalizeRobot,
@@ -187,11 +187,11 @@ async function saveTeamRobot() {
   try {
     const result = await cloud.saveRobot(state.teamSession, state.robot);
     if (!result?.ok) {
-      throw new Error("save-failed");
+      throw new Error(result?.error || "Save failed.");
     }
     setStatus(`Saved "${state.robot.name}" to team ${state.teamSession.name}.`);
   } catch (error) {
-    setStatus("Could not save the robot to the team cloud.");
+    setStatus(`Could not save the robot to the team cloud: ${error.message}`);
   }
 }
 

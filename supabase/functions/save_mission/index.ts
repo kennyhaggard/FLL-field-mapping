@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     const { data: team, error: teamErr } = await supabaseAdmin
       .from("teams")
       .select("id")
-      .eq("team_name", teamName)
+      .ilike("team_name", teamName)
       .maybeSingle();
 
     if (teamErr) {
