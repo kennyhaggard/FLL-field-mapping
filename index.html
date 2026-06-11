@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>FLL Field Mapping</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=action-icons-2" />
 </head>
 <body>
   <header class="header">
@@ -103,12 +103,10 @@
           <button class="btn-secondary" id="add-pause">+ Pause</button>
         </div>
         <div class="insert-action-row" style="margin-top:10px;">
-          <select id="insert-action-top-type" aria-label="Action type to insert at top">
-            <option value="move">MOVE</option>
-            <option value="rotate">ROTATE</option>
-            <option value="pause">PAUSE</option>
-          </select>
-          <button class="btn-ghost" id="insert-action-top">Insert at Top</button>
+          <span class="status">Insert pause at top</span>
+          <button class="btn-ghost icon-button" id="insert-action-top" type="button" aria-label="Insert pause at top" title="Insert pause at top">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
         </div>
         <div class="action-list" id="action-list" style="margin-top:10px;"></div>
       </div>
@@ -197,6 +195,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=action-insert"></script>
+  <script type="module" src="js/app.js?v=action-icons-2"></script>
 </body>
 </html>

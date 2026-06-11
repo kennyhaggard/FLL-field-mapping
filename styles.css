@@ -160,7 +160,7 @@ textarea:disabled {
 
 .insert-action-row {
   display: grid;
-  grid-template-columns: minmax(110px, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 34px;
   gap: 8px;
   align-items: center;
 }
@@ -194,6 +194,25 @@ textarea:disabled {
 .btn-pill {
   border-radius: 999px;
   padding: 8px 14px;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .badge {
@@ -245,7 +264,7 @@ textarea:disabled {
 .action-item,
 .attachment-item {
   display: grid;
-  grid-template-columns: 90px minmax(90px, 1fr) auto auto;
+  grid-template-columns: 90px minmax(80px, 1fr) 34px 34px;
   gap: 8px;
   align-items: center;
   background: var(--panel-2);
@@ -281,13 +300,6 @@ textarea:disabled {
 .action-value-field:focus-within {
   outline: 2px solid rgba(0, 102, 179, 0.22);
   outline-offset: 1px;
-}
-
-.action-insert-controls {
-  display: grid;
-  grid-template-columns: 86px auto;
-  gap: 6px;
-  align-items: center;
 }
 
 .action-unit {
@@ -636,10 +648,6 @@ body[data-lesson-id] .header p {
   .insert-action-row,
   .action-item {
     grid-template-columns: 1fr;
-  }
-
-  .action-insert-controls {
-    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .attachment-item {

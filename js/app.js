@@ -43,7 +43,6 @@ const dom = {
   addMove: document.getElementById("add-move"),
   addRotate: document.getElementById("add-rotate"),
   addPause: document.getElementById("add-pause"),
-  insertActionTopType: document.getElementById("insert-action-top-type"),
   insertActionTop: document.getElementById("insert-action-top"),
   actionList: document.getElementById("action-list"),
   missionJson: document.getElementById("mission-json"),
@@ -356,7 +355,7 @@ function getActionUnit(type) {
 
 function createAction(type) {
   if (type === "rotate") return { type: "rotate", value: -90 };
-  if (type === "pause") return { type: "pause", value: 5 };
+  if (type === "pause") return { type: "pause", value: 1 };
   return { type: "move", value: 50 };
 }
 
@@ -364,6 +363,16 @@ function insertActionAt(index, type) {
   const actions = [...state.mission.actions];
   actions.splice(index, 0, createAction(type));
   commitMission({ ...state.mission, actions });
+}
+
+function createIconButton({ label, title, icon }) {
+  const button = document.createElement("button");
+  button.className = "btn-ghost icon-button";
+  button.type = "button";
+  button.setAttribute("aria-label", label);
+  button.title = title || label;
+  button.innerHTML = icon;
+  return button;
 }
 
 function renderActions() {
@@ -407,37 +416,26 @@ function renderActions() {
     unitLabel.textContent = getActionUnit(action.type);
     valueField.append(valueInput, unitLabel);
 
-    const insertControls = document.createElement("div");
-    insertControls.className = "action-insert-controls";
-
-    const insertTypeSelect = document.createElement("select");
-    insertTypeSelect.setAttribute("aria-label", `Action type to insert after action ${index + 1}`);
-    ["move", "rotate", "pause"].forEach((type) => {
-      const option = document.createElement("option");
-      option.value = type;
-      option.textContent = type.toUpperCase();
-      insertTypeSelect.appendChild(option);
+    const insertButton = createIconButton({
+      label: `Insert pause after action ${index + 1}`,
+      title: "Insert pause",
+      icon: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`
     });
-
-    const insertButton = document.createElement("button");
-    insertButton.className = "btn-ghost";
-    insertButton.type = "button";
-    insertButton.textContent = "Insert";
     insertButton.addEventListener("click", () => {
-      insertActionAt(index + 1, insertTypeSelect.value);
+      insertActionAt(index + 1, "pause");
     });
 
-    insertControls.append(insertTypeSelect, insertButton);
-
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "btn-ghost";
-    deleteButton.textContent = "Delete";
+    const deleteButton = createIconButton({
+      label: `Delete action ${index + 1}`,
+      title: "Delete action",
+      icon: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg>`
+    });
     deleteButton.addEventListener("click", () => {
       const actions = state.mission.actions.filter((_, actionIndex) => actionIndex !== index);
       commitMission({ ...state.mission, actions });
     });
 
-    row.append(typeSelect, valueField, insertControls, deleteButton);
+    row.append(typeSelect, valueField, insertButton, deleteButton);
     dom.actionList.appendChild(row);
   });
 }
@@ -870,7 +868,7 @@ function attachEventHandlers() {
   });
 
   dom.insertActionTop.addEventListener("click", () => {
-    insertActionAt(0, dom.insertActionTopType.value);
+    insertActionAt(0, "pause");
   });
 
   dom.addAttachment.addEventListener("click", () => {
