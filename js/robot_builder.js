@@ -11,7 +11,7 @@ import {
   saveRobotLibrary,
   stageRobotTransfer
 } from "./domain/storage.js";
-import { RobotCanvas } from "./ui/robot_canvas.js?v=front-indicator";
+import { RobotCanvas } from "./ui/robot_canvas.js?v=turn-center-marker";
 
 const dom = {
   robotName: document.getElementById("robot-name"),

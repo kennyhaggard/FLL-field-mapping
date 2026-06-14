@@ -3,8 +3,8 @@ import {
   normalizeMission,
   normalizeRobot
 } from "../domain/model.js";
-import { FieldRenderer } from "../ui/field_renderer.js?v=offset-traces";
-import { RobotCanvas } from "../ui/robot_canvas.js?v=front-indicator";
+import { FieldRenderer } from "../ui/field_renderer.js?v=turn-center-marker";
+import { RobotCanvas } from "../ui/robot_canvas.js?v=turn-center-marker";
 import { getLesson, lessons } from "./lessons.js";
 
 const lessonId = document.body.dataset.lessonId;

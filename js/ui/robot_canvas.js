@@ -29,7 +29,7 @@ class RobotCanvas {
     frontEdge.setAttribute("x2", String(halfWidth));
     frontEdge.setAttribute("y2", String(frontY));
     frontEdge.setAttribute("stroke", "#ed1c24");
-    frontEdge.setAttribute("stroke-width", "2.2");
+    frontEdge.setAttribute("stroke-width", "1.5");
     frontEdge.setAttribute("stroke-linecap", "square");
     frontEdge.setAttribute("vector-effect", "non-scaling-stroke");
     this.svg.appendChild(frontEdge);
@@ -49,6 +49,42 @@ class RobotCanvas {
     pointer.setAttribute("stroke-width", "0.45");
     pointer.setAttribute("vector-effect", "non-scaling-stroke");
     this.svg.appendChild(pointer);
+  }
+
+  drawOffsetMarker() {
+    const y = this.robot.offsetY;
+    const radius = Math.max(0.75, Math.min(this.robot.robotWidthCm, this.robot.robotLengthCm) * 0.055);
+    const cross = radius * 1.45;
+
+    const marker = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    marker.setAttribute("data-offset-marker", "1");
+    marker.setAttribute("fill", "rgba(125, 60, 152, 0.16)");
+    marker.setAttribute("stroke", "#7d3c98");
+    marker.setAttribute("stroke-width", "0.8");
+    marker.setAttribute("stroke-linecap", "round");
+    marker.setAttribute("vector-effect", "non-scaling-stroke");
+
+    const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    ring.setAttribute("cx", "0");
+    ring.setAttribute("cy", String(y));
+    ring.setAttribute("r", String(radius));
+    marker.appendChild(ring);
+
+    const horizontal = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    horizontal.setAttribute("x1", String(-cross));
+    horizontal.setAttribute("y1", String(y));
+    horizontal.setAttribute("x2", String(cross));
+    horizontal.setAttribute("y2", String(y));
+    marker.appendChild(horizontal);
+
+    const vertical = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    vertical.setAttribute("x1", "0");
+    vertical.setAttribute("y1", String(y - cross));
+    vertical.setAttribute("x2", "0");
+    vertical.setAttribute("y2", String(y + cross));
+    marker.appendChild(vertical);
+
+    this.svg.appendChild(marker);
   }
 
   render() {
@@ -71,7 +107,7 @@ class RobotCanvas {
     base.setAttribute("height", String(this.robot.robotLengthCm));
     base.setAttribute("fill", "rgba(0, 102, 179, 0.18)");
     base.setAttribute("stroke", "#0066b3");
-    base.setAttribute("stroke-width", "1.6");
+    base.setAttribute("stroke-width", "1");
     this.svg.appendChild(base);
 
     this.robot.attachments.forEach((attachment, index) => {
@@ -85,12 +121,13 @@ class RobotCanvas {
       rect.setAttribute("height", String(rectCm.height));
       rect.setAttribute("fill", "rgba(37, 99, 235, 0.18)");
       rect.setAttribute("stroke", "#1e3a8a");
-      rect.setAttribute("stroke-width", "1.2");
+      rect.setAttribute("stroke-width", "0.8");
       rect.setAttribute("data-index", String(index));
       rect.setAttribute("cursor", "grab");
       this.svg.appendChild(rect);
     });
 
+    this.drawOffsetMarker();
     this.drawFrontIndicator();
   }
 

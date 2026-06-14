@@ -187,7 +187,7 @@ class FieldRenderer {
     group.setAttribute("data-pause-outline", "1");
     group.setAttribute("fill", "none");
     group.setAttribute("stroke", color);
-    group.setAttribute("stroke-width", "2.4");
+    group.setAttribute("stroke-width", "1.6");
     group.setAttribute("stroke-linejoin", "round");
     group.setAttribute("vector-effect", "non-scaling-stroke");
     group.setAttribute("opacity", "0.9");
@@ -214,7 +214,7 @@ class FieldRenderer {
       attachmentEl.setAttribute("y", rect.y);
       attachmentEl.setAttribute("width", rect.width);
       attachmentEl.setAttribute("height", rect.height);
-      attachmentEl.setAttribute("stroke-width", String(Math.max(1.6, Math.min(scaleX, scaleY) * 0.45)));
+      attachmentEl.setAttribute("stroke-width", String(Math.max(1, Math.min(scaleX, scaleY) * 0.28)));
       group.appendChild(attachmentEl);
     });
 
@@ -238,7 +238,7 @@ class FieldRenderer {
     frontEdge.setAttribute("x2", String(halfWidthSvg));
     frontEdge.setAttribute("y2", String(frontY));
     frontEdge.setAttribute("stroke", "#ed1c24");
-    frontEdge.setAttribute("stroke-width", "3");
+    frontEdge.setAttribute("stroke-width", "2");
     frontEdge.setAttribute("stroke-linecap", "square");
     frontEdge.setAttribute("vector-effect", "non-scaling-stroke");
     group.appendChild(frontEdge);
@@ -258,6 +258,43 @@ class FieldRenderer {
     pointer.setAttribute("stroke-width", "0.8");
     pointer.setAttribute("vector-effect", "non-scaling-stroke");
     group.appendChild(pointer);
+  }
+
+  appendOffsetMarker(group, mission) {
+    const { scaleX, scaleY } = this.getScale();
+    const y = mission.offsetY * scaleY;
+    const radius = Math.max(3, Math.min(mission.robotWidthCm * scaleX, mission.robotLengthCm * scaleY) * 0.055);
+    const cross = radius * 1.45;
+
+    const marker = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    marker.setAttribute("data-offset-marker", "1");
+    marker.setAttribute("fill", "rgba(125, 60, 152, 0.16)");
+    marker.setAttribute("stroke", "#7d3c98");
+    marker.setAttribute("stroke-width", "1.4");
+    marker.setAttribute("stroke-linecap", "round");
+    marker.setAttribute("vector-effect", "non-scaling-stroke");
+
+    const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    ring.setAttribute("cx", "0");
+    ring.setAttribute("cy", String(y));
+    ring.setAttribute("r", String(radius));
+    marker.appendChild(ring);
+
+    const horizontal = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    horizontal.setAttribute("x1", String(-cross));
+    horizontal.setAttribute("y1", String(y));
+    horizontal.setAttribute("x2", String(cross));
+    horizontal.setAttribute("y2", String(y));
+    marker.appendChild(horizontal);
+
+    const vertical = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    vertical.setAttribute("x1", "0");
+    vertical.setAttribute("y1", String(y - cross));
+    vertical.setAttribute("x2", "0");
+    vertical.setAttribute("y2", String(y + cross));
+    marker.appendChild(vertical);
+
+    group.appendChild(marker);
   }
 
   drawRobot(mission, pose) {
@@ -280,7 +317,7 @@ class FieldRenderer {
     base.setAttribute("height", baseRect.height);
     base.setAttribute("fill", "rgba(0, 102, 179, 0.22)");
     base.setAttribute("stroke", mission.traceColor);
-    base.setAttribute("stroke-width", "2");
+    base.setAttribute("stroke-width", "1.25");
     group.appendChild(base);
 
     mission.attachments.forEach((attachment) => {
@@ -294,10 +331,11 @@ class FieldRenderer {
       attachmentEl.setAttribute("height", rect.height);
       attachmentEl.setAttribute("fill", "rgba(37, 99, 235, 0.2)");
       attachmentEl.setAttribute("stroke", "#1e3a8a");
-      attachmentEl.setAttribute("stroke-width", String(Math.max(1.2, Math.min(scaleX, scaleY) * 0.35)));
+      attachmentEl.setAttribute("stroke-width", String(Math.max(0.9, Math.min(scaleX, scaleY) * 0.24)));
       group.appendChild(attachmentEl);
     });
 
+    this.appendOffsetMarker(group, mission);
     this.appendFrontIndicator(group, mission);
 
     this.svg.appendChild(group);
