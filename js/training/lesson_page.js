@@ -125,6 +125,19 @@ function setAttachmentValue(index, key, value) {
   }
 }
 
+function isCompleteNumberText(value) {
+  const text = String(value ?? "").trim();
+  if (!text || text === "-" || text === "+" || text === "." || text === "-." || text === "+.") {
+    return false;
+  }
+  return Number.isFinite(Number(text));
+}
+
+function configureDecimalInput(input) {
+  input.type = "text";
+  input.inputMode = "decimal";
+}
+
 function inputValueFor(control) {
   if (control.type === "missionNumber") return mission?.[control.key] ?? 0;
   if (control.type === "robotNumber" || control.type === "robotText") return robot?.[control.key] ?? "";
@@ -187,17 +200,22 @@ function renderControls() {
     }
 
     const input = document.createElement("input");
-    input.type = control.type === "robotText" ? "text" : "number";
-    if (control.step) input.step = String(control.step);
+    input.type = "text";
+    if (control.type !== "robotText") configureDecimalInput(input);
     input.value = String(inputValueFor(control));
     input.addEventListener("input", () => {
-      const value = input.type === "number" ? Number(input.value) : input.value;
+      if (control.type !== "robotText" && !isCompleteNumberText(input.value)) {
+        updatePreview("current");
+        return;
+      }
+      const value = control.type === "robotText" ? input.value : Number(input.value);
       if (control.type === "missionNumber") setMissionValue(control.key, value);
       if (control.type === "robotNumber" || control.type === "robotText") setRobotValue(control.key, value);
       if (control.type === "actionNumber") setActionValue(control.actionIndex, value);
       if (control.type === "attachmentNumber") setAttachmentValue(control.index, control.key, value);
       updatePreview("current");
     });
+    input.addEventListener("blur", renderControls);
     wrap.appendChild(input);
     dom.controls.appendChild(wrap);
   });

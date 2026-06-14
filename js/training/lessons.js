@@ -227,20 +227,12 @@ const lessons = [
     title: "Attachment Builder",
     shortTitle: "Attachments",
     objective: "Add an attachment to the footprint.",
-    preview: "robotAndField",
-    starterMission: mission({
-      name: "Attachment Practice",
-      startX: 26,
-      startY: 20,
-      startAngle: 90,
-      robot: {
-        ...baseRobot,
-        name: "Attachment Bot",
-        attachments: [{ side: "front", widthCm: 6, lengthCm: 4, positionCm: 0 }]
-      },
-      attachments: [{ side: "front", widthCm: 6, lengthCm: 4, positionCm: 0 }],
-      actions: [{ type: "move", value: 25 }]
-    }),
+    preview: "robot",
+    starterRobot: {
+      ...baseRobot,
+      name: "Attachment Bot",
+      attachments: [{ side: "front", widthCm: 6, lengthCm: 4, positionCm: 0 }]
+    },
     controls: [
       { type: "attachmentSide", index: 0, label: "Attachment side" },
       { type: "attachmentNumber", index: 0, key: "widthCm", label: "Attachment width", unit: "cm", step: 0.5 },
@@ -250,8 +242,7 @@ const lessons = [
     steps: [
       "Start on the front.",
       "Change width and length.",
-      "Slide the side position.",
-      "Check the field footprint."
+      "Slide the side position."
     ],
     tryIt: [
       "Move it left.",

@@ -59,15 +59,40 @@ function upsertRobot(list, robotLike) {
 
 function syncRobotToInputs() {
   dom.robotName.value = state.robot.name || "";
-  dom.robotOffset.value = String(state.robot.offsetY);
-  dom.robotWidth.value = String(state.robot.robotWidthCm);
-  dom.robotLength.value = String(state.robot.robotLengthCm);
+  setInputValue(dom.robotOffset, state.robot.offsetY);
+  setInputValue(dom.robotWidth, state.robot.robotWidthCm);
+  setInputValue(dom.robotLength, state.robot.robotLengthCm);
 }
 
-function commitRobot(nextRobot) {
+function isCompleteNumberText(value) {
+  const text = String(value ?? "").trim();
+  if (!text || text === "-" || text === "+" || text === "." || text === "-." || text === "+.") {
+    return false;
+  }
+  return Number.isFinite(Number(text));
+}
+
+function numberFromInput(input, fallback) {
+  return isCompleteNumberText(input.value) ? safeNum(input.value, fallback) : fallback;
+}
+
+function setInputValue(input, value) {
+  if (document.activeElement !== input) {
+    input.value = String(value);
+  }
+}
+
+function configureDecimalInput(input) {
+  input.type = "text";
+  input.inputMode = "decimal";
+}
+
+function commitRobot(nextRobot, { skipAttachments = false } = {}) {
   state.robot = normalizeRobot(nextRobot);
   syncRobotToInputs();
-  renderAttachmentList();
+  if (!skipAttachments) {
+    renderAttachmentList();
+  }
   canvas.setRobot(state.robot);
 }
 
@@ -75,9 +100,9 @@ function updateRobotFromInputs() {
   commitRobot({
     ...state.robot,
     name: dom.robotName.value.trim() || "Untitled Robot",
-    offsetY: safeNum(dom.robotOffset.value, 0),
-    robotWidthCm: safeNum(dom.robotWidth.value, 0),
-    robotLengthCm: safeNum(dom.robotLength.value, 0)
+    offsetY: numberFromInput(dom.robotOffset, state.robot.offsetY),
+    robotWidthCm: numberFromInput(dom.robotWidth, state.robot.robotWidthCm),
+    robotLengthCm: numberFromInput(dom.robotLength, state.robot.robotLengthCm)
   });
 }
 
@@ -102,33 +127,39 @@ function renderAttachmentList() {
     });
 
     const width = document.createElement("input");
-    width.type = "number";
-    width.step = "0.1";
+    configureDecimalInput(width);
     width.value = String(attachment.widthCm);
     width.addEventListener("input", () => {
       const attachments = [...state.robot.attachments];
-      attachments[index] = { ...attachments[index], widthCm: safeNum(width.value, 0) };
-      commitRobot({ ...state.robot, attachments });
+      attachments[index] = { ...attachments[index], widthCm: numberFromInput(width, attachments[index].widthCm) };
+      commitRobot({ ...state.robot, attachments }, { skipAttachments: true });
+    });
+    width.addEventListener("blur", () => {
+      renderAttachmentList();
     });
 
     const length = document.createElement("input");
-    length.type = "number";
-    length.step = "0.1";
+    configureDecimalInput(length);
     length.value = String(attachment.lengthCm);
     length.addEventListener("input", () => {
       const attachments = [...state.robot.attachments];
-      attachments[index] = { ...attachments[index], lengthCm: safeNum(length.value, 0) };
-      commitRobot({ ...state.robot, attachments });
+      attachments[index] = { ...attachments[index], lengthCm: numberFromInput(length, attachments[index].lengthCm) };
+      commitRobot({ ...state.robot, attachments }, { skipAttachments: true });
+    });
+    length.addEventListener("blur", () => {
+      renderAttachmentList();
     });
 
     const position = document.createElement("input");
-    position.type = "number";
-    position.step = "0.1";
+    configureDecimalInput(position);
     position.value = String(attachment.positionCm);
     position.addEventListener("input", () => {
       const attachments = [...state.robot.attachments];
-      attachments[index] = { ...attachments[index], positionCm: safeNum(position.value, 0) };
-      commitRobot({ ...state.robot, attachments });
+      attachments[index] = { ...attachments[index], positionCm: numberFromInput(position, attachments[index].positionCm) };
+      commitRobot({ ...state.robot, attachments }, { skipAttachments: true });
+    });
+    position.addEventListener("blur", () => {
+      renderAttachmentList();
     });
 
     const deleteButton = document.createElement("button");
@@ -236,7 +267,13 @@ function updateRuntimeMessage() {
 }
 
 function attachEvents() {
-  [dom.robotName, dom.robotOffset, dom.robotWidth, dom.robotLength].forEach((input) => {
+  [dom.robotOffset, dom.robotWidth, dom.robotLength].forEach((input) => {
+    configureDecimalInput(input);
+    input.addEventListener("input", updateRobotFromInputs);
+    input.addEventListener("blur", syncRobotToInputs);
+  });
+
+  [dom.robotName].forEach((input) => {
     input.addEventListener("input", updateRobotFromInputs);
   });
 

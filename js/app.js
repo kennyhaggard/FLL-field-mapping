@@ -293,16 +293,39 @@ function renderReplayFrame(index) {
   renderer.renderFrameSequence(state.mission, state.replay.frames, safeIndex);
 }
 
+function isCompleteNumberText(value) {
+  const text = String(value ?? "").trim();
+  if (!text || text === "-" || text === "+" || text === "." || text === "-." || text === "+.") {
+    return false;
+  }
+  return Number.isFinite(Number(text));
+}
+
+function numberFromInput(input, fallback) {
+  return isCompleteNumberText(input.value) ? safeNum(input.value, fallback) : fallback;
+}
+
+function setInputValue(input, value) {
+  if (document.activeElement !== input) {
+    input.value = String(value);
+  }
+}
+
+function configureDecimalInput(input) {
+  input.type = "text";
+  input.inputMode = "decimal";
+}
+
 function syncMissionToInputs({ skipActions = false, skipAttachments = false } = {}) {
   const mission = state.mission;
   dom.missionName.value = mission.name;
   dom.traceColor.value = mission.traceColor;
-  dom.startX.value = String(mission.startX);
-  dom.startY.value = String(mission.startY);
-  dom.startAngle.value = String(mission.startAngle);
-  dom.robotWidth.value = String(mission.robotWidthCm);
-  dom.robotLength.value = String(mission.robotLengthCm);
-  dom.robotOffset.value = String(mission.offsetY);
+  setInputValue(dom.startX, mission.startX);
+  setInputValue(dom.startY, mission.startY);
+  setInputValue(dom.startAngle, mission.startAngle);
+  setInputValue(dom.robotWidth, mission.robotWidthCm);
+  setInputValue(dom.robotLength, mission.robotLengthCm);
+  setInputValue(dom.robotOffset, mission.offsetY);
   dom.robotName.value = mission.robotName || "";
 
   if (document.activeElement !== dom.missionJson) {
@@ -341,12 +364,12 @@ function updateMissionFromInputs() {
       ...state.mission,
       name: dom.missionName.value.trim() || "Untitled Mission",
       traceColor: dom.traceColor.value,
-      startX: safeNum(dom.startX.value, 0),
-      startY: safeNum(dom.startY.value, 0),
-      startAngle: safeNum(dom.startAngle.value, 0),
-      robotWidthCm: safeNum(dom.robotWidth.value, 0),
-      robotLengthCm: safeNum(dom.robotLength.value, 0),
-      offsetY: safeNum(dom.robotOffset.value, 0),
+      startX: numberFromInput(dom.startX, state.mission.startX),
+      startY: numberFromInput(dom.startY, state.mission.startY),
+      startAngle: numberFromInput(dom.startAngle, state.mission.startAngle),
+      robotWidthCm: numberFromInput(dom.robotWidth, state.mission.robotWidthCm),
+      robotLengthCm: numberFromInput(dom.robotLength, state.mission.robotLengthCm),
+      offsetY: numberFromInput(dom.robotOffset, state.mission.offsetY),
       robotName: dom.robotName.value.trim()
     })
   );
@@ -422,12 +445,11 @@ function renderActions() {
     });
 
     const valueInput = document.createElement("input");
-    valueInput.type = "number";
-    valueInput.step = "1";
+    configureDecimalInput(valueInput);
     valueInput.value = String(action.value);
     valueInput.addEventListener("input", () => {
       const actions = [...state.mission.actions];
-      actions[index] = { ...actions[index], value: safeNum(valueInput.value, 0) };
+      actions[index] = { ...actions[index], value: numberFromInput(valueInput, actions[index].value) };
       commitMission({ ...state.mission, actions }, { skipActions: true });
     });
     valueInput.addEventListener("blur", () => {
@@ -489,12 +511,14 @@ function renderAttachments() {
     });
 
     const width = document.createElement("input");
-    width.type = "number";
-    width.step = "0.1";
+    configureDecimalInput(width);
     width.value = String(attachment.widthCm);
     width.addEventListener("input", () => {
       const attachmentsNext = [...state.mission.attachments];
-      attachmentsNext[index] = { ...attachmentsNext[index], widthCm: safeNum(width.value, 0) };
+      attachmentsNext[index] = {
+        ...attachmentsNext[index],
+        widthCm: numberFromInput(width, attachmentsNext[index].widthCm)
+      };
       commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }), {
         skipAttachments: true
       });
@@ -505,12 +529,14 @@ function renderAttachments() {
     const widthField = createLabeledNumberField({ label: "Width", input: width });
 
     const length = document.createElement("input");
-    length.type = "number";
-    length.step = "0.1";
+    configureDecimalInput(length);
     length.value = String(attachment.lengthCm);
     length.addEventListener("input", () => {
       const attachmentsNext = [...state.mission.attachments];
-      attachmentsNext[index] = { ...attachmentsNext[index], lengthCm: safeNum(length.value, 0) };
+      attachmentsNext[index] = {
+        ...attachmentsNext[index],
+        lengthCm: numberFromInput(length, attachmentsNext[index].lengthCm)
+      };
       commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }), {
         skipAttachments: true
       });
@@ -521,12 +547,14 @@ function renderAttachments() {
     const lengthField = createLabeledNumberField({ label: "Length", input: length });
 
     const position = document.createElement("input");
-    position.type = "number";
-    position.step = "0.1";
+    configureDecimalInput(position);
     position.value = String(attachment.positionCm);
     position.addEventListener("input", () => {
       const attachmentsNext = [...state.mission.attachments];
-      attachmentsNext[index] = { ...attachmentsNext[index], positionCm: safeNum(position.value, 0) };
+      attachmentsNext[index] = {
+        ...attachmentsNext[index],
+        positionCm: numberFromInput(position, attachmentsNext[index].positionCm)
+      };
       commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }), {
         skipAttachments: true
       });
@@ -871,17 +899,17 @@ function hydrateInitialState() {
 }
 
 function attachEventHandlers() {
-  [
-    dom.missionName,
-    dom.traceColor,
-    dom.startX,
-    dom.startY,
-    dom.startAngle,
-    dom.robotWidth,
-    dom.robotLength,
-    dom.robotOffset,
-    dom.robotName
-  ].forEach((input) => input.addEventListener("input", updateMissionFromInputs));
+  [dom.startX, dom.startY, dom.startAngle, dom.robotWidth, dom.robotLength, dom.robotOffset].forEach(
+    (input) => {
+      configureDecimalInput(input);
+      input.addEventListener("input", updateMissionFromInputs);
+      input.addEventListener("blur", () => syncMissionToInputs({ skipActions: true, skipAttachments: true }));
+    }
+  );
+
+  [dom.missionName, dom.traceColor, dom.robotName].forEach((input) => {
+    input.addEventListener("input", updateMissionFromInputs);
+  });
 
   dom.loadDemo.addEventListener("click", () => {
     commitMission(createDefaultMission());

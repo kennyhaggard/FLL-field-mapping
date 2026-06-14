@@ -29,15 +29,15 @@
           </label>
           <label>
             Offset Y (cm)
-            <input id="robot-offset" type="number" step="0.1" />
+            <input id="robot-offset" type="text" inputmode="decimal" />
           </label>
           <label>
             Width (cm)
-            <input id="robot-width" type="number" step="0.1" />
+            <input id="robot-width" type="text" inputmode="decimal" />
           </label>
           <label>
             Length (cm)
-            <input id="robot-length" type="number" step="0.1" />
+            <input id="robot-length" type="text" inputmode="decimal" />
           </label>
         </div>
         <p class="notice">Drag attachments on the canvas to adjust their position along each side.</p>
@@ -73,6 +73,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/robot_builder.js?v=cloud-diagnostics"></script>
+  <script type="module" src="js/robot_builder.js?v=flexible-numeric-inputs"></script>
 </body>
 </html>
