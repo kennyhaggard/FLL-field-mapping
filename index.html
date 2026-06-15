@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>FLL Field Mapping</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=attachment-labels" />
+  <link rel="stylesheet" href="styles.css?v=color-swatch-fields" />
 </head>
 <body>
   <header class="header">
@@ -21,111 +21,6 @@
 
   <main class="app-layout">
     <section>
-      <div class="panel">
-        <div class="section-title">Mission Builder</div>
-        <div class="grid-2">
-          <label>
-            Mission name
-            <input id="mission-name" type="text" />
-          </label>
-          <label>
-            Trace color
-            <input id="trace-color" type="color" />
-          </label>
-          <label>
-            Start X (cm)
-            <input id="start-x" type="text" inputmode="decimal" />
-          </label>
-          <label>
-            Start Y (cm)
-            <input id="start-y" type="text" inputmode="decimal" />
-          </label>
-          <label>
-            Start angle (deg)
-            <input id="start-angle" type="text" inputmode="decimal" />
-          </label>
-        </div>
-        <div class="button-row" style="margin-top:12px;">
-          <button class="btn-secondary" id="load-demo">Load Demo Mission</button>
-          <button class="btn-ghost" id="reset-mission">Reset Mission</button>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="section-title">Robot Profile</div>
-        <div class="grid-2">
-          <label>
-            Robot width (cm)
-            <input id="robot-width" type="text" inputmode="decimal" />
-          </label>
-          <label>
-            Robot length (cm)
-            <input id="robot-length" type="text" inputmode="decimal" />
-          </label>
-          <label>
-            Offset Y (cm)
-            <input id="robot-offset" type="text" inputmode="decimal" />
-          </label>
-          <label>
-            Robot color
-            <input id="robot-color" type="color" />
-          </label>
-          <label>
-            Active robot
-            <input id="robot-name" type="text" placeholder="Default Robot" />
-          </label>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="button-row">
-          <button class="btn-primary" id="save-robot-local">Save Robot (Local)</button>
-          <button class="btn-ghost" id="apply-local-robot">Apply Selected Robot</button>
-          <a class="btn-pill btn-ghost" href="robot_builder.html">Open Robot Builder</a>
-        </div>
-
-        <label style="margin-top:10px;">
-          Local robots
-          <select id="local-robot-select"></select>
-        </label>
-
-        <div class="divider"></div>
-
-        <div class="section-title">Attachments</div>
-        <div class="button-row">
-          <button class="btn-secondary" id="add-attachment">Add Attachment</button>
-          <span class="badge" id="attachment-count">0 attachments</span>
-        </div>
-        <div class="action-list" id="attachment-list" style="margin-top:10px;"></div>
-      </div>
-
-      <div class="panel">
-        <div class="section-title">Mission Actions</div>
-        <div class="button-row">
-          <button class="btn-secondary" id="add-move">+ Move</button>
-          <button class="btn-secondary" id="add-rotate">+ Rotate</button>
-          <button class="btn-secondary" id="add-pause">+ Pause</button>
-        </div>
-        <div class="insert-action-row" style="margin-top:10px;">
-          <span class="status">Insert pause at top</span>
-          <button class="btn-ghost icon-button" id="insert-action-top" type="button" aria-label="Insert pause at top" title="Insert pause at top">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
-        </div>
-        <div class="action-list" id="action-list" style="margin-top:10px;"></div>
-      </div>
-
-      <div class="panel">
-        <div class="section-title">Mission JSON</div>
-        <textarea id="mission-json"></textarea>
-        <p class="notice notice-error" id="json-error" style="display:none;"></p>
-        <div class="button-row">
-          <button class="btn-primary" id="apply-json">Apply JSON</button>
-          <button class="btn-ghost" id="copy-link">Copy Share Link</button>
-          <button class="btn-ghost" id="email-link">Email Link</button>
-        </div>
-      </div>
-
       <div class="panel">
         <div class="section-title">Team Cloud</div>
         <div class="mode-banner">
@@ -174,6 +69,111 @@
           <button class="btn-danger" id="delete-team-robot" disabled>Delete Robot</button>
         </div>
       </div>
+
+      <div class="panel">
+        <div class="section-title">Mission Builder</div>
+        <div class="grid-2">
+          <label>
+            Mission name
+            <input id="mission-name" type="text" />
+          </label>
+          <label>
+            Trace color
+            <input id="trace-color" class="color-swatch-input" type="color" />
+          </label>
+          <label>
+            Start X (cm)
+            <input id="start-x" type="text" inputmode="decimal" />
+          </label>
+          <label>
+            Start Y (cm)
+            <input id="start-y" type="text" inputmode="decimal" />
+          </label>
+          <label>
+            Start angle (deg)
+            <input id="start-angle" type="text" inputmode="decimal" />
+          </label>
+        </div>
+        <div class="button-row" style="margin-top:12px;">
+          <button class="btn-secondary" id="load-demo">Load Demo Mission</button>
+          <button class="btn-ghost" id="reset-mission">Reset Mission</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">Robot Profile</div>
+        <div class="grid-2">
+          <label>
+            Robot width (cm)
+            <input id="robot-width" type="text" inputmode="decimal" />
+          </label>
+          <label>
+            Robot length (cm)
+            <input id="robot-length" type="text" inputmode="decimal" />
+          </label>
+          <label>
+            Offset Y (cm)
+            <input id="robot-offset" type="text" inputmode="decimal" />
+          </label>
+          <label>
+            Robot color
+            <input id="robot-color" class="color-swatch-input" type="color" />
+          </label>
+          <label>
+            Active robot
+            <input id="robot-name" type="text" placeholder="Default Robot" />
+          </label>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="button-row">
+          <button class="btn-primary" id="save-robot-local">Save Robot (Local)</button>
+          <button class="btn-ghost" id="apply-local-robot">Apply Selected Robot</button>
+          <a class="btn-pill btn-ghost" href="robot_builder.html">Open Robot Builder</a>
+        </div>
+
+        <label style="margin-top:10px;">
+          Local robots
+          <select id="local-robot-select"></select>
+        </label>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">Attachments</div>
+        <div class="button-row">
+          <button class="btn-secondary" id="add-attachment">Add Attachment</button>
+          <span class="badge" id="attachment-count">0 attachments</span>
+        </div>
+        <div class="action-list" id="attachment-list" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">Mission Actions</div>
+        <div class="button-row">
+          <button class="btn-secondary" id="add-move">+ Move</button>
+          <button class="btn-secondary" id="add-rotate">+ Rotate</button>
+          <button class="btn-secondary" id="add-pause">+ Pause</button>
+        </div>
+        <div class="insert-action-row" style="margin-top:10px;">
+          <span class="status">Insert pause at top</span>
+          <button class="btn-ghost icon-button" id="insert-action-top" type="button" aria-label="Insert pause at top" title="Insert pause at top">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <div class="action-list" id="action-list" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">Mission JSON</div>
+        <textarea id="mission-json"></textarea>
+        <p class="notice notice-error" id="json-error" style="display:none;"></p>
+        <div class="button-row">
+          <button class="btn-primary" id="apply-json">Apply JSON</button>
+          <button class="btn-ghost" id="copy-link">Copy Share Link</button>
+          <button class="btn-ghost" id="email-link">Email Link</button>
+        </div>
+      </div>
     </section>
 
     <section class="field-panel">
@@ -199,6 +199,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=robot-color-controls"></script>
+  <script type="module" src="js/app.js?v=cloud-first-autoload-mission"></script>
 </body>
 </html>

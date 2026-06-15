@@ -129,6 +129,27 @@ textarea {
   color: var(--ink);
 }
 
+input[type="color"].color-swatch-input {
+  height: 38px;
+  padding: 3px;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+input[type="color"].color-swatch-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"].color-swatch-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 0;
+}
+
+input[type="color"].color-swatch-input::-moz-color-swatch {
+  border: none;
+  border-radius: 0;
+}
+
 textarea {
   min-height: 160px;
   resize: vertical;

@@ -1017,6 +1017,7 @@ function attachEventHandlers() {
 
   dom.connectTeam.addEventListener("click", connectTeam);
   dom.refreshTeam.addEventListener("click", refreshTeamData);
+  dom.teamMissionSelect.addEventListener("change", loadTeamMission);
   dom.loadTeamMission.addEventListener("click", loadTeamMission);
   dom.saveTeamMission.addEventListener("click", saveTeamMission);
   dom.deleteTeamMission.addEventListener("click", deleteTeamMission);
