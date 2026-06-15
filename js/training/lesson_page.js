@@ -3,8 +3,8 @@ import {
   normalizeMission,
   normalizeRobot
 } from "../domain/model.js";
-import { FieldRenderer } from "../ui/field_renderer.js?v=smaller-front-arrow";
-import { RobotCanvas } from "../ui/robot_canvas.js?v=smaller-front-arrow";
+import { FieldRenderer } from "../ui/field_renderer.js?v=field-scaled-robot-strokes";
+import { RobotCanvas } from "../ui/robot_canvas.js?v=field-scaled-robot-strokes";
 import { getLesson, lessons } from "./lessons.js";
 
 const lessonId = document.body.dataset.lessonId;

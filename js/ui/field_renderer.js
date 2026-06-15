@@ -181,15 +181,13 @@ class FieldRenderer {
   }
 
   drawRobotOutline(mission, pose, color) {
-    const { scaleX, scaleY } = this.getScale();
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
     group.setAttribute("data-dynamic", "1");
     group.setAttribute("data-pause-outline", "1");
     group.setAttribute("fill", "none");
     group.setAttribute("stroke", color);
-    group.setAttribute("stroke-width", "1.6");
+    group.setAttribute("stroke-width", "1");
     group.setAttribute("stroke-linejoin", "round");
-    group.setAttribute("vector-effect", "non-scaling-stroke");
     group.setAttribute("opacity", "0.9");
 
     const baseRect = this.rectToSvg({
@@ -214,7 +212,7 @@ class FieldRenderer {
       attachmentEl.setAttribute("y", rect.y);
       attachmentEl.setAttribute("width", rect.width);
       attachmentEl.setAttribute("height", rect.height);
-      attachmentEl.setAttribute("stroke-width", String(Math.max(1, Math.min(scaleX, scaleY) * 0.28)));
+      attachmentEl.setAttribute("stroke-width", "0.8");
       group.appendChild(attachmentEl);
     });
 
@@ -238,9 +236,8 @@ class FieldRenderer {
     frontEdge.setAttribute("x2", String(halfWidthSvg));
     frontEdge.setAttribute("y2", String(frontY));
     frontEdge.setAttribute("stroke", "#ed1c24");
-    frontEdge.setAttribute("stroke-width", "2");
+    frontEdge.setAttribute("stroke-width", "1");
     frontEdge.setAttribute("stroke-linecap", "square");
-    frontEdge.setAttribute("vector-effect", "non-scaling-stroke");
     group.appendChild(frontEdge);
 
     const pointer = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
@@ -255,8 +252,7 @@ class FieldRenderer {
     );
     pointer.setAttribute("fill", "#ed1c24");
     pointer.setAttribute("stroke", "#ffffff");
-    pointer.setAttribute("stroke-width", "0.8");
-    pointer.setAttribute("vector-effect", "non-scaling-stroke");
+    pointer.setAttribute("stroke-width", "0.35");
     group.appendChild(pointer);
   }
 
@@ -270,9 +266,8 @@ class FieldRenderer {
     marker.setAttribute("data-offset-marker", "1");
     marker.setAttribute("fill", "rgba(125, 60, 152, 0.16)");
     marker.setAttribute("stroke", "#7d3c98");
-    marker.setAttribute("stroke-width", "1.4");
+    marker.setAttribute("stroke-width", "0.8");
     marker.setAttribute("stroke-linecap", "round");
-    marker.setAttribute("vector-effect", "non-scaling-stroke");
 
     const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     ring.setAttribute("cx", "0");
@@ -300,7 +295,6 @@ class FieldRenderer {
   drawRobot(mission, pose) {
     if (!this.svg) return;
 
-    const { scaleX, scaleY } = this.getScale();
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
     group.setAttribute("data-dynamic", "1");
 
@@ -317,7 +311,7 @@ class FieldRenderer {
     base.setAttribute("height", baseRect.height);
     base.setAttribute("fill", "rgba(0, 102, 179, 0.22)");
     base.setAttribute("stroke", mission.traceColor);
-    base.setAttribute("stroke-width", "1.25");
+    base.setAttribute("stroke-width", "0.8");
     group.appendChild(base);
 
     mission.attachments.forEach((attachment) => {
@@ -331,7 +325,7 @@ class FieldRenderer {
       attachmentEl.setAttribute("height", rect.height);
       attachmentEl.setAttribute("fill", "rgba(37, 99, 235, 0.2)");
       attachmentEl.setAttribute("stroke", "#1e3a8a");
-      attachmentEl.setAttribute("stroke-width", String(Math.max(0.9, Math.min(scaleX, scaleY) * 0.24)));
+      attachmentEl.setAttribute("stroke-width", "0.65");
       group.appendChild(attachmentEl);
     });
 
