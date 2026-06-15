@@ -17,6 +17,7 @@ test("normalize mission uses nested robot profile values", () => {
     name: "Nested",
     robot: {
       name: "Nested Bot",
+      robotColor: "#f58220",
       robotWidthCm: 14,
       robotLengthCm: 21,
       offsetY: 4,
@@ -26,6 +27,8 @@ test("normalize mission uses nested robot profile values", () => {
 
   assert.equal(mission.robotName, "Nested Bot");
   assert.equal(mission.robot.name, "Nested Bot");
+  assert.equal(mission.robotColor, "#f58220");
+  assert.equal(mission.robot.robotColor, "#f58220");
   assert.equal(mission.robotWidthCm, 14);
   assert.equal(mission.robot.robotWidthCm, 14);
   assert.equal(mission.attachments.length, 1);
@@ -36,6 +39,7 @@ test("normalizeMission preserves a robot snapshot for flat mission fields", () =
   const mission = normalizeMission({
     name: "Flat",
     robotName: "Flat Bot",
+    robotColor: "rgb(237, 28, 36)",
     robotWidthCm: 15,
     robotLengthCm: 20,
     offsetY: 2,
@@ -43,6 +47,8 @@ test("normalizeMission preserves a robot snapshot for flat mission fields", () =
   });
 
   assert.equal(mission.robot.name, "Flat Bot");
+  assert.equal(mission.robotColor, "#ed1c24");
+  assert.equal(mission.robot.robotColor, "#ed1c24");
   assert.equal(mission.robot.robotWidthCm, 15);
   assert.equal(mission.robot.robotLengthCm, 20);
   assert.equal(mission.robot.offsetY, 2);
@@ -128,6 +134,7 @@ test("applyRobotToMission replaces robot geometry and attachments", () => {
   const mission = normalizeMission(createBlankMission());
   const robot = normalizeRobot({
     name: "Sweeper",
+    robotColor: "#7d3c98",
     robotWidthCm: 16,
     robotLengthCm: 18,
     offsetY: 3,
@@ -137,6 +144,8 @@ test("applyRobotToMission replaces robot geometry and attachments", () => {
   const nextMission = applyRobotToMission(mission, robot);
   assert.equal(nextMission.robotName, "Sweeper");
   assert.equal(nextMission.robot.name, "Sweeper");
+  assert.equal(nextMission.robotColor, "#7d3c98");
+  assert.equal(nextMission.robot.robotColor, "#7d3c98");
   assert.equal(nextMission.robotWidthCm, 16);
   assert.equal(nextMission.robot.robotWidthCm, 16);
   assert.equal(nextMission.attachments[0].side, "left");

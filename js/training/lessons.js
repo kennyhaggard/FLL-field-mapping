@@ -1,5 +1,6 @@
 const baseRobot = Object.freeze({
   name: "Training Bot",
+  robotColor: "#0066b3",
   robotWidthCm: 14,
   robotLengthCm: 18,
   offsetY: 0,
@@ -11,6 +12,7 @@ function mission(overrides = {}) {
     ...baseRobot,
     ...(overrides.robot || {}),
     name: overrides.robotName || overrides.robot?.name || baseRobot.name,
+    robotColor: overrides.robotColor ?? overrides.robot?.robotColor ?? baseRobot.robotColor,
     robotWidthCm: overrides.robotWidthCm ?? overrides.robot?.robotWidthCm ?? baseRobot.robotWidthCm,
     robotLengthCm: overrides.robotLengthCm ?? overrides.robot?.robotLengthCm ?? baseRobot.robotLengthCm,
     offsetY: overrides.offsetY ?? overrides.robot?.offsetY ?? baseRobot.offsetY
@@ -29,6 +31,7 @@ function mission(overrides = {}) {
     startY: 20,
     startAngle: 90,
     traceColor: "#0066b3",
+    robotColor: robot.robotColor,
     robotWidthCm: robot.robotWidthCm,
     robotLengthCm: robot.robotLengthCm,
     offsetY: robot.offsetY,

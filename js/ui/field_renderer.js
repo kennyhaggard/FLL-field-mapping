@@ -4,7 +4,14 @@ import {
   getAttachmentRectCm,
   normalizeMission,
   poseToTracePointCm
-} from "../domain/model.js";
+} from "../domain/model.js?v=robot-color-controls";
+
+function colorWithAlpha(hexColor, alpha) {
+  const match = String(hexColor || "").match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
+  if (!match) return `rgba(0, 102, 179, ${alpha})`;
+  const [, r, g, b] = match;
+  return `rgba(${parseInt(r, 16)}, ${parseInt(g, 16)}, ${parseInt(b, 16)}, ${alpha})`;
+}
 
 class FieldRenderer {
   constructor(host, fieldSvgUrl = "./field.svg") {
@@ -186,7 +193,7 @@ class FieldRenderer {
     group.setAttribute("data-pause-outline", "1");
     group.setAttribute("fill", "none");
     group.setAttribute("stroke", color);
-    group.setAttribute("stroke-width", "1");
+    group.setAttribute("stroke-width", "1.25");
     group.setAttribute("stroke-linejoin", "round");
     group.setAttribute("opacity", "0.9");
 
@@ -212,7 +219,7 @@ class FieldRenderer {
       attachmentEl.setAttribute("y", rect.y);
       attachmentEl.setAttribute("width", rect.width);
       attachmentEl.setAttribute("height", rect.height);
-      attachmentEl.setAttribute("stroke-width", "0.8");
+      attachmentEl.setAttribute("stroke-width", "1");
       group.appendChild(attachmentEl);
     });
 
@@ -236,7 +243,7 @@ class FieldRenderer {
     frontEdge.setAttribute("x2", String(halfWidthSvg));
     frontEdge.setAttribute("y2", String(frontY));
     frontEdge.setAttribute("stroke", "#ed1c24");
-    frontEdge.setAttribute("stroke-width", "1");
+    frontEdge.setAttribute("stroke-width", "1.25");
     frontEdge.setAttribute("stroke-linecap", "square");
     group.appendChild(frontEdge);
 
@@ -252,7 +259,7 @@ class FieldRenderer {
     );
     pointer.setAttribute("fill", "#ed1c24");
     pointer.setAttribute("stroke", "#ffffff");
-    pointer.setAttribute("stroke-width", "0.35");
+    pointer.setAttribute("stroke-width", "0.44");
     group.appendChild(pointer);
   }
 
@@ -266,7 +273,7 @@ class FieldRenderer {
     marker.setAttribute("data-offset-marker", "1");
     marker.setAttribute("fill", "rgba(125, 60, 152, 0.16)");
     marker.setAttribute("stroke", "#7d3c98");
-    marker.setAttribute("stroke-width", "0.8");
+    marker.setAttribute("stroke-width", "1");
     marker.setAttribute("stroke-linecap", "round");
 
     const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -309,9 +316,9 @@ class FieldRenderer {
     base.setAttribute("y", baseRect.y);
     base.setAttribute("width", baseRect.width);
     base.setAttribute("height", baseRect.height);
-    base.setAttribute("fill", "rgba(0, 102, 179, 0.22)");
-    base.setAttribute("stroke", mission.traceColor);
-    base.setAttribute("stroke-width", "0.8");
+    base.setAttribute("fill", colorWithAlpha(mission.robotColor, 0.22));
+    base.setAttribute("stroke", mission.robotColor);
+    base.setAttribute("stroke-width", "1");
     group.appendChild(base);
 
     mission.attachments.forEach((attachment) => {
@@ -323,9 +330,9 @@ class FieldRenderer {
       attachmentEl.setAttribute("y", rect.y);
       attachmentEl.setAttribute("width", rect.width);
       attachmentEl.setAttribute("height", rect.height);
-      attachmentEl.setAttribute("fill", "rgba(37, 99, 235, 0.2)");
-      attachmentEl.setAttribute("stroke", "#1e3a8a");
-      attachmentEl.setAttribute("stroke-width", "0.65");
+      attachmentEl.setAttribute("fill", colorWithAlpha(mission.robotColor, 0.18));
+      attachmentEl.setAttribute("stroke", mission.robotColor);
+      attachmentEl.setAttribute("stroke-width", "0.81");
       group.appendChild(attachmentEl);
     });
 

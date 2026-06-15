@@ -7,7 +7,7 @@ import {
   createDefaultMission,
   normalizeMission,
   normalizeRobot
-} from "./model.js";
+} from "./model.js?v=robot-color-controls";
 
 function readJson(storage, key) {
   try {

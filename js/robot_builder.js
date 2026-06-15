@@ -3,19 +3,20 @@ import {
   createDefaultRobot,
   normalizeRobot,
   safeNum
-} from "./domain/model.js";
+} from "./domain/model.js?v=robot-color-controls";
 import { detectRuntimeMode } from "./domain/runtime.js";
 import {
   loadRobotLibrary,
   loadTeamSession,
   saveRobotLibrary,
   stageRobotTransfer
-} from "./domain/storage.js";
-import { RobotCanvas } from "./ui/robot_canvas.js?v=field-scaled-robot-strokes";
+} from "./domain/storage.js?v=robot-color-controls";
+import { RobotCanvas } from "./ui/robot_canvas.js?v=robot-color-controls";
 
 const dom = {
   robotName: document.getElementById("robot-name"),
   robotOffset: document.getElementById("robot-offset"),
+  robotColor: document.getElementById("robot-color"),
   robotWidth: document.getElementById("robot-width"),
   robotLength: document.getElementById("robot-length"),
   addAttachment: document.getElementById("add-attachment"),
@@ -60,6 +61,7 @@ function upsertRobot(list, robotLike) {
 function syncRobotToInputs() {
   dom.robotName.value = state.robot.name || "";
   setInputValue(dom.robotOffset, state.robot.offsetY);
+  dom.robotColor.value = state.robot.robotColor;
   setInputValue(dom.robotWidth, state.robot.robotWidthCm);
   setInputValue(dom.robotLength, state.robot.robotLengthCm);
 }
@@ -100,6 +102,7 @@ function updateRobotFromInputs() {
   commitRobot({
     ...state.robot,
     name: dom.robotName.value.trim() || "Untitled Robot",
+    robotColor: dom.robotColor.value,
     offsetY: numberFromInput(dom.robotOffset, state.robot.offsetY),
     robotWidthCm: numberFromInput(dom.robotWidth, state.robot.robotWidthCm),
     robotLengthCm: numberFromInput(dom.robotLength, state.robot.robotLengthCm)
@@ -273,7 +276,7 @@ function attachEvents() {
     input.addEventListener("blur", syncRobotToInputs);
   });
 
-  [dom.robotName].forEach((input) => {
+  [dom.robotName, dom.robotColor].forEach((input) => {
     input.addEventListener("input", updateRobotFromInputs);
   });
 

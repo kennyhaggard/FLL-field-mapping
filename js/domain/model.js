@@ -3,8 +3,8 @@ import { DEFAULT_REPLAY_OPTIONS } from "./constants.js";
 /**
  * @typedef {{side:"front"|"rear"|"left"|"right", widthCm:number, lengthCm:number, positionCm:number}} Attachment
  * @typedef {{type:"move"|"rotate"|"pause", value:number}} MissionAction
- * @typedef {{id:string, name:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[]}} RobotProfile
- * @typedef {{name:string, robotName:string, robot:RobotProfile, startX:number, startY:number, startAngle:number, traceColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[], actions:MissionAction[]}} Mission
+ * @typedef {{id:string, name:string, robotColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[]}} RobotProfile
+ * @typedef {{name:string, robotName:string, robot:RobotProfile, startX:number, startY:number, startAngle:number, traceColor:string, robotColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[], actions:MissionAction[]}} Mission
  * @typedef {{x:number, y:number, headingDeg:number, turnCenterX:number, turnCenterY:number}} Pose
  */
 
@@ -77,6 +77,7 @@ function normalizeRobot(raw) {
   return {
     id: String(source.id || ""),
     name: String(source.name || "Untitled Robot"),
+    robotColor: normalizeColorToHex(source.robotColor, "#0066b3"),
     robotWidthCm: safeNum(source.robotWidthCm, 12.7),
     robotLengthCm: safeNum(source.robotLengthCm, 20.5),
     offsetY: safeNum(source.offsetY, 0),
@@ -91,10 +92,12 @@ function normalizeMission(raw) {
   const robotWidthCm = safeNum(source.robotWidthCm ?? robotSource.robotWidthCm, 12.7);
   const robotLengthCm = safeNum(source.robotLengthCm ?? robotSource.robotLengthCm, 20.5);
   const offsetY = safeNum(source.offsetY ?? robotSource.offsetY, 0);
+  const robotColor = normalizeColorToHex(source.robotColor ?? robotSource.robotColor, "#0066b3");
   const attachments = normalizeAttachments(source.attachments || robotSource.attachments || []);
   const robot = normalizeRobot({
     ...robotSource,
     name: robotName || robotSource.name || "Mission Robot",
+    robotColor,
     robotWidthCm,
     robotLengthCm,
     offsetY,
@@ -109,6 +112,7 @@ function normalizeMission(raw) {
     startY: safeNum(source.startY, 0),
     startAngle: normalizeAngle(source.startAngle),
     traceColor: normalizeColorToHex(source.traceColor, "#0066b3"),
+    robotColor: robot.robotColor,
     robotWidthCm: robot.robotWidthCm,
     robotLengthCm: robot.robotLengthCm,
     offsetY: robot.offsetY,
@@ -124,6 +128,7 @@ function createDefaultMission() {
     startY: 0,
     startAngle: 90,
     traceColor: "#0066b3",
+    robotColor: "#0066b3",
     robotWidthCm: 12.7,
     robotLengthCm: 20.5,
     offsetY: 6.1,
@@ -147,6 +152,7 @@ function createBlankMission() {
     startY: 0,
     startAngle: 90,
     traceColor: "#0066b3",
+    robotColor: "#0066b3",
     robotWidthCm: 12.7,
     robotLengthCm: 20.5,
     offsetY: 0,
@@ -158,6 +164,7 @@ function createBlankMission() {
 function createDefaultRobot() {
   return normalizeRobot({
     name: "Default Robot",
+    robotColor: "#0066b3",
     robotWidthCm: 12.7,
     robotLengthCm: 20.5,
     offsetY: 6.1,
@@ -172,6 +179,7 @@ function applyRobotToMission(missionLike, robotLike) {
     ...mission,
     robotName: robot.name,
     robot,
+    robotColor: robot.robotColor,
     robotWidthCm: robot.robotWidthCm,
     robotLengthCm: robot.robotLengthCm,
     offsetY: robot.offsetY,

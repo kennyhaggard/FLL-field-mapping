@@ -1,4 +1,4 @@
-import { normalizeMission } from "./model.js";
+import { normalizeMission } from "./model.js?v=robot-color-controls";
 
 function encodeBase64Utf8(text) {
   if (typeof Buffer !== "undefined") {

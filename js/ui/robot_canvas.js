@@ -3,7 +3,14 @@ import {
   computeRobotLocalBoundsCm,
   getAttachmentRectCm,
   normalizeRobot
-} from "../domain/model.js";
+} from "../domain/model.js?v=robot-color-controls";
+
+function colorWithAlpha(hexColor, alpha) {
+  const match = String(hexColor || "").match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
+  if (!match) return `rgba(0, 102, 179, ${alpha})`;
+  const [, r, g, b] = match;
+  return `rgba(${parseInt(r, 16)}, ${parseInt(g, 16)}, ${parseInt(b, 16)}, ${alpha})`;
+}
 
 class RobotCanvas {
   constructor(svg) {
@@ -29,7 +36,7 @@ class RobotCanvas {
     frontEdge.setAttribute("x2", String(halfWidth));
     frontEdge.setAttribute("y2", String(frontY));
     frontEdge.setAttribute("stroke", "#ed1c24");
-    frontEdge.setAttribute("stroke-width", "0.45");
+    frontEdge.setAttribute("stroke-width", "0.56");
     frontEdge.setAttribute("stroke-linecap", "square");
     this.svg.appendChild(frontEdge);
 
@@ -45,7 +52,7 @@ class RobotCanvas {
     );
     pointer.setAttribute("fill", "#ed1c24");
     pointer.setAttribute("stroke", "#ffffff");
-    pointer.setAttribute("stroke-width", "0.15");
+    pointer.setAttribute("stroke-width", "0.19");
     this.svg.appendChild(pointer);
   }
 
@@ -58,7 +65,7 @@ class RobotCanvas {
     marker.setAttribute("data-offset-marker", "1");
     marker.setAttribute("fill", "rgba(125, 60, 152, 0.16)");
     marker.setAttribute("stroke", "#7d3c98");
-    marker.setAttribute("stroke-width", "0.25");
+    marker.setAttribute("stroke-width", "0.31");
     marker.setAttribute("stroke-linecap", "round");
 
     const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -102,9 +109,9 @@ class RobotCanvas {
     base.setAttribute("y", String(-this.robot.robotLengthCm / 2));
     base.setAttribute("width", String(this.robot.robotWidthCm));
     base.setAttribute("height", String(this.robot.robotLengthCm));
-    base.setAttribute("fill", "rgba(0, 102, 179, 0.18)");
-    base.setAttribute("stroke", "#0066b3");
-    base.setAttribute("stroke-width", "0.35");
+    base.setAttribute("fill", colorWithAlpha(this.robot.robotColor, 0.18));
+    base.setAttribute("stroke", this.robot.robotColor);
+    base.setAttribute("stroke-width", "0.44");
     this.svg.appendChild(base);
 
     this.robot.attachments.forEach((attachment, index) => {
@@ -116,9 +123,9 @@ class RobotCanvas {
       rect.setAttribute("y", String(-(rectCm.yMin + rectCm.height)));
       rect.setAttribute("width", String(rectCm.width));
       rect.setAttribute("height", String(rectCm.height));
-      rect.setAttribute("fill", "rgba(37, 99, 235, 0.18)");
-      rect.setAttribute("stroke", "#1e3a8a");
-      rect.setAttribute("stroke-width", "0.3");
+      rect.setAttribute("fill", colorWithAlpha(this.robot.robotColor, 0.16));
+      rect.setAttribute("stroke", this.robot.robotColor);
+      rect.setAttribute("stroke-width", "0.38");
       rect.setAttribute("data-index", String(index));
       rect.setAttribute("cursor", "grab");
       this.svg.appendChild(rect);

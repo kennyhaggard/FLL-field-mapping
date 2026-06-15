@@ -2,9 +2,9 @@ import {
   buildReplayFrames,
   normalizeMission,
   normalizeRobot
-} from "../domain/model.js";
-import { FieldRenderer } from "../ui/field_renderer.js?v=field-scaled-robot-strokes";
-import { RobotCanvas } from "../ui/robot_canvas.js?v=field-scaled-robot-strokes";
+} from "../domain/model.js?v=robot-color-controls";
+import { FieldRenderer } from "../ui/field_renderer.js?v=robot-color-controls";
+import { RobotCanvas } from "../ui/robot_canvas.js?v=robot-color-controls";
 import { getLesson, lessons } from "./lessons.js";
 
 const lessonId = document.body.dataset.lessonId;
@@ -67,6 +67,7 @@ function syncMissionRobot(nextMission) {
   const syncedRobot = normalizeRobot({
     ...(nextMission.robot || {}),
     name: nextMission.robotName || nextMission.robot?.name || "Training Bot",
+    robotColor: nextMission.robotColor || nextMission.robot?.robotColor,
     robotWidthCm: nextMission.robotWidthCm,
     robotLengthCm: nextMission.robotLengthCm,
     offsetY: nextMission.offsetY,
@@ -77,6 +78,7 @@ function syncMissionRobot(nextMission) {
     ...nextMission,
     robotName: syncedRobot.name,
     robot: syncedRobot,
+    robotColor: syncedRobot.robotColor,
     robotWidthCm: syncedRobot.robotWidthCm,
     robotLengthCm: syncedRobot.robotLengthCm,
     offsetY: syncedRobot.offsetY,
@@ -96,6 +98,7 @@ function setRobotValue(key, value) {
       ...mission,
       robotName: robot.name,
       robot,
+      robotColor: robot.robotColor,
       robotWidthCm: robot.robotWidthCm,
       robotLengthCm: robot.robotLengthCm,
       offsetY: robot.offsetY,

@@ -7,9 +7,9 @@ import {
   normalizeMission,
   normalizeRobot,
   safeNum
-} from "./domain/model.js";
+} from "./domain/model.js?v=robot-color-controls";
 import { detectRuntimeMode, validateTeamPin } from "./domain/runtime.js";
-import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js";
+import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=robot-color-controls";
 import {
   consumeRobotTransfer,
   loadMissionDraft,
@@ -18,8 +18,8 @@ import {
   saveMissionDraft,
   saveRobotLibrary,
   saveTeamSession
-} from "./domain/storage.js";
-import { FieldRenderer } from "./ui/field_renderer.js?v=field-scaled-robot-strokes";
+} from "./domain/storage.js?v=robot-color-controls";
+import { FieldRenderer } from "./ui/field_renderer.js?v=robot-color-controls";
 
 const dom = {
   fieldHost: document.getElementById("mission-field-host"),
@@ -33,6 +33,7 @@ const dom = {
   robotWidth: document.getElementById("robot-width"),
   robotLength: document.getElementById("robot-length"),
   robotOffset: document.getElementById("robot-offset"),
+  robotColor: document.getElementById("robot-color"),
   robotName: document.getElementById("robot-name"),
   saveRobotLocal: document.getElementById("save-robot-local"),
   applyLocalRobot: document.getElementById("apply-local-robot"),
@@ -186,6 +187,7 @@ function upsertRobot(list, robotLike) {
 function createRobotFromMission() {
   return normalizeRobot({
     name: state.mission.robotName || `Robot ${state.localRobots.length + 1}`,
+    robotColor: state.mission.robotColor,
     robotWidthCm: state.mission.robotWidthCm,
     robotLengthCm: state.mission.robotLengthCm,
     offsetY: state.mission.offsetY,
@@ -197,6 +199,7 @@ function withMissionRobot(nextMission) {
   const robot = normalizeRobot({
     ...(nextMission.robot || {}),
     name: nextMission.robotName || nextMission.robot?.name || "Mission Robot",
+    robotColor: nextMission.robotColor || nextMission.robot?.robotColor,
     robotWidthCm: nextMission.robotWidthCm,
     robotLengthCm: nextMission.robotLengthCm,
     offsetY: nextMission.offsetY,
@@ -207,6 +210,7 @@ function withMissionRobot(nextMission) {
     ...nextMission,
     robotName: robot.name,
     robot,
+    robotColor: robot.robotColor,
     robotWidthCm: robot.robotWidthCm,
     robotLengthCm: robot.robotLengthCm,
     offsetY: robot.offsetY,
@@ -326,6 +330,7 @@ function syncMissionToInputs({ skipActions = false, skipAttachments = false } = 
   setInputValue(dom.robotWidth, mission.robotWidthCm);
   setInputValue(dom.robotLength, mission.robotLengthCm);
   setInputValue(dom.robotOffset, mission.offsetY);
+  dom.robotColor.value = mission.robotColor;
   dom.robotName.value = mission.robotName || "";
 
   if (document.activeElement !== dom.missionJson) {
@@ -370,6 +375,7 @@ function updateMissionFromInputs() {
       robotWidthCm: numberFromInput(dom.robotWidth, state.mission.robotWidthCm),
       robotLengthCm: numberFromInput(dom.robotLength, state.mission.robotLengthCm),
       offsetY: numberFromInput(dom.robotOffset, state.mission.offsetY),
+      robotColor: dom.robotColor.value,
       robotName: dom.robotName.value.trim()
     })
   );
@@ -907,7 +913,7 @@ function attachEventHandlers() {
     }
   );
 
-  [dom.missionName, dom.traceColor, dom.robotName].forEach((input) => {
+  [dom.missionName, dom.traceColor, dom.robotColor, dom.robotName].forEach((input) => {
     input.addEventListener("input", updateMissionFromInputs);
   });
 
