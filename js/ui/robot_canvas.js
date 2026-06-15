@@ -20,7 +20,7 @@ class RobotCanvas {
     const halfWidth = this.robot.robotWidthCm / 2;
     const halfLength = this.robot.robotLengthCm / 2;
     const frontY = -halfLength;
-    const markerSize = Math.max(1.6, Math.min(this.robot.robotWidthCm, this.robot.robotLengthCm) * 0.12);
+    const markerSize = Math.max(1, Math.min(this.robot.robotWidthCm, this.robot.robotLengthCm) * 0.075);
 
     const frontEdge = document.createElementNS("http://www.w3.org/2000/svg", "line");
     frontEdge.setAttribute("data-front-indicator", "edge");
@@ -40,8 +40,8 @@ class RobotCanvas {
       "points",
       [
         `0,${(frontY - markerSize).toFixed(2)}`,
-        `${(-markerSize * 0.75).toFixed(2)},${(frontY + markerSize * 0.45).toFixed(2)}`,
-        `${(markerSize * 0.75).toFixed(2)},${(frontY + markerSize * 0.45).toFixed(2)}`
+        `${(-markerSize * 0.55).toFixed(2)},${(frontY + markerSize * 0.28).toFixed(2)}`,
+        `${(markerSize * 0.55).toFixed(2)},${(frontY + markerSize * 0.28).toFixed(2)}`
       ].join(" ")
     );
     pointer.setAttribute("fill", "#ed1c24");

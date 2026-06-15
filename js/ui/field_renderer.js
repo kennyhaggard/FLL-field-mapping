@@ -229,7 +229,7 @@ class FieldRenderer {
     const halfWidthSvg = (mission.robotWidthCm / 2) * scaleX;
     const halfLengthSvg = (mission.robotLengthCm / 2) * scaleY;
     const frontY = -halfLengthSvg;
-    const markerSize = Math.max(4, Math.min(mission.robotWidthCm * scaleX, mission.robotLengthCm * scaleY) * 0.12);
+    const markerSize = Math.max(3, Math.min(mission.robotWidthCm * scaleX, mission.robotLengthCm * scaleY) * 0.075);
 
     const frontEdge = document.createElementNS("http://www.w3.org/2000/svg", "line");
     frontEdge.setAttribute("data-front-indicator", "edge");
@@ -249,8 +249,8 @@ class FieldRenderer {
       "points",
       [
         `0,${(frontY - markerSize).toFixed(2)}`,
-        `${(-markerSize * 0.75).toFixed(2)},${(frontY + markerSize * 0.45).toFixed(2)}`,
-        `${(markerSize * 0.75).toFixed(2)},${(frontY + markerSize * 0.45).toFixed(2)}`
+        `${(-markerSize * 0.55).toFixed(2)},${(frontY + markerSize * 0.28).toFixed(2)}`,
+        `${(markerSize * 0.55).toFixed(2)},${(frontY + markerSize * 0.28).toFixed(2)}`
       ].join(" ")
     );
     pointer.setAttribute("fill", "#ed1c24");
