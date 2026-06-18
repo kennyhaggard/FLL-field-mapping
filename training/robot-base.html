@@ -4,17 +4,27 @@
   <meta charset="utf-8" />
   <title>Base Robot | Field Mapping Training</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="../styles.css?v=color-swatch-fields" />
+  <link rel="stylesheet" href="../styles.css?v=sitewide-nav" />
 </head>
 <body data-lesson-id="robot-base">
   <header class="header">
-    <h1 id="lesson-title">Training Lesson</h1>
-    <p id="lesson-objective"></p>
-    <nav class="nav">
-      <a href="../training.html">Training</a>
-      <a href="../index.html">Mission Tool</a>
-      <a href="../robot_builder.html">Robot Builder</a>
-    </nav>
+    <div class="header-main">
+      <div class="header-copy">
+        <h1 id="lesson-title">Training Lesson</h1>
+        <p id="lesson-objective"></p>
+      </div>
+      <div class="nav-menu">
+        <input class="nav-check" id="site-nav-toggle" type="checkbox" aria-label="Menu" />
+        <label class="nav-toggle" for="site-nav-toggle"><span></span><span></span><span></span></label>
+        <nav class="nav" aria-label="Primary">
+          <a href="../index.html">Mission Tool</a>
+          <a href="../training.html" aria-current="page">Training</a>
+          <a href="../robot_builder.html">Robot Builder</a>
+          <a href="../introduction.html">How It Works</a>
+          <a href="../team_signup.html">Team Signup</a>
+        </nav>
+      </div>
+    </div>
   </header>
   <main class="training-layout">
     <section class="panel training-lesson-panel">
@@ -57,6 +67,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="../js/training/lesson_page.js?v=robot-color-controls"></script>
+  <script type="module" src="../js/training/lesson_page.js?v=sitewide-nav"></script>
 </body>
 </html>

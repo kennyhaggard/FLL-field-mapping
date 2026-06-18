@@ -4,18 +4,27 @@
   <meta charset="utf-8" />
   <title>Robot Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=color-swatch-fields" />
+  <link rel="stylesheet" href="styles.css?v=sitewide-nav" />
 </head>
 <body>
   <header class="header">
-    <h1>Robot Builder</h1>
-    <p>Draw your robot footprint, attachments, and export it into mission format.</p>
-    <nav class="nav">
-      <a href="index.html">Mission Tool</a>
-      <a href="training.html">Training</a>
-      <a href="introduction.html">How It Works</a>
-      <a href="team_signup.html">Team Signup</a>
-    </nav>
+    <div class="header-main">
+      <div class="header-copy">
+        <h1>Robot Builder</h1>
+        <p>Draw your robot footprint, attachments, and export it into mission format.</p>
+      </div>
+      <div class="nav-menu">
+        <input class="nav-check" id="site-nav-toggle" type="checkbox" aria-label="Menu" />
+        <label class="nav-toggle" for="site-nav-toggle"><span></span><span></span><span></span></label>
+        <nav class="nav" aria-label="Primary">
+          <a href="index.html">Mission Tool</a>
+          <a href="training.html">Training</a>
+          <a href="robot_builder.html" aria-current="page">Robot Builder</a>
+          <a href="introduction.html">How It Works</a>
+          <a href="team_signup.html">Team Signup</a>
+        </nav>
+      </div>
+    </div>
   </header>
 
   <main class="app-layout">

@@ -4,108 +4,89 @@
   <meta charset="utf-8" />
   <title>How It Works | FLL Field Mapping Studio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=color-swatch-fields" />
+  <link rel="stylesheet" href="styles.css?v=sitewide-nav" />
 </head>
 <body>
   <header class="header">
-    <h1>How It Works</h1>
-    <p>Use the planner to test route ideas, compare starts, and talk through strategy before a practice run.</p>
-    <nav class="nav">
-      <a href="index.html">Mission Tool</a>
-      <a href="training.html">Training</a>
-      <a href="robot_builder.html">Robot Builder</a>
-      <a href="team_signup.html">Team Signup</a>
-    </nav>
+    <div class="header-main">
+      <div class="header-copy">
+        <h1>How It Works</h1>
+        <p>Use the planner to test route ideas, compare starts, and talk through strategy before a practice run.</p>
+      </div>
+      <div class="nav-menu">
+        <input class="nav-check" id="site-nav-toggle" type="checkbox" aria-label="Menu" />
+        <label class="nav-toggle" for="site-nav-toggle"><span></span><span></span><span></span></label>
+        <nav class="nav" aria-label="Primary">
+          <a href="index.html">Mission Tool</a>
+          <a href="training.html">Training</a>
+          <a href="robot_builder.html">Robot Builder</a>
+          <a href="introduction.html" aria-current="page">How It Works</a>
+          <a href="team_signup.html">Team Signup</a>
+        </nav>
+      </div>
+    </div>
   </header>
 
   <main class="app-layout">
     <section>
       <div class="panel">
-        <div class="section-title">Workflow</div>
-        <p>Start in the Mission Tool and define the mission name, start position, heading, and action list. Use the Robot Builder if you want to model the actual footprint of the chassis and any mission attachments.</p>
-        <p>When the mission looks right, run it directly on the field map or use replay mode to scrub through the route frame by frame. If you are working with a team, save missions and robot profiles through the hosted team cloud.</p>
+        <div class="section-title">Start Here</div>
+        <p>FLL Field Mapping Studio helps you plan where the robot should start, move, turn, pause, and finish on the field. It is not trying to predict every real-world detail. It gives students a shared picture of the route before they test it on the mat.</p>
+        <p>Use the Training area first if the field coordinates, headings, or turn-center offset are new ideas. Use the Mission Tool when you are ready to sketch an actual route.</p>
       </div>
 
       <div class="panel">
-        <div class="section-title">What The Model Assumes</div>
-        <p>The simulator is meant for planning, not for precise drivetrain prediction. It helps students reason about geometry and sequencing, but it does not model wheel slip, acceleration, backlash, collision physics, or sensor drift.</p>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Topic</th>
-              <th>Current behavior</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Units</td>
-              <td>Centimeters for distance, degrees for heading</td>
-            </tr>
-            <tr>
-              <td>Origin</td>
-              <td>Lower-left corner of the field</td>
-            </tr>
-            <tr>
-              <td>Heading</td>
-              <td><code>0</code> degrees points along positive X, positive angles turn counter-clockwise</td>
-            </tr>
-            <tr>
-              <td>Robot shape</td>
-              <td>One rectangle plus optional rectangular attachments</td>
-            </tr>
-            <tr>
-              <td>Turning</td>
-              <td>In-place turns around a configurable front/back offset</td>
-            </tr>
-            <tr>
-              <td>Timing</td>
-              <td>Replay timing is illustrative rather than measured from a real robot</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="section-title">Mission Tool</div>
+        <p>The main page is where you build a route. Start by connecting your team if you want to load or save cloud missions. Then set the mission name, starting X/Y position, starting angle, robot size, robot color, and attachments.</p>
+        <p>Mission actions are read from top to bottom. A move goes forward or backward in centimeters. A rotate turns by degrees. A pause marks the robot working in place for a number of seconds and leaves a purple outline on the field.</p>
+        <p>The trace color controls the path line. The robot color controls the robot body and attachments. The replay controls let you scrub through the route right away, so you can check the route one frame at a time.</p>
       </div>
 
       <div class="panel">
-        <div class="section-title">Practical Tips</div>
-        <p>Keep the mission model simple enough that students can understand why the path changes. If a path only works in the simulator when the start pose is extremely exact, that is usually a sign the real robot will need a more reliable alignment method or a better recovery plan.</p>
-        <p>Using the hub yaw sensor for turns will generally make the simulated route more meaningful, because the visual plan assumes the robot can hit the commanded heading consistently.</p>
+        <div class="section-title">Training</div>
+        <p>Training lessons are short practice pages separate from the Mission Tool. Each lesson has instructions on the left and a focused sandbox on the right. They are meant for students who are learning the field map, not for scoring or grading.</p>
+        <p>Lessons cover field orientation, movement, rotation, pause blocks, robot placement, base robot size, turn-center offset, and attachments. The offset lesson is especially useful because it shows how the same route changes when the robot turns around a different point.</p>
       </div>
 
       <div class="panel">
-        <div class="section-title">Mission JSON</div>
-        <p>The planner also accepts mission JSON directly. This is useful when you want to share a route, keep versions in source control, or generate paths outside the editor.</p>
-        <pre><code>{
-  "name": "Coral Sweep",
-  "startX": 11.5,
-  "startY": 0,
-  "startAngle": 90,
-  "robotWidthCm": 17,
-  "robotLengthCm": 15,
-  "traceColor": "#108368",
-  "offsetY": 1.8,
-  "attachments": [
-    { "side": "front", "widthCm": 6, "lengthCm": 4, "positionCm": 0 }
-  ],
-  "actions": [
-    { "type": "move", "value": 17 },
-    { "type": "rotate", "value": -24 },
-    { "type": "move", "value": 50 },
-    { "type": "move", "value": -50 },
-    { "type": "rotate", "value": 24 },
-    { "type": "move", "value": -17 }
-  ]
-}</code></pre>
+        <div class="section-title">Robot Builder</div>
+        <p>Robot Builder is for making a reusable robot profile. Set the base size, color, turn-center offset, and attachments, then save it locally, stage it for the Mission Tool, or save it to your team cloud.</p>
+        <p>The red mark shows the front of the robot. The purple crosshair shows the point the robot rotates around. If your robot does not turn around its exact center, changing this offset makes the planned path more realistic.</p>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">What To Remember</div>
+        <p>Distances are centimeters. Angles are degrees. A heading of <code>0</code> points right across the field, and <code>90</code> points up the field. The lower-left corner of the field is the coordinate origin.</p>
+        <p>The planner does not model wheel slip, acceleration, sensors, or collisions. If a route only works with a perfect start, use that as a warning sign and design a better alignment or recovery step.</p>
       </div>
     </section>
 
     <section class="field-panel">
       <div class="panel">
-        <div class="section-title">Reference Images</div>
-        <p class="notice">These diagrams explain how the turn-center offset and field orientation are interpreted by the planner.</p>
-        <div class="robot-preview" style="margin-top:12px;">
-          <img src="offset_diagram.png" alt="Offset diagram" style="width:100%;height:auto;display:block;border-radius:10px;" />
+        <div class="section-title">Turn-Center Offset</div>
+        <p class="notice">The purple crosshair marks the point used for rotations. A different offset changes where the robot body moves during a turn.</p>
+        <div class="robot-preview offset-static-preview">
+          <svg viewBox="-70 -82 140 164" role="img" aria-labelledby="offset-static-title offset-static-desc" xmlns="http://www.w3.org/2000/svg">
+            <title id="offset-static-title">Robot turn-center offset</title>
+            <desc id="offset-static-desc">A rectangular robot with front indicator and a purple crosshair showing the turn center.</desc>
+            <line x1="0" y1="-72" x2="0" y2="72" stroke="#d6deeb" stroke-width="0.8" stroke-dasharray="4 4" />
+            <rect x="-30" y="-45" width="60" height="90" fill="rgba(0, 102, 179, 0.18)" stroke="#0066b3" stroke-width="1.4" />
+            <rect x="-18" y="-62" width="36" height="17" fill="rgba(0, 102, 179, 0.14)" stroke="#0066b3" stroke-width="1.1" />
+            <line x1="-30" y1="-45" x2="30" y2="-45" stroke="#ed1c24" stroke-width="1.6" />
+            <polygon points="0,-70 -6,-54 6,-54" fill="#ed1c24" stroke="#ffffff" stroke-width="0.5" />
+            <circle cx="0" cy="24" r="6" fill="rgba(125, 60, 152, 0.16)" stroke="#7d3c98" stroke-width="1.6" />
+            <line x1="-10" y1="24" x2="10" y2="24" stroke="#7d3c98" stroke-width="1.6" stroke-linecap="round" />
+            <line x1="0" y1="14" x2="0" y2="34" stroke="#7d3c98" stroke-width="1.6" stroke-linecap="round" />
+            <text x="0" y="54" text-anchor="middle" font-size="8" fill="#5f6f86">turn center</text>
+            <text x="0" y="-73" text-anchor="middle" font-size="8" fill="#5f6f86">front</text>
+          </svg>
         </div>
-        <div class="robot-preview" style="margin-top:16px;">
+      </div>
+
+      <div class="panel">
+        <div class="section-title">Field Orientation</div>
+        <p class="notice">Use this diagram as a quick reminder for X/Y direction and headings.</p>
+        <div class="robot-preview field-orientation-preview">
           <img src="field_orientation.png" alt="Field orientation diagram" style="width:100%;height:auto;display:block;border-radius:10px;" />
         </div>
       </div>

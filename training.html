@@ -4,18 +4,27 @@
   <meta charset="utf-8" />
   <title>Training | FLL Field Mapping Studio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=color-swatch-fields" />
+  <link rel="stylesheet" href="styles.css?v=sitewide-nav" />
 </head>
 <body>
   <header class="header">
-    <h1>Training</h1>
-    <p>Pick a lesson.</p>
-    <nav class="nav">
-      <a href="index.html">Mission Tool</a>
-      <a href="robot_builder.html">Robot Builder</a>
-      <a href="introduction.html">How It Works</a>
-      <a href="team_signup.html">Team Signup</a>
-    </nav>
+    <div class="header-main">
+      <div class="header-copy">
+        <h1>Training</h1>
+        <p>Pick a lesson.</p>
+      </div>
+      <div class="nav-menu">
+        <input class="nav-check" id="site-nav-toggle" type="checkbox" aria-label="Menu" />
+        <label class="nav-toggle" for="site-nav-toggle"><span></span><span></span><span></span></label>
+        <nav class="nav" aria-label="Primary">
+          <a href="index.html">Mission Tool</a>
+          <a href="training.html" aria-current="page">Training</a>
+          <a href="robot_builder.html">Robot Builder</a>
+          <a href="introduction.html">How It Works</a>
+          <a href="team_signup.html">Team Signup</a>
+        </nav>
+      </div>
+    </div>
   </header>
 
   <main class="training-hub">

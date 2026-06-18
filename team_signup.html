@@ -4,16 +4,32 @@
   <meta charset="utf-8" />
   <title>Team Signup</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=color-swatch-fields">
+  <link rel="stylesheet" href="styles.css?v=sitewide-nav">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
+  <header class="header">
+    <div class="header-main">
+      <div class="header-copy">
+        <h1>Register a Team</h1>
+        <p>Create a team so missions and robots can be saved securely.</p>
+      </div>
+      <div class="nav-menu">
+        <input class="nav-check" id="site-nav-toggle" type="checkbox" aria-label="Menu" />
+        <label class="nav-toggle" for="site-nav-toggle"><span></span><span></span><span></span></label>
+        <nav class="nav" aria-label="Primary">
+          <a href="index.html">Mission Tool</a>
+          <a href="training.html">Training</a>
+          <a href="robot_builder.html">Robot Builder</a>
+          <a href="introduction.html">How It Works</a>
+          <a href="team_signup.html" aria-current="page">Team Signup</a>
+        </nav>
+      </div>
+    </div>
+  </header>
   <div class="signup-wrapper">
     <div class="panel signup-card">
-      <h1 style="margin-top:0;">Register a Team</h1>
-      <p>Create a team so missions and robots can be saved securely.</p>
       <p class="notice" id="runtime-note"></p>
-      <p><a href="index.html">Back to Mission Tool</a> · <a href="training.html">Training</a></p>
 
       <div class="grid-2" style="margin-top:12px;">
         <label>

@@ -4,19 +4,27 @@
   <meta charset="utf-8" />
   <title>FLL Field Mapping</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=color-swatch-fields" />
+  <link rel="stylesheet" href="styles.css?v=sitewide-nav" />
 </head>
 <body>
   <header class="header">
-    <h1>FLL Field Mapping Studio</h1>
-    <p>Plan routes, simulate moves, and keep robot profiles ready for team practice.</p>
-    <nav class="nav">
-      <a href="introduction.html">How It Works</a>
-      <a href="training.html">Training</a>
-      <a href="robot_builder.html">Robot Builder</a>
-      <a href="team_signup.html">Team Signup</a>
-      <a href="https://kennyhaggard.github.io/FLL-field-mapping/" target="_blank" rel="noreferrer">Live Site</a>
-    </nav>
+    <div class="header-main">
+      <div class="header-copy">
+        <h1>FLL Field Mapping Studio</h1>
+        <p>Plan routes, simulate moves, and keep robot profiles ready for team practice.</p>
+      </div>
+      <div class="nav-menu">
+        <input class="nav-check" id="site-nav-toggle" type="checkbox" aria-label="Menu" />
+        <label class="nav-toggle" for="site-nav-toggle"><span></span><span></span><span></span></label>
+        <nav class="nav" aria-label="Primary">
+          <a href="index.html" aria-current="page">Mission Tool</a>
+          <a href="training.html">Training</a>
+          <a href="robot_builder.html">Robot Builder</a>
+          <a href="introduction.html">How It Works</a>
+          <a href="team_signup.html">Team Signup</a>
+        </nav>
+      </div>
+    </div>
   </header>
 
   <main class="app-layout">

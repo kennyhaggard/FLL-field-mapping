@@ -47,7 +47,7 @@ const isOffsetLesson = lesson?.id === "offset";
 
 function refreshTrainingStylesheet() {
   const link = document.querySelector("link[rel='stylesheet'][href*='styles.css']");
-  if (!link || link.href.includes("training-pane-2")) return Promise.resolve();
+  if (!link || link.href.includes("sitewide-nav")) return Promise.resolve();
 
   return new Promise((resolve) => {
     const done = () => resolve();
@@ -55,7 +55,7 @@ function refreshTrainingStylesheet() {
     link.addEventListener("error", done, { once: true });
     setTimeout(done, 600);
     const baseHref = link.getAttribute("href").split("?")[0];
-    link.href = `${baseHref}?v=training-pane-2`;
+    link.href = `${baseHref}?v=sitewide-nav`;
   });
 }
 
