@@ -20,7 +20,7 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js?v=global-heading-mode";
-import { FieldRenderer } from "./ui/field_renderer.js?v=grid-opacity-30";
+import { FieldRenderer } from "./ui/field_renderer.js?v=trace-width-4";
 
 const GRID_OPACITY_STORAGE_KEY = "fll-field-grid-opacity";
 const DEFAULT_GRID_OPACITY = 30;

@@ -127,7 +127,7 @@ class FieldRenderer {
     polyline.setAttribute("data-dynamic", "1");
     polyline.setAttribute("fill", "none");
     polyline.setAttribute("stroke", color || "#0066b3");
-    polyline.setAttribute("stroke-width", "2.4");
+    polyline.setAttribute("stroke-width", "4");
     polyline.setAttribute("stroke-linecap", "round");
     polyline.setAttribute("stroke-linejoin", "round");
     polyline.setAttribute("vector-effect", "non-scaling-stroke");
