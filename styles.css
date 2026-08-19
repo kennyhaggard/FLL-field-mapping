@@ -144,6 +144,66 @@ a:hover {
   gap: 10px;
 }
 
+.heading-mode-row {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.toggle-control {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 9px;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.toggle-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggle-track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #dfe6f0;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.toggle-track span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(23, 32, 51, 0.24);
+  transition: transform 160ms ease;
+}
+
+.toggle-control input:checked + .toggle-track {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.toggle-control input:checked + .toggle-track span {
+  transform: translateX(18px);
+}
+
+.toggle-control input:focus-visible + .toggle-track {
+  outline: 3px solid rgba(0, 102, 179, 0.22);
+  outline-offset: 2px;
+}
+
 label {
   font-size: 12px;
   color: var(--muted);
@@ -320,7 +380,7 @@ textarea:disabled {
 .action-item,
 .attachment-item {
   display: grid;
-  grid-template-columns: 90px minmax(80px, 1fr) 34px 34px;
+  grid-template-columns: 104px minmax(80px, 1fr) 34px 34px;
   gap: 8px;
   align-items: center;
   background: var(--panel-2);

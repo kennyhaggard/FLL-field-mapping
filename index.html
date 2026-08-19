@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>FLL Field Mapping</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=sitewide-nav" />
+  <link rel="stylesheet" href="styles.css?v=global-heading-mode" />
 </head>
 <body>
   <header class="header">
@@ -98,9 +98,17 @@
             <input id="start-y" type="text" inputmode="decimal" />
           </label>
           <label>
-            Start angle (deg)
+            <span id="start-angle-label">Start angle (deg)</span>
             <input id="start-angle" type="text" inputmode="decimal" />
           </label>
+        </div>
+        <div class="heading-mode-row">
+          <label class="toggle-control" for="global-mode">
+            <input id="global-mode" type="checkbox" role="switch" />
+            <span class="toggle-track" aria-hidden="true"><span></span></span>
+            <span class="toggle-label">Global Mode</span>
+          </label>
+          <span class="notice-inline" id="heading-mode-detail">Rotate values are relative turn amounts.</span>
         </div>
         <div class="button-row" style="margin-top:12px;">
           <button class="btn-secondary" id="load-demo">Load Demo Mission</button>
@@ -207,6 +215,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=cloud-first-autoload-mission"></script>
+  <script type="module" src="js/app.js?v=global-heading-mode"></script>
 </body>
 </html>

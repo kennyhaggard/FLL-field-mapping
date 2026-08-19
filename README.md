@@ -57,6 +57,7 @@ npm test
 Each mission is a single JSON object with:
 
 - `name`
+- `headingMode` (`"relative"` or `"global"`)
 - `startX`
 - `startY`
 - `startAngle`
@@ -72,6 +73,7 @@ Example:
 ```json
 {
   "name": "Coral Sweep",
+  "headingMode": "relative",
   "startX": 11.5,
   "startY": 0,
   "startAngle": 90,
@@ -98,7 +100,8 @@ Example:
 - Motion is a planning aid, not a physics simulation.
 - Rotations are treated as in-place turns around a configurable center offset.
 - Coordinates use centimeters, with `(0,0)` at the lower-left of the field.
-- `0` degrees points along positive X and positive angles rotate counter-clockwise.
+- Relative mode uses Cartesian angles: `0` degrees points along positive X, positive angles rotate counter-clockwise, and Rotate values are turn amounts.
+- Global mode uses field headings: `0` points upfield, `90` right, `-90` left, and `180` downfield. Rotate values are absolute target headings.
 - The robot body is modeled as a rectangle with optional rectangular attachments.
 - Accurate real-world results still depend on calibration, sensor usage, traction, and field setup.
 

@@ -4,7 +4,8 @@ import { DEFAULT_REPLAY_OPTIONS } from "./constants.js";
  * @typedef {{side:"front"|"rear"|"left"|"right", widthCm:number, lengthCm:number, positionCm:number}} Attachment
  * @typedef {{type:"move"|"rotate"|"pause", value:number}} MissionAction
  * @typedef {{id:string, name:string, robotColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[]}} RobotProfile
- * @typedef {{name:string, robotName:string, robot:RobotProfile, startX:number, startY:number, startAngle:number, traceColor:string, robotColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[], actions:MissionAction[]}} Mission
+ * @typedef {"relative"|"global"} HeadingMode
+ * @typedef {{name:string, robotName:string, robot:RobotProfile, headingMode:HeadingMode, startX:number, startY:number, startAngle:number, traceColor:string, robotColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[], actions:MissionAction[]}} Mission
  * @typedef {{x:number, y:number, headingDeg:number, turnCenterX:number, turnCenterY:number}} Pose
  */
 
@@ -20,6 +21,42 @@ function clamp(value, min, max) {
 function normalizeAngle(angleDeg) {
   const value = safeNum(angleDeg, 0);
   return ((value % 360) + 360) % 360;
+}
+
+function normalizeGlobalHeading(angleDeg) {
+  const normalized = normalizeAngle(angleDeg);
+  return normalized > 180 ? normalized - 360 : normalized;
+}
+
+function normalizeHeadingMode(mode) {
+  return mode === "global" || mode === true ? "global" : "relative";
+}
+
+function globalHeadingToFieldAngle(headingDeg) {
+  return normalizeAngle(90 - safeNum(headingDeg, 0));
+}
+
+function fieldAngleToGlobalHeading(angleDeg) {
+  return normalizeGlobalHeading(90 - safeNum(angleDeg, 0));
+}
+
+function missionStartHeadingDeg(missionLike) {
+  const mission = missionLike || {};
+  const headingMode = normalizeHeadingMode(mission.headingMode);
+  return headingMode === "global"
+    ? globalHeadingToFieldAngle(mission.startAngle)
+    : normalizeAngle(mission.startAngle);
+}
+
+function rotationDeltaDeg(currentHeadingDeg, actionValue, headingMode = "relative") {
+  if (normalizeHeadingMode(headingMode) === "relative") {
+    return safeNum(actionValue, 0);
+  }
+
+  const currentGlobalHeading = fieldAngleToGlobalHeading(currentHeadingDeg);
+  const targetGlobalHeading = normalizeGlobalHeading(actionValue);
+  const clockwiseDelta = normalizeGlobalHeading(targetGlobalHeading - currentGlobalHeading);
+  return -clockwiseDelta;
 }
 
 function normalizeColorToHex(colorStr, fallback = "#0066b3") {
@@ -87,6 +124,7 @@ function normalizeRobot(raw) {
 
 function normalizeMission(raw) {
   const source = raw || {};
+  const headingMode = normalizeHeadingMode(source.headingMode ?? source.globalMode);
   const robotSource = source.robot || {};
   const robotName = String(source.robotName || robotSource.name || "");
   const robotWidthCm = safeNum(source.robotWidthCm ?? robotSource.robotWidthCm, 12.7);
@@ -106,11 +144,14 @@ function normalizeMission(raw) {
 
   return {
     name: String(source.name || "Untitled Mission"),
+    headingMode,
     robotName: robot.name,
     robot,
     startX: safeNum(source.startX, 0),
     startY: safeNum(source.startY, 0),
-    startAngle: normalizeAngle(source.startAngle),
+    startAngle: headingMode === "global"
+      ? normalizeGlobalHeading(source.startAngle)
+      : normalizeAngle(source.startAngle),
     traceColor: normalizeColorToHex(source.traceColor, "#0066b3"),
     robotColor: robot.robotColor,
     robotWidthCm: robot.robotWidthCm,
@@ -119,6 +160,38 @@ function normalizeMission(raw) {
     attachments: robot.attachments,
     actions: normalizeActions(source.actions || [])
   };
+}
+
+function convertMissionHeadingMode(missionLike, nextModeLike) {
+  const mission = normalizeMission(missionLike);
+  const nextMode = normalizeHeadingMode(nextModeLike);
+  if (mission.headingMode === nextMode) return mission;
+
+  let currentHeadingDeg = missionStartHeadingDeg(mission);
+  const startAngle = nextMode === "global"
+    ? fieldAngleToGlobalHeading(currentHeadingDeg)
+    : normalizeAngle(currentHeadingDeg);
+
+  const actions = mission.actions.map((action) => {
+    if (action.type !== "rotate") return action;
+
+    const deltaDeg = rotationDeltaDeg(currentHeadingDeg, action.value, mission.headingMode);
+    currentHeadingDeg = normalizeAngle(currentHeadingDeg + deltaDeg);
+
+    return {
+      ...action,
+      value: nextMode === "global"
+        ? fieldAngleToGlobalHeading(currentHeadingDeg)
+        : deltaDeg
+    };
+  });
+
+  return normalizeMission({
+    ...mission,
+    headingMode: nextMode,
+    startAngle,
+    actions
+  });
 }
 
 function createDefaultMission() {
@@ -284,8 +357,8 @@ function getRobotFootprintHalfExtentsCm(robotLike, headingDeg) {
 
 function computeStartPoseCm(missionLike) {
   const mission = normalizeMission(missionLike);
-  const bounds = getRobotFootprintHalfExtentsCm(mission, mission.startAngle);
-  const headingDeg = normalizeAngle(mission.startAngle);
+  const headingDeg = missionStartHeadingDeg(mission);
+  const bounds = getRobotFootprintHalfExtentsCm(mission, headingDeg);
   const radians = (headingDeg * Math.PI) / 180;
   const x = mission.startX + bounds.x;
   const y = mission.startY + bounds.y;
@@ -366,7 +439,7 @@ function buildReplayFrames(missionLike, options = {}) {
     }
 
     if (action.type === "rotate") {
-      const deltaDeg = safeNum(action.value, 0);
+      const deltaDeg = rotationDeltaDeg(current.headingDeg, action.value, mission.headingMode);
       const durationMs = (Math.abs(deltaDeg) / rotateSpeed) * 1000;
       const steps = Math.max(1, Math.round(durationMs / dtMs));
       const turnCenterX = current.turnCenterX;
@@ -399,17 +472,23 @@ export {
   clampAttachmentPositionCm,
   computeRobotLocalBoundsCm,
   computeStartPoseCm,
+  convertMissionHeadingMode,
   createBlankMission,
   createDefaultMission,
   createDefaultRobot,
+  fieldAngleToGlobalHeading,
+  globalHeadingToFieldAngle,
   getAttachmentRectCm,
   getRobotFootprintHalfExtentsCm,
   normalizeActions,
   normalizeAngle,
   normalizeAttachments,
   normalizeColorToHex,
+  normalizeGlobalHeading,
+  normalizeHeadingMode,
   normalizeMission,
   normalizeRobot,
   poseToTracePointCm,
+  rotationDeltaDeg,
   safeNum
 };

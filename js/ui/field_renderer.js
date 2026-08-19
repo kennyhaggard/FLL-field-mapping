@@ -4,7 +4,7 @@ import {
   getAttachmentRectCm,
   normalizeMission,
   poseToTracePointCm
-} from "../domain/model.js?v=robot-color-controls";
+} from "../domain/model.js?v=global-heading-mode";
 
 function colorWithAlpha(hexColor, alpha) {
   const match = String(hexColor || "").match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);

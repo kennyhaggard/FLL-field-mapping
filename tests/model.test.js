@@ -5,7 +5,10 @@ import {
   applyRobotToMission,
   buildReplayFrames,
   computeStartPoseCm,
+  convertMissionHeadingMode,
   createBlankMission,
+  fieldAngleToGlobalHeading,
+  globalHeadingToFieldAngle,
   normalizeColorToHex,
   normalizeMission,
   normalizeRobot,
@@ -61,6 +64,33 @@ test("normalizeColorToHex keeps hex stable and expands rgb values", () => {
   assert.equal(normalizeColorToHex("bad", "#123456"), "#123456");
 });
 
+test("global headings map to the field's cardinal angles", () => {
+  assert.equal(globalHeadingToFieldAngle(0), 90);
+  assert.equal(globalHeadingToFieldAngle(90), 0);
+  assert.equal(globalHeadingToFieldAngle(-90), 180);
+  assert.equal(globalHeadingToFieldAngle(180), 270);
+
+  assert.equal(fieldAngleToGlobalHeading(90), 0);
+  assert.equal(fieldAngleToGlobalHeading(0), 90);
+  assert.equal(fieldAngleToGlobalHeading(180), -90);
+  assert.equal(fieldAngleToGlobalHeading(270), 180);
+});
+
+test("global starting headings use the same physical placement as relative angles", () => {
+  const base = {
+    ...createBlankMission(),
+    startX: 12,
+    startY: 8,
+    robotWidthCm: 14,
+    robotLengthCm: 22,
+    offsetY: 5
+  };
+  const relativeStart = computeStartPoseCm({ ...base, headingMode: "relative", startAngle: 90 });
+  const globalStart = computeStartPoseCm({ ...base, headingMode: "global", startAngle: 0 });
+
+  assert.deepEqual(globalStart, relativeStart);
+});
+
 test("buildReplayFrames keeps turn center fixed during rotation", () => {
   const mission = normalizeMission({
     ...createBlankMission(),
@@ -78,6 +108,71 @@ test("buildReplayFrames keeps turn center fixed during rotation", () => {
   assert.equal(end.headingDeg, 90);
   assert.equal(Number(end.x.toFixed(3)), Number(start.turnCenterX.toFixed(3)));
   assert.equal(Number(end.y.toFixed(3)), Number((start.turnCenterY + 6).toFixed(3)));
+});
+
+test("global rotations target absolute headings", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    headingMode: "global",
+    startAngle: 0,
+    offsetY: 4,
+    actions: [
+      { type: "rotate", value: 90 },
+      { type: "move", value: 10 },
+      { type: "rotate", value: -90 }
+    ]
+  });
+
+  const start = computeStartPoseCm(mission);
+  const frames = buildReplayFrames(mission, {
+    fps: 10,
+    moveSpeedCmPerSec: 10,
+    rotateSpeedDegPerSec: 90
+  });
+  const end = frames[frames.length - 1];
+
+  assert.equal(start.headingDeg, 90);
+  assert.equal(end.headingDeg, 180);
+  assert.equal(Number(end.turnCenterX.toFixed(3)), Number((start.turnCenterX + 10).toFixed(3)));
+  assert.equal(Number(end.turnCenterY.toFixed(3)), Number(start.turnCenterY.toFixed(3)));
+});
+
+test("an exact 180-degree global turn follows the positive clockwise convention", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    headingMode: "global",
+    startAngle: 0,
+    actions: [{ type: "rotate", value: 180 }]
+  });
+  const frames = buildReplayFrames(mission, { fps: 2, rotateSpeedDegPerSec: 180 });
+
+  assert.equal(frames[1].headingDeg, 0);
+  assert.equal(frames[frames.length - 1].headingDeg, 270);
+});
+
+test("switching heading modes converts common routes without changing replay frames", () => {
+  const relativeMission = normalizeMission({
+    ...createBlankMission(),
+    headingMode: "relative",
+    startAngle: 90,
+    offsetY: 3,
+    actions: [
+      { type: "move", value: 12 },
+      { type: "rotate", value: -90 },
+      { type: "move", value: 8 },
+      { type: "rotate", value: 90 }
+    ]
+  });
+  const globalMission = convertMissionHeadingMode(relativeMission, "global");
+  const roundTripMission = convertMissionHeadingMode(globalMission, "relative");
+
+  assert.equal(globalMission.startAngle, 0);
+  assert.deepEqual(
+    globalMission.actions.filter((action) => action.type === "rotate").map((action) => action.value),
+    [90, 0]
+  );
+  assert.deepEqual(roundTripMission.actions, relativeMission.actions);
+  assert.deepEqual(buildReplayFrames(globalMission), buildReplayFrames(relativeMission));
 });
 
 test("normalizeMission keeps pause actions", () => {

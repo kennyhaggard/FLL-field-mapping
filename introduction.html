@@ -37,8 +37,8 @@
 
       <div class="panel">
         <div class="section-title">Mission Tool</div>
-        <p>The main page is where you build a route. Start by connecting your team if you want to load or save cloud missions. Then set the mission name, starting X/Y position, starting angle, robot size, robot color, and attachments.</p>
-        <p>Mission actions are read from top to bottom. A move goes forward or backward in centimeters. A rotate turns by degrees. A pause marks the robot working in place for a number of seconds and leaves a purple outline on the field.</p>
+        <p>The main page is where you build a route. Start by connecting your team if you want to load or save cloud missions. Then set the mission name, starting X/Y position, starting heading, robot size, robot color, and attachments.</p>
+        <p>Mission actions are read from top to bottom. A move goes forward or backward in centimeters. A rotate turns by degrees in Relative Mode or turns to a field heading in Global Mode. A pause marks the robot working in place for a number of seconds and leaves a purple outline on the field.</p>
         <p>The trace color controls the path line. The robot color controls the robot body and attachments. The replay controls let you scrub through the route right away, so you can check the route one frame at a time.</p>
       </div>
 
@@ -56,7 +56,9 @@
 
       <div class="panel">
         <div class="section-title">What To Remember</div>
-        <p>Distances are centimeters. Angles are degrees. A heading of <code>0</code> points right across the field, and <code>90</code> points up the field. The lower-left corner of the field is the coordinate origin.</p>
+        <p>Distances are centimeters and angles are degrees. The lower-left corner of the field remains the X/Y coordinate origin in both heading modes.</p>
+        <p><strong>Relative Mode</strong> uses the original field angles: <code>0</code> points right and <code>90</code> points up. Each Rotate value is an amount added to the robot's current angle, so negative values turn clockwise.</p>
+        <p><strong>Global Mode</strong> uses fixed headings based on the field: <code>0</code> points upfield, <code>90</code> points right, <code>-90</code> points left, and <code>180</code> points downfield. The starting heading uses this system, and each Rotate value is the heading the robot should face next. The planner takes the shortest turn to that heading; an exact 180-degree turn goes clockwise.</p>
         <p>The planner does not model wheel slip, acceleration, sensors, or collisions. If a route only works with a perfect start, use that as a warning sign and design a better alignment or recovery step.</p>
       </div>
     </section>
@@ -85,10 +87,21 @@
 
       <div class="panel">
         <div class="section-title">Field Orientation</div>
-        <p class="notice">Use this diagram as a quick reminder for X/Y direction and headings.</p>
+        <p class="notice">The diagram shows Relative Mode. Use the table to translate the same physical directions into Global Mode.</p>
         <div class="robot-preview field-orientation-preview">
           <img src="field_orientation.png" alt="Field orientation diagram" style="width:100%;height:auto;display:block;border-radius:10px;" />
         </div>
+        <table class="table" style="margin-top:12px;">
+          <thead>
+            <tr><th>Direction</th><th>Relative</th><th>Global</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Upfield</td><td>90°</td><td>0°</td></tr>
+            <tr><td>Right</td><td>0° / 360°</td><td>90°</td></tr>
+            <tr><td>Left</td><td>180°</td><td>-90°</td></tr>
+            <tr><td>Downfield</td><td>270°</td><td>180°</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
   </main>

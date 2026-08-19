@@ -2,14 +2,15 @@ import { createCloudClient } from "./domain/cloud.js?v=cloud-diagnostics";
 import {
   applyRobotToMission,
   buildReplayFrames,
+  convertMissionHeadingMode,
   createBlankMission,
   createDefaultMission,
   normalizeMission,
   normalizeRobot,
   safeNum
-} from "./domain/model.js?v=robot-color-controls";
+} from "./domain/model.js?v=global-heading-mode";
 import { detectRuntimeMode, validateTeamPin } from "./domain/runtime.js";
-import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=robot-color-controls";
+import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=global-heading-mode";
 import {
   consumeRobotTransfer,
   loadMissionDraft,
@@ -18,8 +19,8 @@ import {
   saveMissionDraft,
   saveRobotLibrary,
   saveTeamSession
-} from "./domain/storage.js?v=robot-color-controls";
-import { FieldRenderer } from "./ui/field_renderer.js?v=robot-color-controls";
+} from "./domain/storage.js?v=global-heading-mode";
+import { FieldRenderer } from "./ui/field_renderer.js?v=global-heading-mode";
 
 const dom = {
   fieldHost: document.getElementById("mission-field-host"),
@@ -28,6 +29,9 @@ const dom = {
   startX: document.getElementById("start-x"),
   startY: document.getElementById("start-y"),
   startAngle: document.getElementById("start-angle"),
+  startAngleLabel: document.getElementById("start-angle-label"),
+  globalMode: document.getElementById("global-mode"),
+  headingModeDetail: document.getElementById("heading-mode-detail"),
   loadDemo: document.getElementById("load-demo"),
   resetMission: document.getElementById("reset-mission"),
   robotWidth: document.getElementById("robot-width"),
@@ -322,11 +326,17 @@ function configureDecimalInput(input) {
 
 function syncMissionToInputs({ skipActions = false, skipAttachments = false } = {}) {
   const mission = state.mission;
+  const isGlobalMode = mission.headingMode === "global";
   dom.missionName.value = mission.name;
   dom.traceColor.value = mission.traceColor;
   setInputValue(dom.startX, mission.startX);
   setInputValue(dom.startY, mission.startY);
   setInputValue(dom.startAngle, mission.startAngle);
+  dom.globalMode.checked = isGlobalMode;
+  dom.startAngleLabel.textContent = isGlobalMode ? "Start heading (deg)" : "Start angle (deg)";
+  dom.headingModeDetail.textContent = isGlobalMode
+    ? "Rotate values are absolute global headings."
+    : "Rotate values are relative turn amounts.";
   setInputValue(dom.robotWidth, mission.robotWidthCm);
   setInputValue(dom.robotLength, mission.robotLengthCm);
   setInputValue(dom.robotOffset, mission.offsetY);
@@ -388,7 +398,9 @@ function getActionUnit(type) {
 }
 
 function createAction(type) {
-  if (type === "rotate") return { type: "rotate", value: -90 };
+  if (type === "rotate") {
+    return { type: "rotate", value: state.mission.headingMode === "global" ? 0 : -90 };
+  }
   if (type === "pause") return { type: "pause", value: 1 };
   return { type: "move", value: 50 };
 }
@@ -440,7 +452,9 @@ function renderActions() {
     ["move", "rotate", "pause"].forEach((type) => {
       const option = document.createElement("option");
       option.value = type;
-      option.textContent = type.toUpperCase();
+      option.textContent = type === "rotate" && state.mission.headingMode === "global"
+        ? "ROTATE TO"
+        : type.toUpperCase();
       if (action.type === type) option.selected = true;
       typeSelect.appendChild(option);
     });
@@ -923,6 +937,11 @@ function attachEventHandlers() {
 
   dom.resetMission.addEventListener("click", () => {
     commitMission(createBlankMission());
+  });
+
+  dom.globalMode.addEventListener("change", () => {
+    const nextMode = dom.globalMode.checked ? "global" : "relative";
+    commitMission(convertMissionHeadingMode(state.mission, nextMode));
   });
 
   dom.addMove.addEventListener("click", () => {
