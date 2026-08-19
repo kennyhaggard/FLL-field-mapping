@@ -20,7 +20,10 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js?v=global-heading-mode";
-import { FieldRenderer } from "./ui/field_renderer.js?v=global-heading-mode";
+import { FieldRenderer } from "./ui/field_renderer.js?v=grid-opacity-30";
+
+const GRID_OPACITY_STORAGE_KEY = "fll-field-grid-opacity";
+const DEFAULT_GRID_OPACITY = 30;
 
 const dom = {
   fieldHost: document.getElementById("mission-field-host"),
@@ -32,6 +35,8 @@ const dom = {
   startAngleLabel: document.getElementById("start-angle-label"),
   globalMode: document.getElementById("global-mode"),
   headingModeDetail: document.getElementById("heading-mode-detail"),
+  gridOpacity: document.getElementById("grid-opacity"),
+  gridOpacityValue: document.getElementById("grid-opacity-value"),
   loadDemo: document.getElementById("load-demo"),
   resetMission: document.getElementById("reset-mission"),
   robotWidth: document.getElementById("robot-width"),
@@ -111,8 +116,45 @@ const state = {
     rafId: null,
     fps: 60,
     startTime: 0
+  },
+  display: {
+    gridOpacity: DEFAULT_GRID_OPACITY
   }
 };
+
+function normalizeGridOpacity(value) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue)
+    ? Math.round(Math.max(0, Math.min(100, numericValue)))
+    : DEFAULT_GRID_OPACITY;
+}
+
+function loadGridOpacity() {
+  try {
+    const savedValue = window.localStorage.getItem(GRID_OPACITY_STORAGE_KEY);
+    return savedValue === null ? DEFAULT_GRID_OPACITY : normalizeGridOpacity(savedValue);
+  } catch {
+    return DEFAULT_GRID_OPACITY;
+  }
+}
+
+function saveGridOpacity(value) {
+  try {
+    window.localStorage.setItem(GRID_OPACITY_STORAGE_KEY, String(value));
+  } catch {
+    // The display preference still works for this page when storage is unavailable.
+  }
+}
+
+function applyGridOpacity(value, { persist = false } = {}) {
+  const opacity = normalizeGridOpacity(value);
+  state.display.gridOpacity = opacity;
+  dom.gridOpacity.value = String(opacity);
+  dom.gridOpacityValue.value = `${opacity}%`;
+  dom.gridOpacity.setAttribute("aria-valuetext", `${opacity}% visible`);
+  renderer.setGridOpacity(opacity / 100);
+  if (persist) saveGridOpacity(opacity);
+}
 
 function setJsonError(message) {
   dom.jsonError.style.display = message ? "block" : "none";
@@ -915,10 +957,15 @@ function hydrateInitialState() {
 
   const missionFromUrl = readMissionFromQuery(window.location.search);
   state.mission = missionFromUrl || loadMissionDraft(window.localStorage);
+  state.display.gridOpacity = loadGridOpacity();
   applyTransferredRobotIfPresent();
 }
 
 function attachEventHandlers() {
+  dom.gridOpacity.addEventListener("input", () => {
+    applyGridOpacity(dom.gridOpacity.value, { persist: true });
+  });
+
   [dom.startX, dom.startY, dom.startAngle, dom.robotWidth, dom.robotLength, dom.robotOffset].forEach(
     (input) => {
       configureDecimalInput(input);
@@ -1057,6 +1104,7 @@ async function init() {
   attachEventHandlers();
   renderLocalRobots();
   syncMissionToInputs();
+  applyGridOpacity(state.display.gridOpacity);
   updateTeamControls();
   renderTeamMissions();
   renderTeamRobots();

@@ -196,6 +196,14 @@
       <div class="panel field-wrap">
         <div id="mission-field-host" class="mission-field-host" aria-live="polite"></div>
 
+        <div class="field-display-controls">
+          <label for="grid-opacity">
+            <span>Grid visibility</span>
+            <input id="grid-opacity" type="range" min="0" max="100" step="1" value="30" />
+          </label>
+          <output id="grid-opacity-value" for="grid-opacity">30%</output>
+        </div>
+
         <div class="field-controls">
           <button class="btn-primary" id="start-mission">Start Mission</button>
           <button class="btn-warn" id="stop-mission" disabled>Stop</button>
@@ -215,6 +223,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=global-heading-mode"></script>
+  <script type="module" src="js/app.js?v=grid-opacity-30"></script>
 </body>
 </html>

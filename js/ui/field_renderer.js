@@ -14,12 +14,13 @@ function colorWithAlpha(hexColor, alpha) {
 }
 
 class FieldRenderer {
-  constructor(host, fieldSvgUrl = "./field.svg") {
+  constructor(host, fieldSvgUrl = "./field.svg?v=bioglow-sharp-grid-30") {
     this.host = host;
     this.fieldSvgUrl = fieldSvgUrl;
     this.svg = null;
     this.robotEl = null;
     this.traceEl = null;
+    this.gridOpacity = 0.3;
   }
 
   async load() {
@@ -37,12 +38,26 @@ class FieldRenderer {
         throw new Error("Mission field SVG is missing its root id.");
       }
 
+      this.setGridOpacity(this.gridOpacity);
+
       this.host.removeAttribute("data-state");
       return true;
     } catch (error) {
       this.host.dataset.state = "error";
       this.host.textContent = "Could not load the field artwork. Refresh the page and try again.";
       return false;
+    }
+  }
+
+  setGridOpacity(opacity) {
+    const numericOpacity = Number(opacity);
+    this.gridOpacity = Number.isFinite(numericOpacity)
+      ? Math.max(0, Math.min(1, numericOpacity))
+      : 0.3;
+
+    const grid = this.svg?.querySelector("#field-grid");
+    if (grid) {
+      grid.setAttribute("opacity", String(this.gridOpacity));
     }
   }
 

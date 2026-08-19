@@ -496,6 +496,25 @@ textarea:disabled {
   stroke-width: 0.8;
 }
 
+.field-display-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 44px;
+  gap: 10px;
+  align-items: end;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+}
+
+.field-display-controls output {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 38px;
+  text-align: right;
+}
+
 .field-controls {
   margin-top: 12px;
   display: flex;
