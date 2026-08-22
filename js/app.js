@@ -7,10 +7,13 @@ import {
   createBlankMission,
   createDefaultMission,
   fieldAngleToGlobalHeading,
+  missionStartHeadingDeg,
+  normalizeAngle,
   normalizeMission,
   normalizeRobot,
+  rotationDeltaDeg,
   safeNum
-} from "./domain/model.js?v=no-attachments-selection";
+} from "./domain/model.js?v=global-turn-path";
 import { detectRuntimeMode, validateTeamPin } from "./domain/runtime.js";
 import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=global-heading-mode";
 import {
@@ -785,7 +788,23 @@ function renderActions() {
     commitDisplayedActionOrder();
   };
 
+  let actionHeadingDeg = missionStartHeadingDeg(state.mission);
+
   state.mission.actions.forEach((action, index) => {
+    const incomingHeadingDeg = actionHeadingDeg;
+    const actionRotationDeltaDeg = action.type === "rotate"
+      ? rotationDeltaDeg(
+        incomingHeadingDeg,
+        action.value,
+        state.mission.headingMode,
+        state.mission.globalZeroDirection,
+        action.alternateTurn
+      )
+      : 0;
+    if (action.type === "rotate") {
+      actionHeadingDeg = normalizeAngle(incomingHeadingDeg + actionRotationDeltaDeg);
+    }
+
     const row = document.createElement("div");
     row.className = "action-item";
     row.dataset.actionIndex = String(index);
@@ -851,6 +870,7 @@ function renderActions() {
     });
 
     let valueField;
+    let directionButton = null;
     if (action.type === "change-attachment") {
       valueField = createAttachmentSelectionField(action.attachmentIndexes, (attachmentIndexes) => {
         const actions = [...state.mission.actions];
@@ -876,6 +896,43 @@ function renderActions() {
       unitLabel.className = "action-unit";
       unitLabel.textContent = getActionUnit(action.type);
       valueField.append(valueInput, unitLabel);
+
+      if (action.type === "rotate" && state.mission.headingMode === "global") {
+        const usesAlternateTurn = action.alternateTurn === true;
+        const isClockwise = actionRotationDeltaDeg <= 0;
+        const directionName = isClockwise ? "clockwise" : "counterclockwise";
+        const oppositeDirectionName = isClockwise ? "counterclockwise" : "clockwise";
+        directionButton = document.createElement("button");
+        directionButton.className = "btn-ghost icon-button action-turn-direction";
+        directionButton.type = "button";
+        directionButton.dataset.alternate = String(usesAlternateTurn);
+        directionButton.textContent = isClockwise ? "↻" : "↺";
+
+        const turnAmount = Math.abs(actionRotationDeltaDeg);
+        const currentPathDescription = turnAmount === 0
+          ? "Shortest path: no turn"
+          : `${usesAlternateTurn ? "Alternate" : "Shortest"} path: ${directionName} ${turnAmount.toFixed(1)}°`;
+        const nextPathDescription = usesAlternateTurn
+          ? "Use the shortest path"
+          : `Use the ${oppositeDirectionName} path`;
+        directionButton.setAttribute(
+          "aria-label",
+          `${currentPathDescription}. ${nextPathDescription}.`
+        );
+        directionButton.title = `${currentPathDescription}. Click to ${nextPathDescription.toLowerCase()}.`;
+        directionButton.addEventListener("click", () => {
+          const actions = [...state.mission.actions];
+          const currentAction = actions[index];
+          if (currentAction.alternateTurn === true) {
+            const { alternateTurn: _alternateTurn, ...shortestAction } = currentAction;
+            actions[index] = shortestAction;
+          } else {
+            actions[index] = { ...currentAction, alternateTurn: true };
+          }
+          commitMission({ ...state.mission, actions });
+        });
+        row.classList.add("has-turn-direction");
+      }
     }
     valueField.classList.add("action-value-control");
 
@@ -900,7 +957,14 @@ function renderActions() {
     });
     deleteButton.classList.add("action-delete-button");
 
-    row.append(dragHandle, typeSelect, valueField, insertButton, deleteButton);
+    row.append(
+      dragHandle,
+      typeSelect,
+      valueField,
+      ...(directionButton ? [directionButton] : []),
+      insertButton,
+      deleteButton
+    );
     dom.actionList.appendChild(row);
   });
 }

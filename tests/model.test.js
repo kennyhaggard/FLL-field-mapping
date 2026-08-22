@@ -14,7 +14,8 @@ import {
   normalizeColorToHex,
   normalizeMission,
   normalizeRobot,
-  poseToTracePointCm
+  poseToTracePointCm,
+  rotationDeltaDeg
 } from "../js/domain/model.js";
 
 test("computeBearingMove returns the shortest turn and distance", () => {
@@ -225,6 +226,43 @@ test("an exact 180-degree global turn follows the positive clockwise convention"
   assert.equal(frames[frames.length - 1].headingDeg, 270);
 });
 
+test("global rotations can use the alternate path", () => {
+  const startHeadingDeg = globalHeadingToFieldAngle(0);
+
+  assert.equal(rotationDeltaDeg(startHeadingDeg, 90, "global", "upfield"), -90);
+  assert.equal(rotationDeltaDeg(startHeadingDeg, 90, "global", "upfield", true), 270);
+  assert.equal(rotationDeltaDeg(startHeadingDeg, -90, "global", "upfield"), 90);
+  assert.equal(rotationDeltaDeg(startHeadingDeg, -90, "global", "upfield", true), -270);
+  assert.equal(rotationDeltaDeg(startHeadingDeg, 180, "global", "upfield"), -180);
+  assert.equal(rotationDeltaDeg(startHeadingDeg, 180, "global", "upfield", true), 180);
+  assert.equal(rotationDeltaDeg(startHeadingDeg, 0, "global", "upfield"), 0);
+  assert.equal(rotationDeltaDeg(startHeadingDeg, 0, "global", "upfield", true), 360);
+});
+
+test("global turn direction is calculated from the heading entering each block", () => {
+  const startHeadingDeg = globalHeadingToFieldAngle(0);
+  const firstDeltaDeg = rotationDeltaDeg(startHeadingDeg, 90, "global", "upfield");
+  const secondIncomingHeadingDeg = startHeadingDeg + firstDeltaDeg;
+
+  assert.equal(firstDeltaDeg, -90);
+  assert.equal(rotationDeltaDeg(secondIncomingHeadingDeg, 0, "global", "upfield"), 90);
+  assert.equal(rotationDeltaDeg(secondIncomingHeadingDeg, 0, "global", "upfield", true), -270);
+});
+
+test("alternate global turns are preserved in mission JSON and replay", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    headingMode: "global",
+    startAngle: 0,
+    actions: [{ type: "rotate", value: 90, alternateTurn: true }]
+  });
+  const frames = buildReplayFrames(mission, { fps: 1, rotateSpeedDegPerSec: 90 });
+
+  assert.deepEqual(mission.actions, [{ type: "rotate", value: 90, alternateTurn: true }]);
+  assert.equal(frames.length, 4);
+  assert.equal(frames[frames.length - 1].headingDeg, 0);
+});
+
 test("switching heading modes converts common routes without changing replay frames", () => {
   const relativeMission = normalizeMission({
     ...createBlankMission(),
@@ -246,6 +284,23 @@ test("switching heading modes converts common routes without changing replay fra
     globalMission.actions.filter((action) => action.type === "rotate").map((action) => action.value),
     [90, 0]
   );
+  assert.deepEqual(roundTripMission.actions, relativeMission.actions);
+  assert.deepEqual(buildReplayFrames(globalMission), buildReplayFrames(relativeMission));
+});
+
+test("switching modes preserves an alternate global turn", () => {
+  const relativeMission = normalizeMission({
+    ...createBlankMission(),
+    headingMode: "relative",
+    startAngle: 90,
+    actions: [{ type: "rotate", value: 270 }]
+  });
+  const globalMission = convertMissionHeadingMode(relativeMission, "global");
+  const roundTripMission = convertMissionHeadingMode(globalMission, "relative");
+
+  assert.deepEqual(globalMission.actions, [
+    { type: "rotate", value: 90, alternateTurn: true }
+  ]);
   assert.deepEqual(roundTripMission.actions, relativeMission.actions);
   assert.deepEqual(buildReplayFrames(globalMission), buildReplayFrames(relativeMission));
 });

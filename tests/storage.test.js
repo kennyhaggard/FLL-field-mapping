@@ -63,11 +63,13 @@ test("mission storage preserves global heading mode and signed headings", () => 
     name: "Global Mission",
     headingMode: "global",
     startAngle: 270,
-    actions: [{ type: "rotate", value: -90 }]
+    actions: [{ type: "rotate", value: -90, alternateTurn: true }]
   });
 
   const mission = loadMissionDraft(storage);
   assert.equal(mission.headingMode, "global");
   assert.equal(mission.startAngle, -90);
-  assert.deepEqual(mission.actions, [{ type: "rotate", value: -90 }]);
+  assert.deepEqual(mission.actions, [
+    { type: "rotate", value: -90, alternateTurn: true }
+  ]);
 });

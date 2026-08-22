@@ -2,7 +2,7 @@ import { DEFAULT_REPLAY_OPTIONS } from "./constants.js";
 
 /**
  * @typedef {{description:string, side:"front"|"rear"|"left"|"right", widthCm:number, lengthCm:number, positionCm:number}} Attachment
- * @typedef {{type:"move"|"rotate"|"pause", value:number}|{type:"change-attachment", attachmentIndexes:"all"|number[]}} MissionAction
+ * @typedef {{type:"move"|"pause", value:number}|{type:"rotate", value:number, alternateTurn?:boolean}|{type:"change-attachment", attachmentIndexes:"all"|number[]}} MissionAction
  * @typedef {{id:string, name:string, robotColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[]}} RobotProfile
  * @typedef {"relative"|"global"} HeadingMode
  * @typedef {"upfield"|"right"|"downfield"|"left"} GlobalZeroDirection
@@ -68,15 +68,26 @@ function missionStartHeadingDeg(missionLike) {
     : normalizeAngle(mission.startAngle);
 }
 
-function rotationDeltaDeg(currentHeadingDeg, actionValue, headingMode = "relative", zeroDirection = "upfield") {
+function rotationDeltaDeg(
+  currentHeadingDeg,
+  actionValue,
+  headingMode = "relative",
+  zeroDirection = "upfield",
+  alternateTurn = false
+) {
   if (normalizeHeadingMode(headingMode) === "relative") {
     return safeNum(actionValue, 0);
   }
 
   const currentGlobalHeading = fieldAngleToGlobalHeading(currentHeadingDeg, zeroDirection);
   const targetGlobalHeading = normalizeGlobalHeading(actionValue);
-  const clockwiseDelta = normalizeGlobalHeading(targetGlobalHeading - currentGlobalHeading);
-  return -clockwiseDelta;
+  let clockwiseDelta = normalizeGlobalHeading(targetGlobalHeading - currentGlobalHeading);
+  if (alternateTurn) {
+    if (clockwiseDelta > 0) clockwiseDelta -= 360;
+    else if (clockwiseDelta < 0) clockwiseDelta += 360;
+    else clockwiseDelta = -360;
+  }
+  return clockwiseDelta === 0 ? 0 : -clockwiseDelta;
 }
 
 function computeBearingMove(startPoint, endPoint, startHeadingDeg = 0) {
@@ -157,7 +168,14 @@ function normalizeActions(list) {
         };
       }
       const value = safeNum(action?.value, 0);
-      return { type, value: type === "rotate" ? roundAngleValue(value) : value };
+      if (type === "rotate") {
+        return {
+          type,
+          value: roundAngleValue(value),
+          ...(action?.alternateTurn === true ? { alternateTurn: true } : {})
+        };
+      }
+      return { type, value };
     })
     .filter((action) => ["move", "rotate", "pause", "change-attachment"].includes(action.type));
 }
@@ -231,14 +249,34 @@ function convertMissionHeadingMode(missionLike, nextModeLike) {
   const actions = mission.actions.map((action) => {
     if (action.type !== "rotate") return action;
 
-    const deltaDeg = rotationDeltaDeg(currentHeadingDeg, action.value, mission.headingMode, mission.globalZeroDirection);
+    const incomingHeadingDeg = currentHeadingDeg;
+    const deltaDeg = rotationDeltaDeg(
+      incomingHeadingDeg,
+      action.value,
+      mission.headingMode,
+      mission.globalZeroDirection,
+      action.alternateTurn
+    );
     currentHeadingDeg = normalizeAngle(currentHeadingDeg + deltaDeg);
 
+    const nextValue = nextMode === "global"
+      ? fieldAngleToGlobalHeading(currentHeadingDeg, mission.globalZeroDirection)
+      : deltaDeg;
+    const shortestDeltaDeg = nextMode === "global"
+      ? rotationDeltaDeg(
+        incomingHeadingDeg,
+        nextValue,
+        "global",
+        mission.globalZeroDirection
+      )
+      : deltaDeg;
+
     return {
-      ...action,
-      value: nextMode === "global"
-        ? fieldAngleToGlobalHeading(currentHeadingDeg, mission.globalZeroDirection)
-        : deltaDeg
+      type: "rotate",
+      value: nextValue,
+      ...(nextMode === "global" && Math.abs(deltaDeg - shortestDeltaDeg) > 0.000001
+        ? { alternateTurn: true }
+        : {})
     };
   });
 
@@ -539,7 +577,8 @@ function buildReplayFrames(missionLike, options = {}) {
         current.headingDeg,
         action.value,
         mission.headingMode,
-        mission.globalZeroDirection
+        mission.globalZeroDirection,
+        action.alternateTurn
       );
       const durationMs = (Math.abs(deltaDeg) / rotateSpeed) * 1000;
       const steps = Math.max(1, Math.round(durationMs / dtMs));
@@ -584,6 +623,7 @@ export {
   globalHeadingToFieldAngle,
   getAttachmentRectCm,
   getRobotFootprintHalfExtentsCm,
+  missionStartHeadingDeg,
   normalizeActions,
   normalizeAngle,
   normalizeAttachments,

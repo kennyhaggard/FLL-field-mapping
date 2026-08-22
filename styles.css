@@ -471,6 +471,10 @@ textarea:disabled {
   grid-template-columns: 28px 132px minmax(0, 1fr) 34px 34px;
 }
 
+.action-item.has-turn-direction {
+  grid-template-columns: 28px 132px minmax(0, 1fr) 34px 34px 34px;
+}
+
 .default-attachment-control {
   display: grid;
   grid-template-columns: 132px minmax(0, 1fr);
@@ -627,6 +631,26 @@ textarea:disabled {
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
+}
+
+.action-turn-direction {
+  width: 34px;
+  min-width: 34px;
+  padding: 4px;
+  color: var(--brand);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.action-turn-direction:hover,
+.action-turn-direction:focus-visible {
+  background: #eaf4fb;
+}
+
+.action-turn-direction[data-alternate="true"] {
+  background: #dceefa;
+  box-shadow: inset 0 0 0 1px rgba(0, 102, 179, 0.18);
 }
 
 .action-item select,
@@ -1159,6 +1183,10 @@ body[data-lesson-id] .header p {
     grid-template-columns: 28px minmax(0, 1fr) 34px 34px;
   }
 
+  .action-item.has-turn-direction {
+    grid-template-columns: 28px minmax(0, 1fr) 34px 34px 34px;
+  }
+
   .action-drag-handle {
     grid-row: 1 / span 2;
   }
@@ -1169,6 +1197,18 @@ body[data-lesson-id] .header p {
 
   .action-value-control {
     grid-column: 2;
+  }
+
+  .action-turn-direction {
+    grid-column: 3;
+  }
+
+  .action-item.has-turn-direction .action-insert-button {
+    grid-column: 4;
+  }
+
+  .action-item.has-turn-direction .action-delete-button {
+    grid-column: 5;
   }
 
   .action-insert-button {

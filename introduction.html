@@ -58,7 +58,7 @@
         <div class="section-title">What To Remember</div>
         <p>Distances are centimeters and angles are degrees. The lower-left corner of the field remains the X/Y coordinate origin in both heading modes.</p>
         <p><strong>Relative Mode</strong> uses the original field angles: <code>0</code> points right and <code>90</code> points up. Each Rotate value is an amount added to the robot's current angle, so negative values turn clockwise.</p>
-        <p><strong>Global Mode</strong> uses fixed headings based on the field: <code>0</code> points upfield, <code>90</code> points right, <code>-90</code> points left, and <code>180</code> points downfield. The starting heading uses this system, and each Rotate value is the heading the robot should face next. The planner takes the shortest turn to that heading; an exact 180-degree turn goes clockwise.</p>
+        <p><strong>Global Mode</strong> uses fixed headings based on the field: <code>0</code> points upfield, <code>90</code> points right, <code>-90</code> points left, and <code>180</code> points downfield. The starting heading uses this system, and each Rotate value is the heading the robot should face next. The curved arrow on each Rotate block shows the turn direction. The planner chooses the shortest turn by default; select the arrow to use the opposite path. An exact 180-degree turn defaults to clockwise.</p>
         <p>The planner does not model wheel slip, acceleration, sensors, or collisions. If a route only works with a perfect start, use that as a warning sign and design a better alignment or recovery step.</p>
       </div>
     </section>
