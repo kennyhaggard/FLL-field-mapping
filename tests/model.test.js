@@ -4,7 +4,9 @@ import assert from "node:assert/strict";
 import {
   applyRobotToMission,
   buildReplayFrames,
+  computeBearingMove,
   computeStartPoseCm,
+  convertMissionGlobalZeroDirection,
   convertMissionHeadingMode,
   createBlankMission,
   fieldAngleToGlobalHeading,
@@ -14,6 +16,18 @@ import {
   normalizeRobot,
   poseToTracePointCm
 } from "../js/domain/model.js";
+
+test("computeBearingMove returns the shortest turn and distance", () => {
+  const northeast = computeBearingMove({ x: 10, y: 10 }, { x: 13, y: 14 }, 350);
+  assert.equal(Number(northeast.headingDeg.toFixed(3)), 53.13);
+  assert.equal(Number(northeast.turnDeg.toFixed(3)), 63.13);
+  assert.equal(northeast.distanceCm, 5);
+
+  const west = computeBearingMove({ x: 0, y: 0 }, { x: -10, y: 0 }, 270);
+  assert.equal(west.headingDeg, 180);
+  assert.equal(west.turnDeg, -90);
+  assert.equal(west.distanceCm, 10);
+});
 
 test("normalize mission uses nested robot profile values", () => {
   const mission = normalizeMission({
@@ -36,6 +50,36 @@ test("normalize mission uses nested robot profile values", () => {
   assert.equal(mission.robot.robotWidthCm, 14);
   assert.equal(mission.attachments.length, 1);
   assert.equal(mission.robot.attachments.length, 1);
+  assert.equal(mission.attachments[0].description, "");
+});
+
+test("normalizeMission rounds displayed and saved angles to one decimal place", () => {
+  const mission = normalizeMission({
+    startAngle: 36.10000000000002,
+    actions: [
+      { type: "rotate", value: -36.10000000000002 },
+      { type: "move", value: 36.10000000000002 }
+    ]
+  });
+
+  assert.equal(mission.startAngle, 36.1);
+  assert.deepEqual(mission.actions, [
+    { type: "rotate", value: -36.1 },
+    { type: "move", value: 36.10000000000002 }
+  ]);
+  assert.match(JSON.stringify(mission), /"value":-36\.1/);
+});
+
+test("attachment descriptions are trimmed and preserved", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    attachments: [
+      { description: "  Left sweeper  ", side: "left", widthCm: 4, lengthCm: 8, positionCm: 0 }
+    ]
+  });
+
+  assert.equal(mission.attachments[0].description, "Left sweeper");
+  assert.equal(mission.robot.attachments[0].description, "Left sweeper");
 });
 
 test("normalizeMission preserves a robot snapshot for flat mission fields", () => {
@@ -74,6 +118,37 @@ test("global headings map to the field's cardinal angles", () => {
   assert.equal(fieldAngleToGlobalHeading(0), 90);
   assert.equal(fieldAngleToGlobalHeading(180), -90);
   assert.equal(fieldAngleToGlobalHeading(270), 180);
+
+  assert.equal(globalHeadingToFieldAngle(0, "upfield"), 90);
+  assert.equal(globalHeadingToFieldAngle(0, "right"), 0);
+  assert.equal(globalHeadingToFieldAngle(0, "downfield"), 270);
+  assert.equal(globalHeadingToFieldAngle(0, "left"), 180);
+});
+
+test("changing global zero direction preserves the physical route", () => {
+  const upfieldMission = normalizeMission({
+    ...createBlankMission(),
+    headingMode: "global",
+    globalZeroDirection: "upfield",
+    startAngle: 0,
+    actions: [
+      { type: "move", value: 12 },
+      { type: "rotate", value: 90 },
+      { type: "move", value: 8 }
+    ]
+  });
+  const rightMission = convertMissionGlobalZeroDirection(upfieldMission, "right");
+
+  assert.equal(rightMission.globalZeroDirection, "right");
+  assert.equal(rightMission.startAngle, -90);
+  assert.equal(rightMission.actions[1].value, 0);
+  const roundFrames = (frames) => frames.map((frame) => Object.fromEntries(
+    Object.entries(frame).map(([key, value]) => [
+      key,
+      typeof value === "number" ? Number(value.toFixed(9)) : value
+    ])
+  ));
+  assert.deepEqual(roundFrames(buildReplayFrames(rightMission)), roundFrames(buildReplayFrames(upfieldMission)));
 });
 
 test("global starting headings use the same physical placement as relative angles", () => {
@@ -185,6 +260,84 @@ test("normalizeMission keeps pause actions", () => {
   });
 
   assert.deepEqual(mission.actions, [{ type: "pause", value: 2 }]);
+});
+
+test("change attachment actions default to all and normalize selected indexes", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    actions: [
+      { type: "change-attachment" },
+      { type: "change-attachment", attachmentIndexes: [] },
+      { type: "change-attachment", attachmentIndexes: [1, 0, 1, -1, 2.5] }
+    ]
+  });
+
+  assert.deepEqual(mission.actions, [
+    { type: "change-attachment", attachmentIndexes: "all" },
+    { type: "change-attachment", attachmentIndexes: [] },
+    { type: "change-attachment", attachmentIndexes: [1, 0] }
+  ]);
+});
+
+test("buildReplayFrames applies attachment visibility from its change step onward", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    attachments: [
+      { side: "front", widthCm: 4, lengthCm: 4, positionCm: 0 },
+      { side: "left", widthCm: 4, lengthCm: 6, positionCm: 0 }
+    ],
+    actions: [
+      { type: "move", value: 1 },
+      { type: "change-attachment", attachmentIndexes: [1] },
+      { type: "move", value: 1 }
+    ]
+  });
+  const frames = buildReplayFrames(mission, { fps: 1, moveSpeedCmPerSec: 1 });
+  const changeFrameIndex = frames.findIndex((frame) => frame.attachmentActionIndex === 1);
+
+  assert.equal(frames[0].visibleAttachmentIndexes, "all");
+  assert.ok(changeFrameIndex > 0);
+  assert.deepEqual(frames[changeFrameIndex].visibleAttachmentIndexes, [1]);
+  frames.slice(changeFrameIndex).forEach((frame) => {
+    assert.deepEqual(frame.visibleAttachmentIndexes, [1]);
+  });
+});
+
+test("buildReplayFrames starts with the mission default attachments", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    defaultAttachmentIndexes: [1],
+    attachments: [
+      { side: "front", widthCm: 4, lengthCm: 4, positionCm: 0 },
+      { side: "left", widthCm: 4, lengthCm: 6, positionCm: 0 }
+    ],
+    actions: [{ type: "move", value: 1 }]
+  });
+  const frames = buildReplayFrames(mission, { fps: 1, moveSpeedCmPerSec: 1 });
+
+  assert.deepEqual(mission.defaultAttachmentIndexes, [1]);
+  frames.forEach((frame) => assert.deepEqual(frame.visibleAttachmentIndexes, [1]));
+  assert.equal(normalizeMission(createBlankMission()).defaultAttachmentIndexes, "all");
+});
+
+test("buildReplayFrames supports no attachments at start and after a change", () => {
+  const mission = normalizeMission({
+    ...createBlankMission(),
+    defaultAttachmentIndexes: [],
+    attachments: [
+      { side: "front", widthCm: 4, lengthCm: 4, positionCm: 0 }
+    ],
+    actions: [
+      { type: "move", value: 1 },
+      { type: "change-attachment", attachmentIndexes: "all" },
+      { type: "change-attachment", attachmentIndexes: [] }
+    ]
+  });
+  const frames = buildReplayFrames(mission, { fps: 1, moveSpeedCmPerSec: 1 });
+
+  assert.deepEqual(mission.defaultAttachmentIndexes, []);
+  assert.deepEqual(frames[0].visibleAttachmentIndexes, []);
+  assert.deepEqual(frames.at(-1).visibleAttachmentIndexes, []);
 });
 
 test("buildReplayFrames holds pose and tags frames during pause", () => {

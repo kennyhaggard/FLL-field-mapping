@@ -72,6 +72,11 @@ a:hover {
 
 .nav-check {
   position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
   opacity: 0;
   pointer-events: none;
 }
@@ -132,6 +137,46 @@ a:hover {
   margin: 0 0 10px;
 }
 
+.collapsible-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 30px;
+}
+
+.collapsible-panel-header .section-title {
+  margin: 0;
+}
+
+.collapsible-panel-body {
+  margin-top: 10px;
+}
+
+.panel-collapse-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+.panel-collapse-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 160ms ease;
+}
+
+.panel-collapse-toggle[aria-expanded="false"] svg {
+  transform: rotate(180deg);
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -146,8 +191,25 @@ a:hover {
 
 .heading-mode-row {
   display: grid;
+  grid-template-columns: auto minmax(130px, 1fr);
+  align-items: center;
   gap: 6px;
   margin-top: 12px;
+}
+
+.heading-mode-row .notice-inline {
+  grid-column: 1 / -1;
+}
+
+.global-zero-control {
+  display: grid;
+  grid-template-columns: auto minmax(112px, 1fr);
+  align-items: center;
+  gap: 7px;
+}
+
+.global-zero-control select {
+  padding: 6px 8px;
 }
 
 .toggle-control {
@@ -312,6 +374,21 @@ textarea:disabled {
   padding: 8px 14px;
 }
 
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.btn-link:hover {
+  text-decoration: none;
+}
+
 .icon-button {
   display: inline-grid;
   place-items: center;
@@ -389,8 +466,119 @@ textarea:disabled {
   border-radius: 12px;
 }
 
+.action-item {
+  position: relative;
+  grid-template-columns: 28px 132px minmax(0, 1fr) 34px 34px;
+}
+
+.default-attachment-control {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.default-attachment-control > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.action-drag-handle {
+  width: 28px;
+  min-width: 28px;
+  padding: 4px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.action-drag-handle:active {
+  cursor: grabbing;
+}
+
+.action-drag-handle svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.action-dragging {
+  opacity: 0.48;
+}
+
+.action-drop-before::before,
+.action-drop-after::after {
+  position: absolute;
+  right: 4px;
+  left: 4px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--brand);
+  content: "";
+}
+
+.action-drop-before::before {
+  top: -6px;
+}
+
+.action-drop-after::after {
+  bottom: -6px;
+}
+
 .attachment-item {
   grid-template-columns: 80px repeat(3, minmax(0, 1fr)) 34px;
+}
+
+.attachment-description-field {
+  grid-column: 1 / -1;
+}
+
+.attachment-selection {
+  position: relative;
+  min-width: 0;
+}
+
+.attachment-selection summary {
+  overflow: hidden;
+  padding: 8px 28px 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.attachment-selection-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  right: 0;
+  width: max(100%, 220px);
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(23, 32, 51, 0.18);
+}
+
+.attachment-selection-menu label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.attachment-selection-menu input {
+  width: 16px;
+  margin: 0;
 }
 
 .action-value-field {
@@ -485,6 +673,56 @@ textarea:disabled {
   background: #ffffff;
 }
 
+#mission-field [data-draggable-robot="1"] {
+  cursor: grab;
+  touch-action: none;
+}
+
+#mission-field [data-draggable-robot="1"][data-dragging="1"] {
+  cursor: grabbing;
+}
+
+#mission-field [data-drag-line="1"] {
+  stroke: #ed1c24;
+  stroke-width: 3;
+  stroke-dasharray: 8 5;
+  stroke-linecap: round;
+}
+
+#mission-field [data-drag-corridor="1"] {
+  fill: #ed1c24;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+#mission-field [data-drag-edge] {
+  stroke: #ed1c24;
+  stroke-width: 2;
+  stroke-dasharray: 1 7;
+  stroke-linecap: round;
+  opacity: 0.36;
+}
+
+#mission-field [data-drag-origin="1"] {
+  fill: #ffffff;
+  stroke: #ed1c24;
+  stroke-width: 2;
+}
+
+#mission-field [data-drag-label-background="1"] {
+  fill: var(--panel-2);
+  stroke: #7b8798;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+#mission-field [data-drag-label="1"] {
+  fill: #172033;
+  font: 600 13px "Space Grotesk", sans-serif;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
 #mission-field #layer1 path {
   fill: #f8fbff;
   stroke: #111827;
@@ -521,6 +759,15 @@ textarea:disabled {
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+}
+
+#playback-speed,
+#grid-opacity,
+#replay-slider {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .status {
@@ -799,6 +1046,14 @@ body[data-lesson-id] .header p {
 }
 
 @media (max-width: 700px) {
+  .heading-mode-row {
+    grid-template-columns: 1fr;
+  }
+
+  .heading-mode-row .notice-inline {
+    grid-column: 1;
+  }
+
   .header {
     padding: 14px 16px;
   }
@@ -864,9 +1119,36 @@ body[data-lesson-id] .header p {
     grid-template-columns: 1fr;
   }
 
-  .insert-action-row,
-  .action-item {
+  .insert-action-row {
     grid-template-columns: 1fr;
+  }
+
+  .default-attachment-control {
+    grid-template-columns: 1fr;
+  }
+
+  .action-item {
+    grid-template-columns: 28px minmax(0, 1fr) 34px 34px;
+  }
+
+  .action-drag-handle {
+    grid-row: 1 / span 2;
+  }
+
+  .action-type-select {
+    grid-column: 2 / -1;
+  }
+
+  .action-value-control {
+    grid-column: 2;
+  }
+
+  .action-insert-button {
+    grid-column: 3;
+  }
+
+  .action-delete-button {
+    grid-column: 4;
   }
 
   .attachment-item {

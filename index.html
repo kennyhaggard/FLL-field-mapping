@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>FLL Field Mapping</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=global-heading-mode" />
+  <link rel="stylesheet" href="styles.css?v=center-heading-controls" />
 </head>
 <body>
   <header class="header">
@@ -108,7 +108,28 @@
             <span class="toggle-track" aria-hidden="true"><span></span></span>
             <span class="toggle-label">Global Mode</span>
           </label>
+          <label class="global-zero-control" for="global-zero-direction">
+            <span>0° direction</span>
+            <select id="global-zero-direction" disabled>
+              <option value="upfield">Upfield</option>
+              <option value="right">Right</option>
+              <option value="downfield">Downfield</option>
+              <option value="left">Left</option>
+            </select>
+          </label>
           <span class="notice-inline" id="heading-mode-detail">Rotate values are relative turn amounts.</span>
+        </div>
+        <div class="field-display-controls">
+          <label for="playback-speed">
+            <span>Speed</span>
+            <input id="playback-speed" type="range" min="10" max="200" step="10" value="100" />
+          </label>
+          <output id="playback-speed-value" for="playback-speed">100%</output>
+          <label for="grid-opacity">
+            <span>Grid visibility</span>
+            <input id="grid-opacity" type="range" min="0" max="100" step="1" value="30" />
+          </label>
+          <output id="grid-opacity-value" for="grid-opacity">30%</output>
         </div>
         <div class="button-row" style="margin-top:12px;">
           <button class="btn-secondary" id="load-demo">Load Demo Mission</button>
@@ -146,7 +167,7 @@
         <div class="button-row">
           <button class="btn-primary" id="save-robot-local">Save Robot (Local)</button>
           <button class="btn-ghost" id="apply-local-robot">Apply Selected Robot</button>
-          <a class="btn-pill btn-ghost" href="robot_builder.html">Open Robot Builder</a>
+          <a class="btn-link btn-ghost" href="robot_builder.html">Open Robot Builder</a>
         </div>
 
         <label style="margin-top:10px;">
@@ -166,10 +187,15 @@
 
       <div class="panel">
         <div class="section-title">Mission Actions</div>
+        <div class="default-attachment-control">
+          <span>Starting attachments</span>
+          <div id="default-attachment-selection"></div>
+        </div>
         <div class="button-row">
           <button class="btn-secondary" id="add-move">+ Move</button>
           <button class="btn-secondary" id="add-rotate">+ Rotate</button>
           <button class="btn-secondary" id="add-pause">+ Pause</button>
+          <button class="btn-secondary" id="add-change-attachment">+ Attachment</button>
         </div>
         <div class="insert-action-row" style="margin-top:10px;">
           <span class="status">Insert pause at top</span>
@@ -196,14 +222,6 @@
       <div class="panel field-wrap">
         <div id="mission-field-host" class="mission-field-host" aria-live="polite"></div>
 
-        <div class="field-display-controls">
-          <label for="grid-opacity">
-            <span>Grid visibility</span>
-            <input id="grid-opacity" type="range" min="0" max="100" step="1" value="30" />
-          </label>
-          <output id="grid-opacity-value" for="grid-opacity">30%</output>
-        </div>
-
         <div class="field-controls">
           <button class="btn-primary" id="start-mission">Start Mission</button>
           <button class="btn-warn" id="stop-mission" disabled>Stop</button>
@@ -223,6 +241,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=trace-width-4"></script>
+  <script type="module" src="js/app.js?v=no-attachments-selection"></script>
 </body>
 </html>

@@ -1,11 +1,12 @@
 import { DEFAULT_REPLAY_OPTIONS } from "./constants.js";
 
 /**
- * @typedef {{side:"front"|"rear"|"left"|"right", widthCm:number, lengthCm:number, positionCm:number}} Attachment
- * @typedef {{type:"move"|"rotate"|"pause", value:number}} MissionAction
+ * @typedef {{description:string, side:"front"|"rear"|"left"|"right", widthCm:number, lengthCm:number, positionCm:number}} Attachment
+ * @typedef {{type:"move"|"rotate"|"pause", value:number}|{type:"change-attachment", attachmentIndexes:"all"|number[]}} MissionAction
  * @typedef {{id:string, name:string, robotColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[]}} RobotProfile
  * @typedef {"relative"|"global"} HeadingMode
- * @typedef {{name:string, robotName:string, robot:RobotProfile, headingMode:HeadingMode, startX:number, startY:number, startAngle:number, traceColor:string, robotColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[], actions:MissionAction[]}} Mission
+ * @typedef {"upfield"|"right"|"downfield"|"left"} GlobalZeroDirection
+ * @typedef {{name:string, robotName:string, robot:RobotProfile, headingMode:HeadingMode, globalZeroDirection:GlobalZeroDirection, startX:number, startY:number, startAngle:number, traceColor:string, robotColor:string, robotWidthCm:number, robotLengthCm:number, offsetY:number, attachments:Attachment[], defaultAttachmentIndexes:"all"|number[], actions:MissionAction[]}} Mission
  * @typedef {{x:number, y:number, headingDeg:number, turnCenterX:number, turnCenterY:number}} Pose
  */
 
@@ -16,6 +17,10 @@ function safeNum(value, fallback) {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function roundAngleValue(angleDeg) {
+  return Number(safeNum(angleDeg, 0).toFixed(1));
 }
 
 function normalizeAngle(angleDeg) {
@@ -32,31 +37,60 @@ function normalizeHeadingMode(mode) {
   return mode === "global" || mode === true ? "global" : "relative";
 }
 
-function globalHeadingToFieldAngle(headingDeg) {
-  return normalizeAngle(90 - safeNum(headingDeg, 0));
+function normalizeGlobalZeroDirection(direction) {
+  return ["upfield", "right", "downfield", "left"].includes(direction)
+    ? direction
+    : "upfield";
 }
 
-function fieldAngleToGlobalHeading(angleDeg) {
-  return normalizeGlobalHeading(90 - safeNum(angleDeg, 0));
+function globalZeroFieldAngle(direction) {
+  return {
+    upfield: 90,
+    right: 0,
+    downfield: 270,
+    left: 180
+  }[normalizeGlobalZeroDirection(direction)];
+}
+
+function globalHeadingToFieldAngle(headingDeg, zeroDirection = "upfield") {
+  return normalizeAngle(globalZeroFieldAngle(zeroDirection) - safeNum(headingDeg, 0));
+}
+
+function fieldAngleToGlobalHeading(angleDeg, zeroDirection = "upfield") {
+  return normalizeGlobalHeading(globalZeroFieldAngle(zeroDirection) - safeNum(angleDeg, 0));
 }
 
 function missionStartHeadingDeg(missionLike) {
   const mission = missionLike || {};
   const headingMode = normalizeHeadingMode(mission.headingMode);
   return headingMode === "global"
-    ? globalHeadingToFieldAngle(mission.startAngle)
+    ? globalHeadingToFieldAngle(mission.startAngle, mission.globalZeroDirection)
     : normalizeAngle(mission.startAngle);
 }
 
-function rotationDeltaDeg(currentHeadingDeg, actionValue, headingMode = "relative") {
+function rotationDeltaDeg(currentHeadingDeg, actionValue, headingMode = "relative", zeroDirection = "upfield") {
   if (normalizeHeadingMode(headingMode) === "relative") {
     return safeNum(actionValue, 0);
   }
 
-  const currentGlobalHeading = fieldAngleToGlobalHeading(currentHeadingDeg);
+  const currentGlobalHeading = fieldAngleToGlobalHeading(currentHeadingDeg, zeroDirection);
   const targetGlobalHeading = normalizeGlobalHeading(actionValue);
   const clockwiseDelta = normalizeGlobalHeading(targetGlobalHeading - currentGlobalHeading);
   return -clockwiseDelta;
+}
+
+function computeBearingMove(startPoint, endPoint, startHeadingDeg = 0) {
+  const startX = safeNum(startPoint?.x, 0);
+  const startY = safeNum(startPoint?.y, 0);
+  const endX = safeNum(endPoint?.x, startX);
+  const endY = safeNum(endPoint?.y, startY);
+  const deltaX = endX - startX;
+  const deltaY = endY - startY;
+  const distanceCm = Math.hypot(deltaX, deltaY);
+  const headingDeg = distanceCm > 0 ? normalizeAngle((Math.atan2(deltaY, deltaX) * 180) / Math.PI) : normalizeAngle(startHeadingDeg);
+  const turnDeg = ((headingDeg - normalizeAngle(startHeadingDeg) + 540) % 360) - 180;
+
+  return { headingDeg, turnDeg, distanceCm };
 }
 
 function normalizeColorToHex(colorStr, fallback = "#0066b3") {
@@ -91,6 +125,7 @@ function normalizeAttachments(list) {
   const attachments = Array.isArray(list) ? list : [];
   return attachments
     .map((attachment) => ({
+      description: String(attachment?.description || "").trim(),
       side: String(attachment?.side || "").toLowerCase(),
       widthCm: safeNum(attachment?.widthCm, 0),
       lengthCm: safeNum(attachment?.lengthCm, 0),
@@ -99,14 +134,32 @@ function normalizeAttachments(list) {
     .filter((attachment) => ["front", "rear", "left", "right"].includes(attachment.side));
 }
 
+function normalizeAttachmentIndexes(value) {
+  if (value === "all") return "all";
+  if (!Array.isArray(value)) return "all";
+  const indexes = Array.isArray(value)
+    ? [...new Set(value
+      .map((index) => Number(index))
+      .filter((index) => Number.isInteger(index) && index >= 0))]
+    : [];
+  return indexes;
+}
+
 function normalizeActions(list) {
   const actions = Array.isArray(list) ? list : [];
   return actions
-    .map((action) => ({
-      type: String(action?.type || "").toLowerCase(),
-      value: safeNum(action?.value, 0)
-    }))
-    .filter((action) => action.type === "move" || action.type === "rotate" || action.type === "pause");
+    .map((action) => {
+      const type = String(action?.type || "").toLowerCase();
+      if (type === "change-attachment") {
+        return {
+          type,
+          attachmentIndexes: normalizeAttachmentIndexes(action?.attachmentIndexes)
+        };
+      }
+      const value = safeNum(action?.value, 0);
+      return { type, value: type === "rotate" ? roundAngleValue(value) : value };
+    })
+    .filter((action) => ["move", "rotate", "pause", "change-attachment"].includes(action.type));
 }
 
 function normalizeRobot(raw) {
@@ -125,6 +178,7 @@ function normalizeRobot(raw) {
 function normalizeMission(raw) {
   const source = raw || {};
   const headingMode = normalizeHeadingMode(source.headingMode ?? source.globalMode);
+  const globalZeroDirection = normalizeGlobalZeroDirection(source.globalZeroDirection);
   const robotSource = source.robot || {};
   const robotName = String(source.robotName || robotSource.name || "");
   const robotWidthCm = safeNum(source.robotWidthCm ?? robotSource.robotWidthCm, 12.7);
@@ -145,19 +199,21 @@ function normalizeMission(raw) {
   return {
     name: String(source.name || "Untitled Mission"),
     headingMode,
+    globalZeroDirection,
     robotName: robot.name,
     robot,
     startX: safeNum(source.startX, 0),
     startY: safeNum(source.startY, 0),
-    startAngle: headingMode === "global"
+    startAngle: roundAngleValue(headingMode === "global"
       ? normalizeGlobalHeading(source.startAngle)
-      : normalizeAngle(source.startAngle),
+      : normalizeAngle(source.startAngle)) % 360,
     traceColor: normalizeColorToHex(source.traceColor, "#0066b3"),
     robotColor: robot.robotColor,
     robotWidthCm: robot.robotWidthCm,
     robotLengthCm: robot.robotLengthCm,
     offsetY: robot.offsetY,
     attachments: robot.attachments,
+    defaultAttachmentIndexes: normalizeAttachmentIndexes(source.defaultAttachmentIndexes),
     actions: normalizeActions(source.actions || [])
   };
 }
@@ -169,19 +225,19 @@ function convertMissionHeadingMode(missionLike, nextModeLike) {
 
   let currentHeadingDeg = missionStartHeadingDeg(mission);
   const startAngle = nextMode === "global"
-    ? fieldAngleToGlobalHeading(currentHeadingDeg)
+    ? fieldAngleToGlobalHeading(currentHeadingDeg, mission.globalZeroDirection)
     : normalizeAngle(currentHeadingDeg);
 
   const actions = mission.actions.map((action) => {
     if (action.type !== "rotate") return action;
 
-    const deltaDeg = rotationDeltaDeg(currentHeadingDeg, action.value, mission.headingMode);
+    const deltaDeg = rotationDeltaDeg(currentHeadingDeg, action.value, mission.headingMode, mission.globalZeroDirection);
     currentHeadingDeg = normalizeAngle(currentHeadingDeg + deltaDeg);
 
     return {
       ...action,
       value: nextMode === "global"
-        ? fieldAngleToGlobalHeading(currentHeadingDeg)
+        ? fieldAngleToGlobalHeading(currentHeadingDeg, mission.globalZeroDirection)
         : deltaDeg
     };
   });
@@ -191,6 +247,30 @@ function convertMissionHeadingMode(missionLike, nextModeLike) {
     headingMode: nextMode,
     startAngle,
     actions
+  });
+}
+
+function convertMissionGlobalZeroDirection(missionLike, nextDirectionLike) {
+  const mission = normalizeMission(missionLike);
+  const nextDirection = normalizeGlobalZeroDirection(nextDirectionLike);
+  if (mission.globalZeroDirection === nextDirection) return mission;
+
+  if (mission.headingMode !== "global") {
+    return normalizeMission({ ...mission, globalZeroDirection: nextDirection });
+  }
+
+  const convertHeading = (headingDeg) => fieldAngleToGlobalHeading(
+    globalHeadingToFieldAngle(headingDeg, mission.globalZeroDirection),
+    nextDirection
+  );
+
+  return normalizeMission({
+    ...mission,
+    globalZeroDirection: nextDirection,
+    startAngle: convertHeading(mission.startAngle),
+    actions: mission.actions.map((action) => action.type === "rotate"
+      ? { ...action, value: convertHeading(action.value) }
+      : action)
   });
 }
 
@@ -406,10 +486,25 @@ function buildReplayFrames(missionLike, options = {}) {
   const dtMs = 1000 / fps;
 
   const frames = [];
-  let current = computeStartPoseCm(mission);
+  let current = {
+    ...computeStartPoseCm(mission),
+    visibleAttachmentIndexes: mission.defaultAttachmentIndexes === "all"
+      ? "all"
+      : [...mission.defaultAttachmentIndexes]
+  };
   frames.push({ ...current });
 
   mission.actions.forEach((action, actionIndex) => {
+    if (action.type === "change-attachment") {
+      current = {
+        ...current,
+        visibleAttachmentIndexes: action.attachmentIndexes === "all"
+          ? "all"
+          : [...action.attachmentIndexes]
+      };
+      frames.push({ ...current, attachmentActionIndex: actionIndex });
+    }
+
     if (action.type === "move") {
       const distanceCm = safeNum(action.value, 0);
       const durationMs = (Math.abs(distanceCm) / moveSpeed) * 1000;
@@ -420,6 +515,7 @@ function buildReplayFrames(missionLike, options = {}) {
       for (let step = 1; step <= steps; step += 1) {
         const t = step / steps;
         frames.push({
+          ...current,
           x: current.x + dx * t,
           y: current.y + dy * t,
           headingDeg: current.headingDeg,
@@ -439,7 +535,12 @@ function buildReplayFrames(missionLike, options = {}) {
     }
 
     if (action.type === "rotate") {
-      const deltaDeg = rotationDeltaDeg(current.headingDeg, action.value, mission.headingMode);
+      const deltaDeg = rotationDeltaDeg(
+        current.headingDeg,
+        action.value,
+        mission.headingMode,
+        mission.globalZeroDirection
+      );
       const durationMs = (Math.abs(deltaDeg) / rotateSpeed) * 1000;
       const steps = Math.max(1, Math.round(durationMs / dtMs));
       const turnCenterX = current.turnCenterX;
@@ -451,6 +552,7 @@ function buildReplayFrames(missionLike, options = {}) {
         const headingDeg = normalizeAngle(startHeadingDeg + deltaDeg * t);
         const radians = (headingDeg * Math.PI) / 180;
         frames.push({
+          ...current,
           x: turnCenterX + Math.cos(radians) * mission.offsetY,
           y: turnCenterY + Math.sin(radians) * mission.offsetY,
           headingDeg,
@@ -470,8 +572,10 @@ export {
   buildReplayFrames,
   clamp,
   clampAttachmentPositionCm,
+  computeBearingMove,
   computeRobotLocalBoundsCm,
   computeStartPoseCm,
+  convertMissionGlobalZeroDirection,
   convertMissionHeadingMode,
   createBlankMission,
   createDefaultMission,
@@ -485,6 +589,7 @@ export {
   normalizeAttachments,
   normalizeColorToHex,
   normalizeGlobalHeading,
+  normalizeGlobalZeroDirection,
   normalizeHeadingMode,
   normalizeMission,
   normalizeRobot,

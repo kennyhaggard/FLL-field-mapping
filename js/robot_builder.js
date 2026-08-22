@@ -115,6 +115,22 @@ function renderAttachmentList() {
     const row = document.createElement("div");
     row.className = "attachment-item";
 
+    const descriptionField = document.createElement("label");
+    descriptionField.className = "attachment-description-field";
+    const descriptionLabel = document.createElement("span");
+    descriptionLabel.textContent = "Description";
+    const description = document.createElement("input");
+    description.type = "text";
+    description.placeholder = `Attachment ${index + 1}`;
+    description.value = attachment.description;
+    description.addEventListener("input", () => {
+      const attachments = [...state.robot.attachments];
+      attachments[index] = { ...attachments[index], description: description.value };
+      commitRobot({ ...state.robot, attachments }, { skipAttachments: true });
+    });
+    description.addEventListener("blur", renderAttachmentList);
+    descriptionField.append(descriptionLabel, description);
+
     const side = document.createElement("select");
     ["front", "rear", "left", "right"].forEach((type) => {
       const option = document.createElement("option");
@@ -175,7 +191,7 @@ function renderAttachmentList() {
       commitRobot({ ...state.robot, attachments });
     });
 
-    row.append(side, width, length, position, deleteButton);
+    row.append(descriptionField, side, width, length, position, deleteButton);
     dom.attachmentList.appendChild(row);
   });
 }
@@ -185,7 +201,7 @@ function addAttachment() {
     ...state.robot,
     attachments: [
       ...state.robot.attachments,
-      { side: "front", widthCm: 4, lengthCm: 4, positionCm: 0 }
+      { description: "", side: "front", widthCm: 4, lengthCm: 4, positionCm: 0 }
     ]
   });
 }

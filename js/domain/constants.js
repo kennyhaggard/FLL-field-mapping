@@ -23,7 +23,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_NP5pQU0F3ApEYMCcBiV7jg_bIp10veM";
 const DEFAULT_REPLAY_OPTIONS = Object.freeze({
   fps: 60,
   moveSpeedCmPerSec: 20,
-  rotateSpeedDegPerSec: 45
+  rotateSpeedDegPerSec: 67.5
 });
 
 export {

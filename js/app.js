@@ -2,13 +2,15 @@ import { createCloudClient } from "./domain/cloud.js?v=cloud-diagnostics";
 import {
   applyRobotToMission,
   buildReplayFrames,
+  convertMissionGlobalZeroDirection,
   convertMissionHeadingMode,
   createBlankMission,
   createDefaultMission,
+  fieldAngleToGlobalHeading,
   normalizeMission,
   normalizeRobot,
   safeNum
-} from "./domain/model.js?v=global-heading-mode";
+} from "./domain/model.js?v=no-attachments-selection";
 import { detectRuntimeMode, validateTeamPin } from "./domain/runtime.js";
 import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=global-heading-mode";
 import {
@@ -20,10 +22,12 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js?v=global-heading-mode";
-import { FieldRenderer } from "./ui/field_renderer.js?v=trace-width-4";
+import { FieldRenderer } from "./ui/field_renderer.js?v=dual-filleted-replay-corners";
 
 const GRID_OPACITY_STORAGE_KEY = "fll-field-grid-opacity";
 const DEFAULT_GRID_OPACITY = 30;
+const PLAYBACK_SPEED_STORAGE_KEY = "fll-field-playback-speed";
+const DEFAULT_PLAYBACK_SPEED = 100;
 
 const dom = {
   fieldHost: document.getElementById("mission-field-host"),
@@ -34,7 +38,10 @@ const dom = {
   startAngle: document.getElementById("start-angle"),
   startAngleLabel: document.getElementById("start-angle-label"),
   globalMode: document.getElementById("global-mode"),
+  globalZeroDirection: document.getElementById("global-zero-direction"),
   headingModeDetail: document.getElementById("heading-mode-detail"),
+  playbackSpeed: document.getElementById("playback-speed"),
+  playbackSpeedValue: document.getElementById("playback-speed-value"),
   gridOpacity: document.getElementById("grid-opacity"),
   gridOpacityValue: document.getElementById("grid-opacity-value"),
   loadDemo: document.getElementById("load-demo"),
@@ -53,6 +60,8 @@ const dom = {
   addMove: document.getElementById("add-move"),
   addRotate: document.getElementById("add-rotate"),
   addPause: document.getElementById("add-pause"),
+  addChangeAttachment: document.getElementById("add-change-attachment"),
+  defaultAttachmentSelection: document.getElementById("default-attachment-selection"),
   insertActionTop: document.getElementById("insert-action-top"),
   actionList: document.getElementById("action-list"),
   missionJson: document.getElementById("mission-json"),
@@ -118,9 +127,48 @@ const state = {
     startTime: 0
   },
   display: {
+    playbackSpeed: 100,
     gridOpacity: DEFAULT_GRID_OPACITY
   }
 };
+
+function setupCollapsiblePanels() {
+  document.querySelectorAll(".app-layout > section:first-child > .panel").forEach((panel, index) => {
+    const title = panel.querySelector(":scope > .section-title");
+    if (!title) return;
+
+    const titleText = title.textContent.trim();
+    const body = document.createElement("div");
+    body.className = "collapsible-panel-body";
+    body.id = `left-panel-body-${index + 1}`;
+
+    Array.from(panel.children).forEach((child) => {
+      if (child !== title) body.appendChild(child);
+    });
+
+    const header = document.createElement("div");
+    header.className = "collapsible-panel-header";
+
+    const toggle = document.createElement("button");
+    toggle.className = "btn-ghost panel-collapse-toggle";
+    toggle.type = "button";
+    toggle.setAttribute("aria-expanded", "true");
+    toggle.setAttribute("aria-controls", body.id);
+    toggle.setAttribute("aria-label", `Collapse ${titleText}`);
+    toggle.title = `Collapse ${titleText}`;
+    toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>';
+    toggle.addEventListener("click", () => {
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} ${titleText}`);
+      toggle.title = `${expanded ? "Expand" : "Collapse"} ${titleText}`;
+      body.hidden = expanded;
+    });
+
+    header.append(title, toggle);
+    panel.append(header, body);
+  });
+}
 
 function normalizeGridOpacity(value) {
   const numericValue = Number(value);
@@ -154,6 +202,39 @@ function applyGridOpacity(value, { persist = false } = {}) {
   dom.gridOpacity.setAttribute("aria-valuetext", `${opacity}% visible`);
   renderer.setGridOpacity(opacity / 100);
   if (persist) saveGridOpacity(opacity);
+}
+
+function normalizePlaybackSpeed(value) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue)
+    ? Math.round(Math.max(10, Math.min(200, numericValue)))
+    : DEFAULT_PLAYBACK_SPEED;
+}
+
+function loadPlaybackSpeed() {
+  try {
+    const savedValue = window.localStorage.getItem(PLAYBACK_SPEED_STORAGE_KEY);
+    return savedValue === null ? DEFAULT_PLAYBACK_SPEED : normalizePlaybackSpeed(savedValue);
+  } catch {
+    return DEFAULT_PLAYBACK_SPEED;
+  }
+}
+
+function savePlaybackSpeed(value) {
+  try {
+    window.localStorage.setItem(PLAYBACK_SPEED_STORAGE_KEY, String(value));
+  } catch {
+    // The playback preference still works for this page when storage is unavailable.
+  }
+}
+
+function applyPlaybackSpeed(value, { persist = false } = {}) {
+  const speed = normalizePlaybackSpeed(value);
+  state.display.playbackSpeed = speed;
+  dom.playbackSpeed.value = String(speed);
+  dom.playbackSpeedValue.value = `${speed}%`;
+  dom.playbackSpeed.setAttribute("aria-valuetext", `${speed}% speed`);
+  if (persist) savePlaybackSpeed(speed);
 }
 
 function setJsonError(message) {
@@ -375,9 +456,11 @@ function syncMissionToInputs({ skipActions = false, skipAttachments = false } = 
   setInputValue(dom.startY, mission.startY);
   setInputValue(dom.startAngle, mission.startAngle);
   dom.globalMode.checked = isGlobalMode;
+  dom.globalZeroDirection.value = mission.globalZeroDirection;
+  dom.globalZeroDirection.disabled = !isGlobalMode;
   dom.startAngleLabel.textContent = isGlobalMode ? "Start heading (deg)" : "Start angle (deg)";
   dom.headingModeDetail.textContent = isGlobalMode
-    ? "Rotate values are absolute global headings."
+    ? `Rotate values are absolute headings with 0° ${mission.globalZeroDirection}.`
     : "Rotate values are relative turn amounts.";
   setInputValue(dom.robotWidth, mission.robotWidthCm);
   setInputValue(dom.robotLength, mission.robotLengthCm);
@@ -440,6 +523,9 @@ function getActionUnit(type) {
 }
 
 function createAction(type) {
+  if (type === "change-attachment") {
+    return { type: "change-attachment", attachmentIndexes: "all" };
+  }
   if (type === "rotate") {
     return { type: "rotate", value: state.mission.headingMode === "global" ? 0 : -90 };
   }
@@ -451,6 +537,34 @@ function insertActionAt(index, type) {
   const actions = [...state.mission.actions];
   actions.splice(index, 0, createAction(type));
   commitMission({ ...state.mission, actions });
+}
+
+function handleRobotDrop({ headingDeg, turnDeg, distanceCm, startPose }) {
+  const roundedTurn = Number(turnDeg.toFixed(1));
+  const roundedDistance = Number(distanceCm.toFixed(1));
+  const rotateValue = state.mission.headingMode === "global"
+    ? Number(fieldAngleToGlobalHeading(headingDeg, state.mission.globalZeroDirection).toFixed(1))
+    : roundedTurn;
+  const angleText = state.mission.headingMode === "global"
+    ? `rotate to ${rotateValue.toFixed(1)}°`
+    : `turn ${roundedTurn.toFixed(1)}°`;
+  const accepted = confirm(
+    `${angleText}, then move ${roundedDistance.toFixed(1)} cm.\n\nAdd these steps to the mission?`
+  );
+
+  if (!accepted) {
+    renderer.updateRobotTransform(startPose);
+    return;
+  }
+
+  commitMission({
+    ...state.mission,
+    actions: [
+      ...state.mission.actions,
+      { type: "rotate", value: rotateValue },
+      { type: "move", value: roundedDistance }
+    ]
+  });
 }
 
 function createIconButton({ label, title, icon }) {
@@ -483,47 +597,227 @@ function createLabeledNumberField({ label, input, unit = "cm" }) {
   return field;
 }
 
+function getAttachmentDisplayName(attachment, index) {
+  if (!attachment) return "";
+  return attachment.description || `Attachment ${index + 1} (${attachment.side})`;
+}
+
+function createAttachmentSelectionField(initialSelection, onSelectionChange) {
+  const details = document.createElement("details");
+  details.className = "attachment-selection";
+
+  const summary = document.createElement("summary");
+  const menu = document.createElement("div");
+  menu.className = "attachment-selection-menu";
+  details.append(summary, menu);
+
+  let selection = initialSelection === "all"
+    ? "all"
+    : [...initialSelection];
+  const optionInputs = [];
+
+  const updateControl = () => {
+    const selectedIndexes = selection === "all" ? [] : selection;
+    summary.textContent = selection === "all"
+      ? "All attachments"
+      : selectedIndexes
+        .map((index) => getAttachmentDisplayName(state.mission.attachments[index], index))
+        .filter(Boolean)
+        .join(", ") || "No attachments";
+    optionInputs.forEach(({ input, attachmentIndex }) => {
+      input.checked = attachmentIndex === "all"
+        ? selection === "all"
+        : selection !== "all" && selection.includes(attachmentIndex);
+    });
+  };
+
+  const commitSelection = () => {
+    onSelectionChange(selection);
+    updateControl();
+  };
+
+  const addOption = (labelText, attachmentIndex) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.addEventListener("change", () => {
+      if (attachmentIndex === "all") {
+        selection = input.checked ? "all" : [];
+      } else {
+        const selectedIndexes = selection === "all" ? [] : [...selection];
+        selection = input.checked
+          ? [...new Set([...selectedIndexes, attachmentIndex])]
+          : selectedIndexes.filter((index) => index !== attachmentIndex);
+      }
+      commitSelection();
+    });
+    label.append(input, document.createTextNode(labelText));
+    menu.appendChild(label);
+    optionInputs.push({ input, attachmentIndex });
+  };
+
+  addOption("All attachments", "all");
+  state.mission.attachments.forEach((attachment, index) => {
+    addOption(getAttachmentDisplayName(attachment, index), index);
+  });
+  updateControl();
+  return details;
+}
+
+function reorderAction(fromIndex, toIndex, { focusHandle = false } = {}) {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 ||
+      fromIndex >= state.mission.actions.length || toIndex >= state.mission.actions.length) {
+    return;
+  }
+  const actions = [...state.mission.actions];
+  const [action] = actions.splice(fromIndex, 1);
+  actions.splice(toIndex, 0, action);
+  commitMission({ ...state.mission, actions });
+  if (focusHandle) {
+    requestAnimationFrame(() => {
+      dom.actionList.querySelector(`[data-action-drag-index="${toIndex}"]`)?.focus();
+    });
+  }
+}
+
 function renderActions() {
   dom.actionList.innerHTML = "";
+  dom.defaultAttachmentSelection.replaceChildren(createAttachmentSelectionField(
+    state.mission.defaultAttachmentIndexes,
+    (defaultAttachmentIndexes) => {
+      commitMission({ ...state.mission, defaultAttachmentIndexes }, { skipActions: true });
+    }
+  ));
+  let draggedActionIndex = null;
+  let draggedRow = null;
+  let dragOrderCommitted = false;
+
+  const clearDropIndicators = () => {
+    dom.actionList.querySelectorAll(".action-drop-before, .action-drop-after").forEach((item) => {
+      item.classList.remove("action-drop-before", "action-drop-after");
+    });
+  };
+
+  const commitDisplayedActionOrder = () => {
+    if (draggedActionIndex === null || dragOrderCommitted) return;
+    const actionIndexes = Array.from(dom.actionList.children).map((item) => (
+      Number(item.dataset.actionIndex)
+    ));
+    const orderChanged = actionIndexes.some((actionIndex, index) => actionIndex !== index);
+    dragOrderCommitted = true;
+    clearDropIndicators();
+    if (orderChanged) {
+      commitMission({
+        ...state.mission,
+        actions: actionIndexes.map((actionIndex) => state.mission.actions[actionIndex])
+      });
+    }
+  };
+
+  dom.actionList.ondragover = (event) => {
+    if (draggedActionIndex === null) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  };
+  dom.actionList.ondrop = (event) => {
+    if (draggedActionIndex === null) return;
+    event.preventDefault();
+    commitDisplayedActionOrder();
+  };
 
   state.mission.actions.forEach((action, index) => {
     const row = document.createElement("div");
     row.className = "action-item";
+    row.dataset.actionIndex = String(index);
 
+    const dragHandle = createIconButton({
+      label: `Reorder action ${index + 1}. Drag, or press Alt and an arrow key.`,
+      title: "Drag to reorder",
+      icon: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>`
+    });
+    dragHandle.classList.add("action-drag-handle");
+    dragHandle.draggable = true;
+    dragHandle.dataset.actionDragIndex = String(index);
+    dragHandle.addEventListener("dragstart", (event) => {
+      draggedActionIndex = index;
+      draggedRow = row;
+      dragOrderCommitted = false;
+      row.classList.add("action-dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", String(index));
+    });
+    dragHandle.addEventListener("dragend", () => {
+      commitDisplayedActionOrder();
+      draggedActionIndex = null;
+      draggedRow = null;
+      row.classList.remove("action-dragging");
+      clearDropIndicators();
+    });
+    dragHandle.addEventListener("keydown", (event) => {
+      if (!event.altKey || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+      event.preventDefault();
+      const direction = event.key === "ArrowUp" ? -1 : 1;
+      reorderAction(index, Math.max(0, Math.min(state.mission.actions.length - 1, index + direction)), {
+        focusHandle: true
+      });
+    });
+
+    row.addEventListener("dragover", (event) => {
+      if (draggedActionIndex === null || !draggedRow || draggedRow === row) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      clearDropIndicators();
+      const bounds = row.getBoundingClientRect();
+      const dropAfter = event.clientY >= bounds.top + bounds.height / 2;
+      row.classList.add(dropAfter ? "action-drop-after" : "action-drop-before");
+      const referenceNode = dropAfter ? row.nextSibling : row;
+      dom.actionList.insertBefore(draggedRow, referenceNode);
+    });
     const typeSelect = document.createElement("select");
-    ["move", "rotate", "pause"].forEach((type) => {
+    typeSelect.className = "action-type-select";
+    ["move", "rotate", "pause", "change-attachment"].forEach((type) => {
       const option = document.createElement("option");
       option.value = type;
       option.textContent = type === "rotate" && state.mission.headingMode === "global"
         ? "ROTATE TO"
-        : type.toUpperCase();
+        : type === "change-attachment" ? "ATTACHMENTS" : type.toUpperCase();
       if (action.type === type) option.selected = true;
       typeSelect.appendChild(option);
     });
     typeSelect.addEventListener("change", () => {
       const actions = [...state.mission.actions];
-      actions[index] = { ...actions[index], type: typeSelect.value };
+      actions[index] = createAction(typeSelect.value);
       commitMission({ ...state.mission, actions });
     });
 
-    const valueInput = document.createElement("input");
-    configureDecimalInput(valueInput);
-    valueInput.value = String(action.value);
-    valueInput.addEventListener("input", () => {
-      const actions = [...state.mission.actions];
-      actions[index] = { ...actions[index], value: numberFromInput(valueInput, actions[index].value) };
-      commitMission({ ...state.mission, actions }, { skipActions: true });
-    });
-    valueInput.addEventListener("blur", () => {
-      renderActions();
-    });
+    let valueField;
+    if (action.type === "change-attachment") {
+      valueField = createAttachmentSelectionField(action.attachmentIndexes, (attachmentIndexes) => {
+        const actions = [...state.mission.actions];
+        actions[index] = { type: "change-attachment", attachmentIndexes };
+        commitMission({ ...state.mission, actions }, { skipActions: true });
+      });
+    } else {
+      const valueInput = document.createElement("input");
+      configureDecimalInput(valueInput);
+      valueInput.value = String(action.value);
+      valueInput.addEventListener("input", () => {
+        const actions = [...state.mission.actions];
+        actions[index] = { ...actions[index], value: numberFromInput(valueInput, actions[index].value) };
+        commitMission({ ...state.mission, actions }, { skipActions: true });
+      });
+      valueInput.addEventListener("blur", () => {
+        renderActions();
+      });
 
-    const valueField = document.createElement("div");
-    valueField.className = "action-value-field";
-    const unitLabel = document.createElement("span");
-    unitLabel.className = "action-unit";
-    unitLabel.textContent = getActionUnit(action.type);
-    valueField.append(valueInput, unitLabel);
+      valueField = document.createElement("div");
+      valueField.className = "action-value-field";
+      const unitLabel = document.createElement("span");
+      unitLabel.className = "action-unit";
+      unitLabel.textContent = getActionUnit(action.type);
+      valueField.append(valueInput, unitLabel);
+    }
+    valueField.classList.add("action-value-control");
 
     const insertButton = createIconButton({
       label: `Insert pause after action ${index + 1}`,
@@ -533,6 +827,7 @@ function renderActions() {
     insertButton.addEventListener("click", () => {
       insertActionAt(index + 1, "pause");
     });
+    insertButton.classList.add("action-insert-button");
 
     const deleteButton = createIconButton({
       label: `Delete action ${index + 1}`,
@@ -543,8 +838,9 @@ function renderActions() {
       const actions = state.mission.actions.filter((_, actionIndex) => actionIndex !== index);
       commitMission({ ...state.mission, actions });
     });
+    deleteButton.classList.add("action-delete-button");
 
-    row.append(typeSelect, valueField, insertButton, deleteButton);
+    row.append(dragHandle, typeSelect, valueField, insertButton, deleteButton);
     dom.actionList.appendChild(row);
   });
 }
@@ -557,6 +853,28 @@ function renderAttachments() {
   attachments.forEach((attachment, index) => {
     const row = document.createElement("div");
     row.className = "attachment-item";
+
+    const descriptionField = document.createElement("label");
+    descriptionField.className = "attachment-description-field";
+    const descriptionLabel = document.createElement("span");
+    descriptionLabel.textContent = "Description";
+    const description = document.createElement("input");
+    description.type = "text";
+    description.placeholder = `Attachment ${index + 1}`;
+    description.value = attachment.description;
+    description.addEventListener("input", () => {
+      const attachmentsNext = [...state.mission.attachments];
+      attachmentsNext[index] = { ...attachmentsNext[index], description: description.value };
+      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }), {
+        skipActions: true,
+        skipAttachments: true
+      });
+    });
+    description.addEventListener("blur", () => {
+      renderAttachments();
+      renderActions();
+    });
+    descriptionField.append(descriptionLabel, description);
 
     const side = document.createElement("select");
     ["front", "rear", "left", "right"].forEach((type) => {
@@ -635,10 +953,32 @@ function renderAttachments() {
       const attachmentsNext = state.mission.attachments.filter(
         (_, attachmentIndex) => attachmentIndex !== index
       );
-      commitMission(withMissionRobot({ ...state.mission, attachments: attachmentsNext }));
+      const actions = state.mission.actions.map((action) => {
+        if (action.type !== "change-attachment" || action.attachmentIndexes === "all") {
+          return action;
+        }
+        const attachmentIndexes = action.attachmentIndexes
+          .filter((attachmentIndex) => attachmentIndex !== index)
+          .map((attachmentIndex) => attachmentIndex > index ? attachmentIndex - 1 : attachmentIndex);
+        return {
+          ...action,
+          attachmentIndexes
+        };
+      });
+      const defaultAttachmentIndexes = state.mission.defaultAttachmentIndexes === "all"
+        ? "all"
+        : state.mission.defaultAttachmentIndexes
+          .filter((attachmentIndex) => attachmentIndex !== index)
+          .map((attachmentIndex) => attachmentIndex > index ? attachmentIndex - 1 : attachmentIndex);
+      commitMission(withMissionRobot({
+        ...state.mission,
+        attachments: attachmentsNext,
+        defaultAttachmentIndexes,
+        actions
+      }));
     });
 
-    row.append(side, widthField, lengthField, positionField, deleteButton);
+    row.append(descriptionField, side, widthField, lengthField, positionField, deleteButton);
     dom.attachmentList.appendChild(row);
   });
 }
@@ -691,7 +1031,7 @@ function playReplay() {
     const elapsedMs = now - startedAt;
     const index = Math.min(
       state.replay.frames.length - 1,
-      startIndex + Math.floor((elapsedMs / 1000) * state.replay.fps)
+      startIndex + Math.floor((elapsedMs / 1000) * state.replay.fps * (state.display.playbackSpeed / 100))
     );
     renderReplayFrame(index);
     if (index >= state.replay.frames.length - 1) {
@@ -728,7 +1068,9 @@ function startMissionRun() {
     if (!state.run.active) return;
     const index = Math.min(
       state.run.frames.length - 1,
-      Math.floor(((now - state.run.startTime) / 1000) * state.run.fps)
+      Math.floor(
+        ((now - state.run.startTime) / 1000) * state.run.fps * (state.display.playbackSpeed / 100)
+      )
     );
     renderReplayFrame(index);
     if (index >= state.run.frames.length - 1) {
@@ -957,13 +1299,24 @@ function hydrateInitialState() {
 
   const missionFromUrl = readMissionFromQuery(window.location.search);
   state.mission = missionFromUrl || loadMissionDraft(window.localStorage);
+  state.display.playbackSpeed = loadPlaybackSpeed();
   state.display.gridOpacity = loadGridOpacity();
   applyTransferredRobotIfPresent();
 }
 
 function attachEventHandlers() {
+  document.addEventListener("pointerdown", (event) => {
+    document.querySelectorAll(".attachment-selection[open]").forEach((selection) => {
+      if (!selection.contains(event.target)) selection.open = false;
+    });
+  });
+
   dom.gridOpacity.addEventListener("input", () => {
     applyGridOpacity(dom.gridOpacity.value, { persist: true });
+  });
+
+  dom.playbackSpeed.addEventListener("input", () => {
+    applyPlaybackSpeed(dom.playbackSpeed.value, { persist: true });
   });
 
   [dom.startX, dom.startY, dom.startAngle, dom.robotWidth, dom.robotLength, dom.robotOffset].forEach(
@@ -983,12 +1336,20 @@ function attachEventHandlers() {
   });
 
   dom.resetMission.addEventListener("click", () => {
+    const accepted = confirm(
+      "Reset this mission? This will clear all mission settings, attachments, and actions."
+    );
+    if (!accepted) return;
     commitMission(createBlankMission());
   });
 
   dom.globalMode.addEventListener("change", () => {
     const nextMode = dom.globalMode.checked ? "global" : "relative";
     commitMission(convertMissionHeadingMode(state.mission, nextMode));
+  });
+
+  dom.globalZeroDirection.addEventListener("change", () => {
+    commitMission(convertMissionGlobalZeroDirection(state.mission, dom.globalZeroDirection.value));
   });
 
   dom.addMove.addEventListener("click", () => {
@@ -1012,6 +1373,13 @@ function attachEventHandlers() {
     });
   });
 
+  dom.addChangeAttachment.addEventListener("click", () => {
+    commitMission({
+      ...state.mission,
+      actions: [...state.mission.actions, createAction("change-attachment")]
+    });
+  });
+
   dom.insertActionTop.addEventListener("click", () => {
     insertActionAt(0, "pause");
   });
@@ -1021,7 +1389,7 @@ function attachEventHandlers() {
       ...state.mission,
       attachments: [
         ...state.mission.attachments,
-        { side: "front", widthCm: 4, lengthCm: 4, positionCm: 0 }
+        { description: "", side: "front", widthCm: 4, lengthCm: 4, positionCm: 0 }
       ]
     });
   });
@@ -1101,9 +1469,19 @@ function attachEventHandlers() {
 async function init() {
   updateRuntimeBanner();
   hydrateInitialState();
+  setupCollapsiblePanels();
   attachEventHandlers();
+  renderer.setRobotDragHandlers({
+    onStart: () => {
+      stopMissionRun();
+      stopReplay();
+      updateReplayControls();
+    },
+    onDrop: handleRobotDrop
+  });
   renderLocalRobots();
   syncMissionToInputs();
+  applyPlaybackSpeed(state.display.playbackSpeed);
   applyGridOpacity(state.display.gridOpacity);
   updateTeamControls();
   renderTeamMissions();
