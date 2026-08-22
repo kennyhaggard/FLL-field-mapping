@@ -651,7 +651,31 @@ textarea:disabled {
 }
 
 .mission-field-host {
+  --wireframe-opacity: 0.3;
+  --graphical-opacity: 0.3;
+  --graphical-grayscale: 0.7;
+  --graphical-saturation: 0.3;
+  --graphical-contrast: 0.55;
   min-height: 260px;
+  position: relative;
+}
+
+.mission-field-host::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("field.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: calc(100% + 8px) calc(100% + 8px);
+  filter: grayscale(var(--graphical-grayscale)) saturate(var(--graphical-saturation)) contrast(var(--graphical-contrast));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mission-field-host[data-background="graphical"]::before,
+.mission-field-host[data-background="overlay"]::before {
+  opacity: var(--graphical-opacity);
 }
 
 .mission-field-host[data-state="error"] {
@@ -667,10 +691,21 @@ textarea:disabled {
 }
 
 #mission-field {
+  display: block;
+  position: relative;
   width: 100%;
   height: auto;
   border-radius: 0;
   background: #ffffff;
+}
+
+#mission-field #field-artwork {
+  opacity: var(--wireframe-opacity);
+}
+
+.mission-field-host[data-background="graphical"] #mission-field,
+.mission-field-host[data-background="overlay"] #mission-field {
+  background: transparent;
 }
 
 #mission-field [data-draggable-robot="1"] {
@@ -753,6 +788,10 @@ textarea:disabled {
   text-align: right;
 }
 
+.field-background-control {
+  grid-column: 1 / -1;
+}
+
 .field-controls {
   margin-top: 12px;
   display: flex;
@@ -762,7 +801,8 @@ textarea:disabled {
 }
 
 #playback-speed,
-#grid-opacity,
+#wireframe-opacity,
+#graphical-opacity,
 #replay-slider {
   padding: 0;
   border: 0;

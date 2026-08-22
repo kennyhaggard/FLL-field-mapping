@@ -22,12 +22,17 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js?v=global-heading-mode";
-import { FieldRenderer } from "./ui/field_renderer.js?v=dual-filleted-replay-corners";
+import { FieldRenderer } from "./ui/field_renderer.js?v=muted-graphical-background";
 
-const GRID_OPACITY_STORAGE_KEY = "fll-field-grid-opacity";
-const DEFAULT_GRID_OPACITY = 30;
+const WIREFRAME_OPACITY_STORAGE_KEY = "fll-field-wireframe-opacity";
+const GRAPHICAL_OPACITY_STORAGE_KEY = "fll-field-graphical-opacity";
+const LEGACY_BACKGROUND_OPACITY_STORAGE_KEY = "fll-field-background-opacity";
+const LEGACY_GRID_OPACITY_STORAGE_KEY = "fll-field-grid-opacity";
+const DEFAULT_BACKGROUND_OPACITY = 30;
 const PLAYBACK_SPEED_STORAGE_KEY = "fll-field-playback-speed";
 const DEFAULT_PLAYBACK_SPEED = 100;
+const FIELD_BACKGROUND_STORAGE_KEY = "fll-field-background";
+const DEFAULT_FIELD_BACKGROUND = "wireframe";
 
 const dom = {
   fieldHost: document.getElementById("mission-field-host"),
@@ -42,8 +47,13 @@ const dom = {
   headingModeDetail: document.getElementById("heading-mode-detail"),
   playbackSpeed: document.getElementById("playback-speed"),
   playbackSpeedValue: document.getElementById("playback-speed-value"),
-  gridOpacity: document.getElementById("grid-opacity"),
-  gridOpacityValue: document.getElementById("grid-opacity-value"),
+  wireframeOpacity: document.getElementById("wireframe-opacity"),
+  wireframeOpacityValue: document.getElementById("wireframe-opacity-value"),
+  wireframeOpacityControl: document.getElementById("wireframe-opacity-control"),
+  graphicalOpacity: document.getElementById("graphical-opacity"),
+  graphicalOpacityValue: document.getElementById("graphical-opacity-value"),
+  graphicalOpacityControl: document.getElementById("graphical-opacity-control"),
+  fieldBackground: document.getElementById("field-background"),
   loadDemo: document.getElementById("load-demo"),
   resetMission: document.getElementById("reset-mission"),
   robotWidth: document.getElementById("robot-width"),
@@ -128,7 +138,9 @@ const state = {
   },
   display: {
     playbackSpeed: 100,
-    gridOpacity: DEFAULT_GRID_OPACITY
+    wireframeOpacity: DEFAULT_BACKGROUND_OPACITY,
+    graphicalOpacity: DEFAULT_BACKGROUND_OPACITY,
+    fieldBackground: DEFAULT_FIELD_BACKGROUND
   }
 };
 
@@ -170,38 +182,85 @@ function setupCollapsiblePanels() {
   });
 }
 
-function normalizeGridOpacity(value) {
+function normalizeBackgroundOpacity(value) {
   const numericValue = Number(value);
   return Number.isFinite(numericValue)
     ? Math.round(Math.max(0, Math.min(100, numericValue)))
-    : DEFAULT_GRID_OPACITY;
+    : DEFAULT_BACKGROUND_OPACITY;
 }
 
-function loadGridOpacity() {
+function loadBackgroundOpacity(storageKey) {
   try {
-    const savedValue = window.localStorage.getItem(GRID_OPACITY_STORAGE_KEY);
-    return savedValue === null ? DEFAULT_GRID_OPACITY : normalizeGridOpacity(savedValue);
+    const savedValue = window.localStorage.getItem(storageKey)
+      ?? window.localStorage.getItem(LEGACY_BACKGROUND_OPACITY_STORAGE_KEY)
+      ?? window.localStorage.getItem(LEGACY_GRID_OPACITY_STORAGE_KEY);
+    return savedValue === null ? DEFAULT_BACKGROUND_OPACITY : normalizeBackgroundOpacity(savedValue);
   } catch {
-    return DEFAULT_GRID_OPACITY;
+    return DEFAULT_BACKGROUND_OPACITY;
   }
 }
 
-function saveGridOpacity(value) {
+function saveBackgroundOpacity(storageKey, value) {
   try {
-    window.localStorage.setItem(GRID_OPACITY_STORAGE_KEY, String(value));
+    window.localStorage.setItem(storageKey, String(value));
   } catch {
     // The display preference still works for this page when storage is unavailable.
   }
 }
 
-function applyGridOpacity(value, { persist = false } = {}) {
-  const opacity = normalizeGridOpacity(value);
-  state.display.gridOpacity = opacity;
-  dom.gridOpacity.value = String(opacity);
-  dom.gridOpacityValue.value = `${opacity}%`;
-  dom.gridOpacity.setAttribute("aria-valuetext", `${opacity}% visible`);
-  renderer.setGridOpacity(opacity / 100);
-  if (persist) saveGridOpacity(opacity);
+function applyWireframeOpacity(value, { persist = false } = {}) {
+  const opacity = normalizeBackgroundOpacity(value);
+  state.display.wireframeOpacity = opacity;
+  dom.wireframeOpacity.value = String(opacity);
+  dom.wireframeOpacityValue.value = `${opacity}%`;
+  dom.wireframeOpacity.setAttribute("aria-valuetext", `${opacity}% visible`);
+  renderer.setWireframeOpacity(opacity / 100);
+  if (persist) saveBackgroundOpacity(WIREFRAME_OPACITY_STORAGE_KEY, opacity);
+}
+
+function applyGraphicalOpacity(value, { persist = false } = {}) {
+  const opacity = normalizeBackgroundOpacity(value);
+  state.display.graphicalOpacity = opacity;
+  dom.graphicalOpacity.value = String(opacity);
+  dom.graphicalOpacityValue.value = `${opacity}%`;
+  dom.graphicalOpacity.setAttribute("aria-valuetext", `${opacity}% visible`);
+  renderer.setGraphicalOpacity(opacity / 100);
+  if (persist) saveBackgroundOpacity(GRAPHICAL_OPACITY_STORAGE_KEY, opacity);
+}
+
+function normalizeFieldBackground(value) {
+  return ["wireframe", "graphical", "overlay"].includes(value) ? value : DEFAULT_FIELD_BACKGROUND;
+}
+
+function loadFieldBackground() {
+  try {
+    return normalizeFieldBackground(window.localStorage.getItem(FIELD_BACKGROUND_STORAGE_KEY));
+  } catch {
+    return DEFAULT_FIELD_BACKGROUND;
+  }
+}
+
+function applyFieldBackground(value, { persist = false } = {}) {
+  const mode = normalizeFieldBackground(value);
+  state.display.fieldBackground = mode;
+  dom.fieldBackground.value = mode;
+  renderer.setBackgroundMode(mode);
+
+  const wireframeVisible = mode !== "graphical";
+  dom.wireframeOpacityControl.hidden = !wireframeVisible;
+  dom.wireframeOpacityValue.hidden = !wireframeVisible;
+
+  const graphicalVisible = mode !== "wireframe";
+  dom.graphicalOpacityControl.hidden = !graphicalVisible;
+  dom.graphicalOpacityValue.hidden = !graphicalVisible;
+
+  if (persist) {
+    try {
+      window.localStorage.setItem(FIELD_BACKGROUND_STORAGE_KEY, mode);
+    } catch {
+      // The display preference still works for this page when storage is unavailable.
+    }
+  }
 }
 
 function normalizePlaybackSpeed(value) {
@@ -1300,7 +1359,9 @@ function hydrateInitialState() {
   const missionFromUrl = readMissionFromQuery(window.location.search);
   state.mission = missionFromUrl || loadMissionDraft(window.localStorage);
   state.display.playbackSpeed = loadPlaybackSpeed();
-  state.display.gridOpacity = loadGridOpacity();
+  state.display.wireframeOpacity = loadBackgroundOpacity(WIREFRAME_OPACITY_STORAGE_KEY);
+  state.display.graphicalOpacity = loadBackgroundOpacity(GRAPHICAL_OPACITY_STORAGE_KEY);
+  state.display.fieldBackground = loadFieldBackground();
   applyTransferredRobotIfPresent();
 }
 
@@ -1311,8 +1372,16 @@ function attachEventHandlers() {
     });
   });
 
-  dom.gridOpacity.addEventListener("input", () => {
-    applyGridOpacity(dom.gridOpacity.value, { persist: true });
+  dom.wireframeOpacity.addEventListener("input", () => {
+    applyWireframeOpacity(dom.wireframeOpacity.value, { persist: true });
+  });
+
+  dom.graphicalOpacity.addEventListener("input", () => {
+    applyGraphicalOpacity(dom.graphicalOpacity.value, { persist: true });
+  });
+
+  dom.fieldBackground.addEventListener("change", () => {
+    applyFieldBackground(dom.fieldBackground.value, { persist: true });
   });
 
   dom.playbackSpeed.addEventListener("input", () => {
@@ -1332,6 +1401,10 @@ function attachEventHandlers() {
   });
 
   dom.loadDemo.addEventListener("click", () => {
+    const accepted = confirm(
+      "Load the demo mission? This will replace all current mission settings, attachments, and actions."
+    );
+    if (!accepted) return;
     commitMission(createDefaultMission());
   });
 
@@ -1482,7 +1555,9 @@ async function init() {
   renderLocalRobots();
   syncMissionToInputs();
   applyPlaybackSpeed(state.display.playbackSpeed);
-  applyGridOpacity(state.display.gridOpacity);
+  applyWireframeOpacity(state.display.wireframeOpacity);
+  applyGraphicalOpacity(state.display.graphicalOpacity);
+  applyFieldBackground(state.display.fieldBackground);
   updateTeamControls();
   renderTeamMissions();
   renderTeamRobots();

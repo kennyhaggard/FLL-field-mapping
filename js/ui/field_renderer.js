@@ -24,7 +24,9 @@ class FieldRenderer {
     this.svg = null;
     this.robotEl = null;
     this.traceEl = null;
-    this.gridOpacity = 0.3;
+    this.wireframeOpacity = 0.3;
+    this.graphicalOpacity = 0.3;
+    this.backgroundMode = "wireframe";
     this.currentPose = null;
     this.onRobotDragStart = null;
     this.onRobotDrop = null;
@@ -50,7 +52,9 @@ class FieldRenderer {
         throw new Error("Mission field SVG is missing its root id.");
       }
 
-      this.setGridOpacity(this.gridOpacity);
+      this.setWireframeOpacity(this.wireframeOpacity);
+      this.setGraphicalOpacity(this.graphicalOpacity);
+      this.setBackgroundMode(this.backgroundMode);
 
       this.host.removeAttribute("data-state");
       return true;
@@ -61,16 +65,35 @@ class FieldRenderer {
     }
   }
 
-  setGridOpacity(opacity) {
+  setWireframeOpacity(opacity) {
     const numericOpacity = Number(opacity);
-    this.gridOpacity = Number.isFinite(numericOpacity)
+    this.wireframeOpacity = Number.isFinite(numericOpacity)
       ? Math.max(0, Math.min(1, numericOpacity))
       : 0.3;
 
-    const grid = this.svg?.querySelector("#field-grid");
-    if (grid) {
-      grid.setAttribute("opacity", String(this.gridOpacity));
+    if (this.host) this.host.style.setProperty("--wireframe-opacity", String(this.wireframeOpacity));
+  }
+
+  setGraphicalOpacity(opacity) {
+    const numericOpacity = Number(opacity);
+    this.graphicalOpacity = Number.isFinite(numericOpacity)
+      ? Math.max(0, Math.min(1, numericOpacity))
+      : 0.3;
+
+    if (this.host) {
+      this.host.style.setProperty("--graphical-opacity", String(this.graphicalOpacity));
+      this.host.style.setProperty("--graphical-grayscale", String(1 - this.graphicalOpacity));
+      this.host.style.setProperty("--graphical-saturation", String(this.graphicalOpacity));
+      this.host.style.setProperty("--graphical-contrast", String(0.35 + this.graphicalOpacity * 0.65));
     }
+  }
+
+  setBackgroundMode(mode) {
+    this.backgroundMode = ["wireframe", "graphical", "overlay"].includes(mode) ? mode : "wireframe";
+    if (this.host) this.host.dataset.background = this.backgroundMode;
+
+    const artwork = this.svg?.querySelector("#field-artwork");
+    if (artwork) artwork.style.display = this.backgroundMode === "graphical" ? "none" : "";
   }
 
   clearDynamic() {
@@ -439,7 +462,7 @@ class FieldRenderer {
     fill.setAttribute("data-replay-corridor-fill", "1");
     fill.setAttribute("d", fillSegments.join(" "));
     fill.setAttribute("fill", mission.traceColor);
-    fill.setAttribute("opacity", "0.08");
+    fill.setAttribute("opacity", "0.3");
 
     const edges = document.createElementNS("http://www.w3.org/2000/svg", "path");
     edges.setAttribute("data-replay-corridor-edges", "1");

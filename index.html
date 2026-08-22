@@ -125,11 +125,24 @@
             <input id="playback-speed" type="range" min="10" max="200" step="10" value="100" />
           </label>
           <output id="playback-speed-value" for="playback-speed">100%</output>
-          <label for="grid-opacity">
-            <span>Grid visibility</span>
-            <input id="grid-opacity" type="range" min="0" max="100" step="1" value="30" />
+          <label id="wireframe-opacity-control" for="wireframe-opacity">
+            <span>Wireframe visibility</span>
+            <input id="wireframe-opacity" type="range" min="0" max="100" step="1" value="30" />
           </label>
-          <output id="grid-opacity-value" for="grid-opacity">30%</output>
+          <output id="wireframe-opacity-value" for="wireframe-opacity">30%</output>
+          <label id="graphical-opacity-control" for="graphical-opacity">
+            <span>Graphical visibility</span>
+            <input id="graphical-opacity" type="range" min="0" max="100" step="1" value="30" />
+          </label>
+          <output id="graphical-opacity-value" for="graphical-opacity">30%</output>
+          <label class="field-background-control" for="field-background">
+            <span>Field background</span>
+            <select id="field-background">
+              <option value="wireframe">Wireframe</option>
+              <option value="graphical">Graphical</option>
+              <option value="overlay">Wireframe over Graphical</option>
+            </select>
+          </label>
         </div>
         <div class="button-row" style="margin-top:12px;">
           <button class="btn-secondary" id="load-demo">Load Demo Mission</button>
@@ -241,6 +254,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=no-attachments-selection"></script>
+  <script type="module" src="js/app.js?v=muted-graphical-background"></script>
 </body>
 </html>
