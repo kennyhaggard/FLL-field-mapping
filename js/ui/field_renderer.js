@@ -18,7 +18,7 @@ function colorWithAlpha(hexColor, alpha) {
 }
 
 class FieldRenderer {
-  constructor(host, fieldSvgUrl = "./field.svg?v=bioglow-sharp-grid-30") {
+  constructor(host, fieldSvgUrl = "./field.svg?v=embedded-field-image-2") {
     this.host = host;
     this.fieldSvgUrl = fieldSvgUrl;
     this.svg = null;
@@ -91,6 +91,9 @@ class FieldRenderer {
   setBackgroundMode(mode) {
     this.backgroundMode = ["wireframe", "graphical", "overlay"].includes(mode) ? mode : "wireframe";
     if (this.host) this.host.dataset.background = this.backgroundMode;
+
+    const backgroundImage = this.svg?.querySelector("#field-background-image");
+    if (backgroundImage) backgroundImage.style.display = this.backgroundMode === "wireframe" ? "none" : "inline";
 
     const artwork = this.svg?.querySelector("#field-artwork");
     if (artwork) artwork.style.display = this.backgroundMode === "graphical" ? "none" : "";

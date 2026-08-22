@@ -22,7 +22,7 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js?v=global-heading-mode";
-import { FieldRenderer } from "./ui/field_renderer.js?v=background-defaults";
+import { FieldRenderer } from "./ui/field_renderer.js?v=embedded-field-image-2";
 
 const WIREFRAME_OPACITY_STORAGE_KEY = "fll-field-wireframe-opacity";
 const GRAPHICAL_OPACITY_STORAGE_KEY = "fll-field-graphical-opacity";

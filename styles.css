@@ -656,26 +656,19 @@ textarea:disabled {
   --graphical-grayscale: 0.34;
   --graphical-saturation: 0.66;
   --graphical-contrast: 0.779;
-  min-height: 260px;
   position: relative;
 }
 
-.mission-field-host::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url("field.png");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: calc(100% + 8px) calc(100% + 8px);
+#mission-field #field-background-image {
+  display: none;
   filter: grayscale(var(--graphical-grayscale)) saturate(var(--graphical-saturation)) contrast(var(--graphical-contrast));
-  opacity: 0;
+  opacity: var(--graphical-opacity);
   pointer-events: none;
 }
 
-.mission-field-host[data-background="graphical"]::before,
-.mission-field-host[data-background="overlay"]::before {
-  opacity: var(--graphical-opacity);
+.mission-field-host[data-background="graphical"] #mission-field #field-background-image,
+.mission-field-host[data-background="overlay"] #mission-field #field-background-image {
+  display: inline;
 }
 
 .mission-field-host[data-state="error"] {
@@ -701,11 +694,6 @@ textarea:disabled {
 
 #mission-field #field-artwork {
   opacity: var(--wireframe-opacity);
-}
-
-.mission-field-host[data-background="graphical"] #mission-field,
-.mission-field-host[data-background="overlay"] #mission-field {
-  background: transparent;
 }
 
 #mission-field [data-draggable-robot="1"] {

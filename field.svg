@@ -33,6 +33,14 @@
      inkscape:window-y="25"
      inkscape:window-maximized="0"
      inkscape:current-layer="g1" />
+  <image
+     id="field-background-image"
+     href="field.png"
+     x="-0.853247"
+     y="-0.853049"
+     width="227.987493"
+     height="130.687098"
+     preserveAspectRatio="none" />
   <g
      id="field-artwork"
      transform="scale(0.2376901261,0.237516582112)">
