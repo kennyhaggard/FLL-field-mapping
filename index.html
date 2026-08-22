@@ -127,20 +127,20 @@
           <output id="playback-speed-value" for="playback-speed">100%</output>
           <label id="wireframe-opacity-control" for="wireframe-opacity">
             <span>Wireframe visibility</span>
-            <input id="wireframe-opacity" type="range" min="0" max="100" step="1" value="30" />
+            <input id="wireframe-opacity" type="range" min="0" max="100" step="1" value="100" />
           </label>
-          <output id="wireframe-opacity-value" for="wireframe-opacity">30%</output>
+          <output id="wireframe-opacity-value" for="wireframe-opacity">100%</output>
           <label id="graphical-opacity-control" for="graphical-opacity">
             <span>Graphical visibility</span>
-            <input id="graphical-opacity" type="range" min="0" max="100" step="1" value="30" />
+            <input id="graphical-opacity" type="range" min="0" max="100" step="1" value="66" />
           </label>
-          <output id="graphical-opacity-value" for="graphical-opacity">30%</output>
+          <output id="graphical-opacity-value" for="graphical-opacity">66%</output>
           <label class="field-background-control" for="field-background">
             <span>Field background</span>
             <select id="field-background">
               <option value="wireframe">Wireframe</option>
               <option value="graphical">Graphical</option>
-              <option value="overlay">Wireframe over Graphical</option>
+              <option value="overlay" selected>Wireframe over Graphical</option>
             </select>
           </label>
         </div>
@@ -254,6 +254,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=muted-graphical-background"></script>
+  <script type="module" src="js/app.js?v=background-defaults"></script>
 </body>
 </html>

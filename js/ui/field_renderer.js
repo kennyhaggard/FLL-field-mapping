@@ -24,8 +24,8 @@ class FieldRenderer {
     this.svg = null;
     this.robotEl = null;
     this.traceEl = null;
-    this.wireframeOpacity = 0.3;
-    this.graphicalOpacity = 0.3;
+    this.wireframeOpacity = 1;
+    this.graphicalOpacity = 0.66;
     this.backgroundMode = "wireframe";
     this.currentPose = null;
     this.onRobotDragStart = null;
@@ -69,7 +69,7 @@ class FieldRenderer {
     const numericOpacity = Number(opacity);
     this.wireframeOpacity = Number.isFinite(numericOpacity)
       ? Math.max(0, Math.min(1, numericOpacity))
-      : 0.3;
+      : 1;
 
     if (this.host) this.host.style.setProperty("--wireframe-opacity", String(this.wireframeOpacity));
   }
@@ -78,7 +78,7 @@ class FieldRenderer {
     const numericOpacity = Number(opacity);
     this.graphicalOpacity = Number.isFinite(numericOpacity)
       ? Math.max(0, Math.min(1, numericOpacity))
-      : 0.3;
+      : 0.66;
 
     if (this.host) {
       this.host.style.setProperty("--graphical-opacity", String(this.graphicalOpacity));

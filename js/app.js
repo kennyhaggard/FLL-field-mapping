@@ -22,17 +22,18 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js?v=global-heading-mode";
-import { FieldRenderer } from "./ui/field_renderer.js?v=muted-graphical-background";
+import { FieldRenderer } from "./ui/field_renderer.js?v=background-defaults";
 
 const WIREFRAME_OPACITY_STORAGE_KEY = "fll-field-wireframe-opacity";
 const GRAPHICAL_OPACITY_STORAGE_KEY = "fll-field-graphical-opacity";
 const LEGACY_BACKGROUND_OPACITY_STORAGE_KEY = "fll-field-background-opacity";
 const LEGACY_GRID_OPACITY_STORAGE_KEY = "fll-field-grid-opacity";
-const DEFAULT_BACKGROUND_OPACITY = 30;
+const DEFAULT_WIREFRAME_OPACITY = 100;
+const DEFAULT_GRAPHICAL_OPACITY = 66;
 const PLAYBACK_SPEED_STORAGE_KEY = "fll-field-playback-speed";
 const DEFAULT_PLAYBACK_SPEED = 100;
 const FIELD_BACKGROUND_STORAGE_KEY = "fll-field-background";
-const DEFAULT_FIELD_BACKGROUND = "wireframe";
+const DEFAULT_FIELD_BACKGROUND = "overlay";
 
 const dom = {
   fieldHost: document.getElementById("mission-field-host"),
@@ -138,8 +139,8 @@ const state = {
   },
   display: {
     playbackSpeed: 100,
-    wireframeOpacity: DEFAULT_BACKGROUND_OPACITY,
-    graphicalOpacity: DEFAULT_BACKGROUND_OPACITY,
+    wireframeOpacity: DEFAULT_WIREFRAME_OPACITY,
+    graphicalOpacity: DEFAULT_GRAPHICAL_OPACITY,
     fieldBackground: DEFAULT_FIELD_BACKGROUND
   }
 };
@@ -182,21 +183,21 @@ function setupCollapsiblePanels() {
   });
 }
 
-function normalizeBackgroundOpacity(value) {
+function normalizeBackgroundOpacity(value, fallback) {
   const numericValue = Number(value);
   return Number.isFinite(numericValue)
     ? Math.round(Math.max(0, Math.min(100, numericValue)))
-    : DEFAULT_BACKGROUND_OPACITY;
+    : fallback;
 }
 
-function loadBackgroundOpacity(storageKey) {
+function loadBackgroundOpacity(storageKey, fallback) {
   try {
     const savedValue = window.localStorage.getItem(storageKey)
       ?? window.localStorage.getItem(LEGACY_BACKGROUND_OPACITY_STORAGE_KEY)
       ?? window.localStorage.getItem(LEGACY_GRID_OPACITY_STORAGE_KEY);
-    return savedValue === null ? DEFAULT_BACKGROUND_OPACITY : normalizeBackgroundOpacity(savedValue);
+    return savedValue === null ? fallback : normalizeBackgroundOpacity(savedValue, fallback);
   } catch {
-    return DEFAULT_BACKGROUND_OPACITY;
+    return fallback;
   }
 }
 
@@ -209,7 +210,7 @@ function saveBackgroundOpacity(storageKey, value) {
 }
 
 function applyWireframeOpacity(value, { persist = false } = {}) {
-  const opacity = normalizeBackgroundOpacity(value);
+  const opacity = normalizeBackgroundOpacity(value, DEFAULT_WIREFRAME_OPACITY);
   state.display.wireframeOpacity = opacity;
   dom.wireframeOpacity.value = String(opacity);
   dom.wireframeOpacityValue.value = `${opacity}%`;
@@ -219,7 +220,7 @@ function applyWireframeOpacity(value, { persist = false } = {}) {
 }
 
 function applyGraphicalOpacity(value, { persist = false } = {}) {
-  const opacity = normalizeBackgroundOpacity(value);
+  const opacity = normalizeBackgroundOpacity(value, DEFAULT_GRAPHICAL_OPACITY);
   state.display.graphicalOpacity = opacity;
   dom.graphicalOpacity.value = String(opacity);
   dom.graphicalOpacityValue.value = `${opacity}%`;
@@ -1359,8 +1360,14 @@ function hydrateInitialState() {
   const missionFromUrl = readMissionFromQuery(window.location.search);
   state.mission = missionFromUrl || loadMissionDraft(window.localStorage);
   state.display.playbackSpeed = loadPlaybackSpeed();
-  state.display.wireframeOpacity = loadBackgroundOpacity(WIREFRAME_OPACITY_STORAGE_KEY);
-  state.display.graphicalOpacity = loadBackgroundOpacity(GRAPHICAL_OPACITY_STORAGE_KEY);
+  state.display.wireframeOpacity = loadBackgroundOpacity(
+    WIREFRAME_OPACITY_STORAGE_KEY,
+    DEFAULT_WIREFRAME_OPACITY
+  );
+  state.display.graphicalOpacity = loadBackgroundOpacity(
+    GRAPHICAL_OPACITY_STORAGE_KEY,
+    DEFAULT_GRAPHICAL_OPACITY
+  );
   state.display.fieldBackground = loadFieldBackground();
   applyTransferredRobotIfPresent();
 }

@@ -651,11 +651,11 @@ textarea:disabled {
 }
 
 .mission-field-host {
-  --wireframe-opacity: 0.3;
-  --graphical-opacity: 0.3;
-  --graphical-grayscale: 0.7;
-  --graphical-saturation: 0.3;
-  --graphical-contrast: 0.55;
+  --wireframe-opacity: 1;
+  --graphical-opacity: 0.66;
+  --graphical-grayscale: 0.34;
+  --graphical-saturation: 0.66;
+  --graphical-contrast: 0.779;
   min-height: 260px;
   position: relative;
 }
