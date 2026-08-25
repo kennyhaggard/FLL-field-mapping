@@ -25,14 +25,16 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js?v=global-heading-mode";
-import { FieldRenderer } from "./ui/field_renderer.js?v=embedded-field-image-2";
+import { FieldRenderer } from "./ui/field_renderer.js?v=mission-model-layer-1";
 
 const WIREFRAME_OPACITY_STORAGE_KEY = "fll-field-wireframe-opacity";
 const GRAPHICAL_OPACITY_STORAGE_KEY = "fll-field-graphical-opacity";
+const MISSION_MODEL_OPACITY_STORAGE_KEY = "fll-field-mission-model-opacity";
 const LEGACY_BACKGROUND_OPACITY_STORAGE_KEY = "fll-field-background-opacity";
 const LEGACY_GRID_OPACITY_STORAGE_KEY = "fll-field-grid-opacity";
 const DEFAULT_WIREFRAME_OPACITY = 100;
 const DEFAULT_GRAPHICAL_OPACITY = 66;
+const DEFAULT_MISSION_MODEL_OPACITY = 100;
 const PLAYBACK_SPEED_STORAGE_KEY = "fll-field-playback-speed";
 const DEFAULT_PLAYBACK_SPEED = 100;
 const FIELD_BACKGROUND_STORAGE_KEY = "fll-field-background";
@@ -57,6 +59,8 @@ const dom = {
   graphicalOpacity: document.getElementById("graphical-opacity"),
   graphicalOpacityValue: document.getElementById("graphical-opacity-value"),
   graphicalOpacityControl: document.getElementById("graphical-opacity-control"),
+  missionModelOpacity: document.getElementById("mission-model-opacity"),
+  missionModelOpacityValue: document.getElementById("mission-model-opacity-value"),
   fieldBackground: document.getElementById("field-background"),
   loadDemo: document.getElementById("load-demo"),
   resetMission: document.getElementById("reset-mission"),
@@ -144,6 +148,7 @@ const state = {
     playbackSpeed: 100,
     wireframeOpacity: DEFAULT_WIREFRAME_OPACITY,
     graphicalOpacity: DEFAULT_GRAPHICAL_OPACITY,
+    missionModelOpacity: DEFAULT_MISSION_MODEL_OPACITY,
     fieldBackground: DEFAULT_FIELD_BACKGROUND
   }
 };
@@ -212,6 +217,15 @@ function saveBackgroundOpacity(storageKey, value) {
   }
 }
 
+function loadDisplayOpacity(storageKey, fallback) {
+  try {
+    const savedValue = window.localStorage.getItem(storageKey);
+    return savedValue === null ? fallback : normalizeBackgroundOpacity(savedValue, fallback);
+  } catch {
+    return fallback;
+  }
+}
+
 function applyWireframeOpacity(value, { persist = false } = {}) {
   const opacity = normalizeBackgroundOpacity(value, DEFAULT_WIREFRAME_OPACITY);
   state.display.wireframeOpacity = opacity;
@@ -230,6 +244,16 @@ function applyGraphicalOpacity(value, { persist = false } = {}) {
   dom.graphicalOpacity.setAttribute("aria-valuetext", `${opacity}% visible`);
   renderer.setGraphicalOpacity(opacity / 100);
   if (persist) saveBackgroundOpacity(GRAPHICAL_OPACITY_STORAGE_KEY, opacity);
+}
+
+function applyMissionModelOpacity(value, { persist = false } = {}) {
+  const opacity = normalizeBackgroundOpacity(value, DEFAULT_MISSION_MODEL_OPACITY);
+  state.display.missionModelOpacity = opacity;
+  dom.missionModelOpacity.value = String(opacity);
+  dom.missionModelOpacityValue.value = `${opacity}%`;
+  dom.missionModelOpacity.setAttribute("aria-valuetext", `${opacity}% visible`);
+  renderer.setMissionModelOpacity(opacity / 100);
+  if (persist) saveBackgroundOpacity(MISSION_MODEL_OPACITY_STORAGE_KEY, opacity);
 }
 
 function normalizeFieldBackground(value) {
@@ -1432,6 +1456,10 @@ function hydrateInitialState() {
     GRAPHICAL_OPACITY_STORAGE_KEY,
     DEFAULT_GRAPHICAL_OPACITY
   );
+  state.display.missionModelOpacity = loadDisplayOpacity(
+    MISSION_MODEL_OPACITY_STORAGE_KEY,
+    DEFAULT_MISSION_MODEL_OPACITY
+  );
   state.display.fieldBackground = loadFieldBackground();
   applyTransferredRobotIfPresent();
 }
@@ -1449,6 +1477,10 @@ function attachEventHandlers() {
 
   dom.graphicalOpacity.addEventListener("input", () => {
     applyGraphicalOpacity(dom.graphicalOpacity.value, { persist: true });
+  });
+
+  dom.missionModelOpacity.addEventListener("input", () => {
+    applyMissionModelOpacity(dom.missionModelOpacity.value, { persist: true });
   });
 
   dom.fieldBackground.addEventListener("change", () => {
@@ -1628,6 +1660,7 @@ async function init() {
   applyPlaybackSpeed(state.display.playbackSpeed);
   applyWireframeOpacity(state.display.wireframeOpacity);
   applyGraphicalOpacity(state.display.graphicalOpacity);
+  applyMissionModelOpacity(state.display.missionModelOpacity);
   applyFieldBackground(state.display.fieldBackground);
   updateTeamControls();
   renderTeamMissions();

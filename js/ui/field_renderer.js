@@ -18,7 +18,7 @@ function colorWithAlpha(hexColor, alpha) {
 }
 
 class FieldRenderer {
-  constructor(host, fieldSvgUrl = "./field.svg?v=embedded-field-image-2") {
+  constructor(host, fieldSvgUrl = "./field.svg?v=mission-model-layer-1") {
     this.host = host;
     this.fieldSvgUrl = fieldSvgUrl;
     this.svg = null;
@@ -26,6 +26,7 @@ class FieldRenderer {
     this.traceEl = null;
     this.wireframeOpacity = 1;
     this.graphicalOpacity = 0.66;
+    this.missionModelOpacity = 1;
     this.backgroundMode = "wireframe";
     this.currentPose = null;
     this.onRobotDragStart = null;
@@ -54,6 +55,7 @@ class FieldRenderer {
 
       this.setWireframeOpacity(this.wireframeOpacity);
       this.setGraphicalOpacity(this.graphicalOpacity);
+      this.setMissionModelOpacity(this.missionModelOpacity);
       this.setBackgroundMode(this.backgroundMode);
 
       this.host.removeAttribute("data-state");
@@ -85,6 +87,17 @@ class FieldRenderer {
       this.host.style.setProperty("--graphical-grayscale", String(1 - this.graphicalOpacity));
       this.host.style.setProperty("--graphical-saturation", String(this.graphicalOpacity));
       this.host.style.setProperty("--graphical-contrast", String(0.35 + this.graphicalOpacity * 0.65));
+    }
+  }
+
+  setMissionModelOpacity(opacity) {
+    const numericOpacity = Number(opacity);
+    this.missionModelOpacity = Number.isFinite(numericOpacity)
+      ? Math.max(0, Math.min(1, numericOpacity))
+      : 1;
+
+    if (this.host) {
+      this.host.style.setProperty("--mission-model-opacity", String(this.missionModelOpacity));
     }
   }
 

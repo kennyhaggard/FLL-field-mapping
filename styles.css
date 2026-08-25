@@ -677,6 +677,7 @@ textarea:disabled {
 .mission-field-host {
   --wireframe-opacity: 1;
   --graphical-opacity: 0.66;
+  --mission-model-opacity: 1;
   --graphical-grayscale: 0.34;
   --graphical-saturation: 0.66;
   --graphical-contrast: 0.779;
@@ -718,6 +719,11 @@ textarea:disabled {
 
 #mission-field #field-artwork {
   opacity: var(--wireframe-opacity);
+}
+
+#mission-field #mission-model-layer {
+  opacity: var(--mission-model-opacity);
+  pointer-events: none;
 }
 
 #mission-field [data-draggable-robot="1"] {
@@ -815,6 +821,7 @@ textarea:disabled {
 #playback-speed,
 #wireframe-opacity,
 #graphical-opacity,
+#mission-model-opacity,
 #replay-slider {
   padding: 0;
   border: 0;
