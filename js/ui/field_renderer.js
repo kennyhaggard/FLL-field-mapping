@@ -18,7 +18,7 @@ function colorWithAlpha(hexColor, alpha) {
 }
 
 class FieldRenderer {
-  constructor(host, fieldSvgUrl = "./field.svg?v=mission-model-layer-1") {
+  constructor(host, fieldSvgUrl = "./field.svg?v=mission-model-layer-2") {
     this.host = host;
     this.fieldSvgUrl = fieldSvgUrl;
     this.svg = null;
@@ -127,6 +127,12 @@ class FieldRenderer {
     this.clearDynamic();
     this.renderTrace(mission, frames, frames.length - 1);
     this.drawRobot(mission, finalPose);
+  }
+
+  renderStartPosition(missionLike) {
+    const mission = normalizeMission(missionLike);
+    this.clearDynamic();
+    this.drawRobot(mission, computeStartPoseCm(mission));
   }
 
   renderFrameSequence(missionLike, frames, frameIndex) {

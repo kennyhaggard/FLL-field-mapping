@@ -25,7 +25,7 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js?v=global-heading-mode";
-import { FieldRenderer } from "./ui/field_renderer.js?v=mission-model-layer-1";
+import { FieldRenderer } from "./ui/field_renderer.js?v=mission-model-layer-2";
 
 const WIREFRAME_OPACITY_STORAGE_KEY = "fll-field-wireframe-opacity";
 const GRAPHICAL_OPACITY_STORAGE_KEY = "fll-field-graphical-opacity";
@@ -1645,7 +1645,7 @@ function attachEventHandlers() {
   dom.clearField.addEventListener("click", () => {
     stopMissionRun();
     resetReplayState();
-    renderer.clearDynamic();
+    renderer.renderStartPosition(state.mission);
   });
 
   dom.buildReplay.addEventListener("click", buildReplay);

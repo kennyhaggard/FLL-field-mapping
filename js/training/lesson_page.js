@@ -425,7 +425,7 @@ async function init() {
   dom.replayControls.style.display = "none";
 
   if (usesField) {
-    fieldRenderer = new FieldRenderer(dom.fieldHost, "../field.svg");
+    fieldRenderer = new FieldRenderer(dom.fieldHost, "../field.svg?v=mission-model-layer-2");
     await fieldRenderer.load();
   }
   if (usesRobot) {
