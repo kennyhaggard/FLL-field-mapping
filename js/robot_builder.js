@@ -58,8 +58,8 @@ function upsertRobot(list, robotLike) {
   return next;
 }
 
-function syncRobotToInputs() {
-  dom.robotName.value = state.robot.name || "";
+function syncRobotToInputs({ skipRobotName = false } = {}) {
+  if (!skipRobotName) dom.robotName.value = state.robot.name || "";
   setInputValue(dom.robotOffset, state.robot.offsetY);
   dom.robotColor.value = state.robot.robotColor;
   setInputValue(dom.robotWidth, state.robot.robotWidthCm);
@@ -89,9 +89,9 @@ function configureDecimalInput(input) {
   input.inputMode = "decimal";
 }
 
-function commitRobot(nextRobot, { skipAttachments = false } = {}) {
+function commitRobot(nextRobot, { skipAttachments = false, skipRobotName = false } = {}) {
   state.robot = normalizeRobot(nextRobot);
-  syncRobotToInputs();
+  syncRobotToInputs({ skipRobotName });
   if (!skipAttachments) {
     renderAttachmentList();
   }
@@ -101,12 +101,21 @@ function commitRobot(nextRobot, { skipAttachments = false } = {}) {
 function updateRobotFromInputs() {
   commitRobot({
     ...state.robot,
-    name: dom.robotName.value.trim() || "Untitled Robot",
+    name: state.robot.name,
     robotColor: dom.robotColor.value,
     offsetY: numberFromInput(dom.robotOffset, state.robot.offsetY),
     robotWidthCm: numberFromInput(dom.robotWidth, state.robot.robotWidthCm),
     robotLengthCm: numberFromInput(dom.robotLength, state.robot.robotLengthCm)
   });
+}
+
+function updateRobotNameFromInput({ finalize = false } = {}) {
+  const name = dom.robotName.value.trim();
+  if (!name && !finalize) return;
+  commitRobot(
+    { ...state.robot, name: name || "Untitled Robot" },
+    { skipRobotName: !finalize }
+  );
 }
 
 function renderAttachmentList() {
@@ -292,9 +301,9 @@ function attachEvents() {
     input.addEventListener("blur", syncRobotToInputs);
   });
 
-  [dom.robotName, dom.robotColor].forEach((input) => {
-    input.addEventListener("input", updateRobotFromInputs);
-  });
+  dom.robotColor.addEventListener("input", updateRobotFromInputs);
+  dom.robotName.addEventListener("input", () => updateRobotNameFromInput());
+  dom.robotName.addEventListener("blur", () => updateRobotNameFromInput({ finalize: true }));
 
   dom.addAttachment.addEventListener("click", addAttachment);
   dom.copyRobot.addEventListener("click", copyRobotJson);

@@ -534,10 +534,15 @@ function configureDecimalInput(input) {
   input.inputMode = "decimal";
 }
 
-function syncMissionToInputs({ skipActions = false, skipAttachments = false } = {}) {
+function syncMissionToInputs({
+  skipActions = false,
+  skipAttachments = false,
+  skipMissionName = false,
+  skipRobotName = false
+} = {}) {
   const mission = state.mission;
   const isGlobalMode = mission.headingMode === "global";
-  dom.missionName.value = mission.name;
+  if (!skipMissionName) dom.missionName.value = mission.name;
   dom.traceColor.value = mission.traceColor;
   setInputValue(dom.startX, mission.startX);
   setInputValue(dom.startY, mission.startY);
@@ -553,7 +558,7 @@ function syncMissionToInputs({ skipActions = false, skipAttachments = false } = 
   setInputValue(dom.robotLength, mission.robotLengthCm);
   setInputValue(dom.robotOffset, mission.offsetY);
   dom.robotColor.value = mission.robotColor;
-  dom.robotName.value = mission.robotName || "";
+  if (!skipRobotName) dom.robotName.value = mission.robotName || "";
 
   if (document.activeElement !== dom.missionJson) {
     dom.missionJson.value = JSON.stringify(mission, null, 2);
@@ -573,7 +578,13 @@ function renderMission() {
 
 function commitMission(
   nextMission,
-  { preserveReplay = false, skipActions = false, skipAttachments = false } = {}
+  {
+    preserveReplay = false,
+    skipActions = false,
+    skipAttachments = false,
+    skipMissionName = false,
+    skipRobotName = false
+  } = {}
 ) {
   state.mission = normalizeMission(nextMission);
   persistMission();
@@ -581,7 +592,7 @@ function commitMission(
     stopMissionRun();
     resetReplayState();
   }
-  syncMissionToInputs({ skipActions, skipAttachments });
+  syncMissionToInputs({ skipActions, skipAttachments, skipMissionName, skipRobotName });
   renderMission();
 }
 
@@ -589,7 +600,7 @@ function updateMissionFromInputs() {
   commitMission(
     withMissionRobot({
       ...state.mission,
-      name: dom.missionName.value.trim() || "Untitled Mission",
+      name: state.mission.name,
       traceColor: dom.traceColor.value,
       startX: numberFromInput(dom.startX, state.mission.startX),
       startY: numberFromInput(dom.startY, state.mission.startY),
@@ -598,8 +609,29 @@ function updateMissionFromInputs() {
       robotLengthCm: numberFromInput(dom.robotLength, state.mission.robotLengthCm),
       offsetY: numberFromInput(dom.robotOffset, state.mission.offsetY),
       robotColor: dom.robotColor.value,
-      robotName: dom.robotName.value.trim()
+      robotName: state.mission.robotName
     })
+  );
+}
+
+function updateMissionNameFromInput({ finalize = false } = {}) {
+  const name = dom.missionName.value.trim();
+  if (!name && !finalize) return;
+  commitMission(
+    { ...state.mission, name: name || "Untitled Mission" },
+    { skipMissionName: !finalize }
+  );
+}
+
+function updateRobotNameFromInput({ finalize = false } = {}) {
+  const robotName = dom.robotName.value.trim();
+  if (!robotName && !finalize) return;
+  commitMission(
+    withMissionRobot({
+      ...state.mission,
+      robotName: robotName || "Mission Robot"
+    }),
+    { skipRobotName: !finalize }
   );
 }
 
@@ -1499,9 +1531,14 @@ function attachEventHandlers() {
     }
   );
 
-  [dom.missionName, dom.traceColor, dom.robotColor, dom.robotName].forEach((input) => {
+  [dom.traceColor, dom.robotColor].forEach((input) => {
     input.addEventListener("input", updateMissionFromInputs);
   });
+
+  dom.missionName.addEventListener("input", () => updateMissionNameFromInput());
+  dom.missionName.addEventListener("blur", () => updateMissionNameFromInput({ finalize: true }));
+  dom.robotName.addEventListener("input", () => updateRobotNameFromInput());
+  dom.robotName.addEventListener("blur", () => updateRobotNameFromInput({ finalize: true }));
 
   dom.loadDemo.addEventListener("click", () => {
     const accepted = confirm(
@@ -1607,8 +1644,8 @@ function attachEventHandlers() {
   dom.stopMission.addEventListener("click", stopMissionRun);
   dom.clearField.addEventListener("click", () => {
     stopMissionRun();
-    stopReplay();
-    renderMission();
+    resetReplayState();
+    renderer.clearDynamic();
   });
 
   dom.buildReplay.addEventListener("click", buildReplay);
