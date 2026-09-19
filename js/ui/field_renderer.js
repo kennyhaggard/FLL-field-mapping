@@ -18,7 +18,7 @@ function colorWithAlpha(hexColor, alpha) {
 }
 
 class FieldRenderer {
-  constructor(host, fieldSvgUrl = "./field.svg?v=mission-model-layer-5") {
+  constructor(host, fieldSvgUrl = "./field.svg?v=mission-model-layer-6") {
     this.host = host;
     this.fieldSvgUrl = fieldSvgUrl;
     this.svg = null;
@@ -47,18 +47,21 @@ class FieldRenderer {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      this.host.innerHTML = await response.text();
-      this.svg = this.host.querySelector("#mission-field");
-      if (!this.svg) {
+      const svgDocument = new DOMParser().parseFromString(await response.text(), "image/svg+xml");
+      const parsedSvg = svgDocument.querySelector("#mission-field");
+      if (!parsedSvg || svgDocument.querySelector("parsererror")) {
         throw new Error("Mission field SVG is missing its root id.");
       }
 
       const fieldAssetBaseUrl = new URL(this.fieldSvgUrl, document.baseURI);
-      this.svg.querySelectorAll("image[href], use[href]").forEach((asset) => {
+      parsedSvg.querySelectorAll("image[href], use[href]").forEach((asset) => {
         const href = asset.getAttribute("href");
         if (!href || /^(?:data:|blob:|#|\/|[a-z][a-z\d+.-]*:)/i.test(href)) return;
         asset.setAttribute("href", new URL(href, fieldAssetBaseUrl).href);
       });
+
+      this.svg = document.importNode(parsedSvg, true);
+      this.host.replaceChildren(this.svg);
 
       this.setWireframeOpacity(this.wireframeOpacity);
       this.setGraphicalOpacity(this.graphicalOpacity);
