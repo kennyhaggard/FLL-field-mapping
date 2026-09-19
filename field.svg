@@ -82,10 +82,13 @@
   </g>
   <!--
     Mission-model overlay calibration:
-    source = mission-model-01-bioglow_2.png
-    shared source scale = 0.107 field units per source-image pixel
+    Mission 1 source = mission-model-01-bioglow_2.png
+    Mission 1 shared source scale = 0.107 field units per source-image pixel
     rod transform = reflected horizontally and positioned at 143.6515, 89.501497
     gray model transform = 149.51 degrees at scale 0.10690
+    Additional mission models are sourced individually from
+    mission1_model_v2_field_preview.svg so its field artwork and grid do not
+    become part of this overlay.
     This layer is independent of the field artwork and grid opacity layers.
   -->
   <g
@@ -116,6 +119,21 @@
          clip-path="url(#mission-model-01-v2-upper-crop)">
         <use href="#mission-model-01-v2-source" />
       </g>
+    </g>
+    <g
+       id="mission-models-from-preview"
+       aria-label="Mission models from updated field preview">
+      <use id="mission-model-preview-01" href="mission1_model_v2_field_preview.svg#image1" />
+      <use id="mission-model-preview-02" href="mission1_model_v2_field_preview.svg#image1-9" />
+      <use id="mission-model-preview-03" href="mission1_model_v2_field_preview.svg#image1-3" />
+      <use id="mission-model-preview-04" href="mission1_model_v2_field_preview.svg#image1-4" />
+      <use id="mission-model-preview-05" href="mission1_model_v2_field_preview.svg#image1-8" />
+      <use id="mission-model-preview-06" href="mission1_model_v2_field_preview.svg#image1-1" />
+      <use id="mission-model-preview-07" href="mission1_model_v2_field_preview.svg#image1-83" />
+      <use id="mission-model-preview-08" href="mission1_model_v2_field_preview.svg#image1-0" />
+      <use id="mission-model-preview-09" href="mission1_model_v2_field_preview.svg#image1-2" />
+      <use id="mission-model-preview-10" href="mission1_model_v2_field_preview.svg#image1-85" />
+      <use id="mission-model-preview-11" href="mission1_model_v2_field_preview.svg#image1-14" />
     </g>
   </g>
 </svg>

@@ -3,7 +3,7 @@ import {
   normalizeMission,
   normalizeRobot
 } from "../domain/model.js?v=robot-color-controls";
-import { FieldRenderer } from "../ui/field_renderer.js?v=robot-color-controls";
+import { FieldRenderer } from "../ui/field_renderer.js?v=mission-model-layer-5";
 import { RobotCanvas } from "../ui/robot_canvas.js?v=robot-color-controls";
 import { getLesson, lessons } from "./lessons.js";
 
@@ -425,7 +425,7 @@ async function init() {
   dom.replayControls.style.display = "none";
 
   if (usesField) {
-    fieldRenderer = new FieldRenderer(dom.fieldHost, "../field.svg?v=mission-model-layer-2");
+    fieldRenderer = new FieldRenderer(dom.fieldHost, "../field.svg?v=mission-model-layer-5");
     await fieldRenderer.load();
   }
   if (usesRobot) {

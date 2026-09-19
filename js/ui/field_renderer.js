@@ -18,7 +18,7 @@ function colorWithAlpha(hexColor, alpha) {
 }
 
 class FieldRenderer {
-  constructor(host, fieldSvgUrl = "./field.svg?v=mission-model-layer-2") {
+  constructor(host, fieldSvgUrl = "./field.svg?v=mission-model-layer-5") {
     this.host = host;
     this.fieldSvgUrl = fieldSvgUrl;
     this.svg = null;
@@ -52,6 +52,13 @@ class FieldRenderer {
       if (!this.svg) {
         throw new Error("Mission field SVG is missing its root id.");
       }
+
+      const fieldAssetBaseUrl = new URL(this.fieldSvgUrl, document.baseURI);
+      this.svg.querySelectorAll("image[href], use[href]").forEach((asset) => {
+        const href = asset.getAttribute("href");
+        if (!href || /^(?:data:|blob:|#|\/|[a-z][a-z\d+.-]*:)/i.test(href)) return;
+        asset.setAttribute("href", new URL(href, fieldAssetBaseUrl).href);
+      });
 
       this.setWireframeOpacity(this.wireframeOpacity);
       this.setGraphicalOpacity(this.graphicalOpacity);
