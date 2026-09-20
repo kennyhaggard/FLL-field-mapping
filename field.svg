@@ -135,5 +135,17 @@
       <use id="mission-model-preview-10" href="mission1_model_v2_field_preview.svg#image1-85" />
       <use id="mission-model-preview-11" href="mission1_model_v2_field_preview.svg#image1-14" />
     </g>
+    <use id="fixed-dock-models" href="assets/dock-models.svg?v=dock-setup-1#fixed-docks" />
+    <g id="configurable-models" aria-label="Interchangeable mission models">
+      <g id="dock-model-m15" transform="scale(-1)">
+        <use href="assets/dock-models.svg?v=dock-setup-1#m15" x="-159.00574" y="-133.13275" />
+      </g>
+      <g id="dock-model-m13" transform="scale(-1)">
+        <use href="assets/dock-models.svg?v=dock-setup-1#m13" x="-122.26916" y="-66.853432" />
+      </g>
+      <g id="dock-model-m14" transform="rotate(-135.12425)">
+        <use href="assets/dock-models.svg?v=dock-setup-1#m14" x="-167.29062" y="130.86523" />
+      </g>
+    </g>
   </g>
 </svg>

@@ -13,9 +13,9 @@ import {
   normalizeRobot,
   rotationDeltaDeg,
   safeNum
-} from "./domain/model.js?v=global-turn-path";
+} from "./domain/model.js?v=dock-setup-1";
 import { detectRuntimeMode, validateTeamPin } from "./domain/runtime.js";
-import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=global-heading-mode";
+import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=dock-setup-1";
 import {
   consumeRobotTransfer,
   loadMissionDraft,
@@ -24,8 +24,9 @@ import {
   saveMissionDraft,
   saveRobotLibrary,
   saveTeamSession
-} from "./domain/storage.js?v=global-heading-mode";
-import { FieldRenderer } from "./ui/field_renderer.js?v=mission-model-layer-6";
+} from "./domain/storage.js?v=dock-setup-1";
+import { FieldRenderer } from "./ui/field_renderer.js?v=dock-setup-1";
+import { DOCK_ORDER, FIELD_MODELS, fieldSetupKey, swapDockModel } from "./domain/field_setup.js";
 
 const WIREFRAME_OPACITY_STORAGE_KEY = "fll-field-wireframe-opacity";
 const GRAPHICAL_OPACITY_STORAGE_KEY = "fll-field-graphical-opacity";
@@ -41,6 +42,12 @@ const FIELD_BACKGROUND_STORAGE_KEY = "fll-field-background";
 const DEFAULT_FIELD_BACKGROUND = "overlay";
 
 const dom = {
+  dockSelectors: [...document.querySelectorAll("[data-dock]")],
+  fieldSetupSummary: document.getElementById("field-setup-summary"),
+  fieldSetupNotice: document.getElementById("field-setup-notice"),
+  fieldConfirmed: document.getElementById("field-confirmed"),
+  fieldCheckStatus: document.getElementById("field-check-status"),
+  editFieldSetup: document.getElementById("edit-field-setup"),
   fieldHost: document.getElementById("mission-field-host"),
   missionName: document.getElementById("mission-name"),
   traceColor: document.getElementById("trace-color"),
@@ -118,6 +125,7 @@ const cloud = createCloudClient({ runtime });
 const renderer = new FieldRenderer(dom.fieldHost);
 
 const state = {
+  fieldConfirmed: false,
   mission: createDefaultMission(),
   localRobots: [],
   teamSession: {
@@ -534,6 +542,21 @@ function configureDecimalInput(input) {
   input.inputMode = "decimal";
 }
 
+function syncFieldSetup() {
+  const setup = state.mission.fieldSetup;
+  dom.dockSelectors.forEach(select => { select.value = setup[select.dataset.dock]; });
+  dom.fieldSetupSummary.replaceChildren(...DOCK_ORDER.map((dock, index) => {
+    const item = document.createElement("span");
+    const model = document.createElement("strong");
+    model.textContent = FIELD_MODELS[setup[dock]].name;
+    item.append(`${index + 1} ${dock[0].toUpperCase() + dock.slice(1)}: `, model);
+    return item;
+  }));
+  dom.fieldConfirmed.checked = state.fieldConfirmed;
+  dom.fieldCheckStatus.textContent = state.fieldConfirmed ? "• Field confirmed" : "• Check physical field";
+  dom.fieldCheckStatus.dataset.confirmed = String(state.fieldConfirmed);
+}
+
 function syncMissionToInputs({
   skipActions = false,
   skipAttachments = false,
@@ -541,6 +564,7 @@ function syncMissionToInputs({
   skipRobotName = false
 } = {}) {
   const mission = state.mission;
+  syncFieldSetup();
   const isGlobalMode = mission.headingMode === "global";
   if (!skipMissionName) dom.missionName.value = mission.name;
   dom.traceColor.value = mission.traceColor;
@@ -586,6 +610,10 @@ function commitMission(
     skipRobotName = false
   } = {}
 ) {
+  if (fieldSetupKey(state.mission.fieldSetup) !== fieldSetupKey(nextMission?.fieldSetup)) {
+    state.fieldConfirmed = false;
+    dom.fieldSetupNotice.textContent = "Layout changed. Check your physical field before practicing.";
+  }
   state.mission = normalizeMission(nextMission);
   persistMission();
   if (!preserveReplay) {
@@ -1497,6 +1525,35 @@ function hydrateInitialState() {
 }
 
 function attachEventHandlers() {
+  for (const select of dom.dockSelectors) {
+    for (const [id, model] of Object.entries(FIELD_MODELS)) {
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = `${model.number} · ${model.name}`;
+      option.title = model.label;
+      select.append(option);
+    }
+    select.addEventListener("change", () => {
+      const dock = select.dataset.dock;
+      const model = select.value;
+      const other = DOCK_ORDER.find(key => state.mission.fieldSetup[key] === model);
+      if (other === dock) return;
+      commitMission({ ...state.mission, fieldSetup: swapDockModel(state.mission.fieldSetup, dock, model) });
+      const dockName = key => key[0].toUpperCase() + key.slice(1);
+      dom.fieldSetupNotice.textContent = `${dockName(dock)} and ${dockName(other)} models swapped. Check your physical field.`;
+    });
+  }
+  dom.fieldConfirmed.addEventListener("change", () => {
+    state.fieldConfirmed = dom.fieldConfirmed.checked;
+    syncFieldSetup();
+  });
+  dom.editFieldSetup.addEventListener("click", () => {
+    const panel = document.getElementById("field-setup-panel");
+    const toggle = panel.querySelector(".panel-collapse-toggle");
+    if (toggle.getAttribute("aria-expanded") === "false") toggle.click();
+    panel.scrollIntoView({ behavior: "smooth", block: "center" });
+    dom.dockSelectors[0].focus({ preventScroll: true });
+  });
   document.addEventListener("pointerdown", (event) => {
     document.querySelectorAll(".attachment-selection[open]").forEach((selection) => {
       if (!selection.contains(event.target)) selection.open = false;

@@ -1,4 +1,4 @@
-import { normalizeMission } from "./model.js?v=global-heading-mode";
+import { normalizeMission } from "./model.js?v=dock-setup-1";
 
 function encodeBase64Utf8(text) {
   if (typeof Buffer !== "undefined") {

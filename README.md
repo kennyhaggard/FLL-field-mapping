@@ -54,6 +54,30 @@ npm test
 
 ## Mission Model
 
+### Field setup
+
+Field Setup assigns M13 (Keystone), M14 (Seeds), and M15 (House) to City,
+Farm, and Mine, listed bottom-to-top. Selecting an occupied model swaps the
+two docks. The summary above the field stays visible when the panel is collapsed.
+The optional physical-field confirmation is local to the current page session;
+changing layouts clears it. It does not prevent running a mission.
+
+`fieldSetup: { city: "m15", farm: "m13", mine: "m14" }` travels with mission
+JSON, local drafts, shared links, and team mission payloads. Older missions use
+this default. Partial or duplicate assignments are repaired on import.
+
+The six `field_*.svg` source files preserve the calibrated placements, with
+filenames ordered City, Farm, Mine. After editing them in Inkscape, regenerate
+the shared model-only asset and placement table with:
+
+```bash
+python3 scripts/extract_dock_models.py | apply_patch
+```
+
+Only the model asset is loaded by the app, not the six full preview SVGs.
+
+### Mission JSON
+
 Each mission is a single JSON object with:
 
 - `name`

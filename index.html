@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>FLL Field Mapping</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=center-heading-controls" />
+  <link rel="stylesheet" href="styles.css?v=dock-setup-1" />
 </head>
 <body>
   <header class="header">
@@ -76,6 +76,19 @@
           <button class="btn-primary" id="save-team-robot" disabled>Save Robot</button>
           <button class="btn-danger" id="delete-team-robot" disabled>Delete Robot</button>
         </div>
+      </div>
+
+      <div class="panel" id="field-setup-panel">
+        <div class="section-title">Field Setup</div>
+        <p class="notice">Choose where each model sits. Docks are listed bottom to top on the field.</p>
+        <div class="dock-selectors">
+          <label for="dock-city"><span><b>1</b> City <small>Bottom</small></span><select id="dock-city" data-dock="city"></select></label>
+          <label for="dock-farm"><span><b>2</b> Farm <small>Middle</small></span><select id="dock-farm" data-dock="farm"></select></label>
+          <label for="dock-mine"><span><b>3</b> Mine <small>Upper right</small></span><select id="dock-mine" data-dock="mine"></select></label>
+        </div>
+        <p class="notice" id="field-setup-notice" role="status">Choosing a model already in use swaps the two docks.</p>
+        <label class="field-confirm"><input id="field-confirmed" type="checkbox" /> Field matches this plan</label>
+        <p class="notice">Check after setting up your practice table. This reminder resets when the layout changes or you reopen the tool.</p>
       </div>
 
       <div class="panel">
@@ -238,6 +251,10 @@
 
     <section class="field-panel">
       <div class="panel field-wrap">
+        <div class="field-setup-summary">
+          <div><span class="field-setup-heading">Field setup <span id="field-check-status">• Check physical field</span></span><div id="field-setup-summary" aria-live="polite"></div></div>
+          <button id="edit-field-setup" class="btn-ghost" type="button">Edit setup</button>
+        </div>
         <div id="mission-field-host" class="mission-field-host" aria-live="polite"></div>
 
         <div class="field-controls">
@@ -259,6 +276,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=mission-model-layer-6"></script>
+  <script type="module" src="js/app.js?v=dock-setup-1"></script>
 </body>
 </html>

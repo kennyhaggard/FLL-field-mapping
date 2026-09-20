@@ -7,7 +7,7 @@ import {
   createDefaultMission,
   normalizeMission,
   normalizeRobot
-} from "./model.js?v=global-heading-mode";
+} from "./model.js?v=dock-setup-1";
 
 function readJson(storage, key) {
   try {

@@ -1,4 +1,5 @@
 import { DEFAULT_REPLAY_OPTIONS } from "./constants.js";
+import { normalizeFieldSetup } from "./field_setup.js";
 
 /**
  * @typedef {{description:string, side:"front"|"rear"|"left"|"right", widthCm:number, lengthCm:number, positionCm:number}} Attachment
@@ -216,6 +217,7 @@ function normalizeMission(raw) {
 
   return {
     name: String(source.name || "Untitled Mission"),
+    fieldSetup: normalizeFieldSetup(source.fieldSetup),
     headingMode,
     globalZeroDirection,
     robotName: robot.name,

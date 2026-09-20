@@ -2,8 +2,8 @@ import {
   buildReplayFrames,
   normalizeMission,
   normalizeRobot
-} from "../domain/model.js?v=robot-color-controls";
-import { FieldRenderer } from "../ui/field_renderer.js?v=mission-model-layer-6";
+} from "../domain/model.js?v=dock-setup-1";
+import { FieldRenderer } from "../ui/field_renderer.js?v=dock-setup-1";
 import { RobotCanvas } from "../ui/robot_canvas.js?v=robot-color-controls";
 import { getLesson, lessons } from "./lessons.js";
 
@@ -425,7 +425,7 @@ async function init() {
   dom.replayControls.style.display = "none";
 
   if (usesField) {
-    fieldRenderer = new FieldRenderer(dom.fieldHost, "../field.svg?v=mission-model-layer-6");
+    fieldRenderer = new FieldRenderer(dom.fieldHost, "../field.svg?v=dock-setup-1");
     await fieldRenderer.load();
   }
   if (usesRobot) {

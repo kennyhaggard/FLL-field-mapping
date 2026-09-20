@@ -1,4 +1,6 @@
 import { FIELD_WIDTH_CM } from "../domain/constants.js";
+import { DOCK_PLACEMENTS } from "../domain/dock_placements.js";
+import { fieldSetupKey } from "../domain/field_setup.js";
 import {
   buildReplayFrames,
   computeBearingMove,
@@ -8,7 +10,7 @@ import {
   getAttachmentRectCm,
   normalizeMission,
   poseToTracePointCm
-} from "../domain/model.js?v=global-zero-direction";
+} from "../domain/model.js?v=dock-setup-1";
 
 function colorWithAlpha(hexColor, alpha) {
   const match = String(hexColor || "").match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
@@ -18,7 +20,7 @@ function colorWithAlpha(hexColor, alpha) {
 }
 
 class FieldRenderer {
-  constructor(host, fieldSvgUrl = "./field.svg?v=mission-model-layer-6") {
+  constructor(host, fieldSvgUrl = "./field.svg?v=dock-setup-1") {
     this.host = host;
     this.fieldSvgUrl = fieldSvgUrl;
     this.svg = null;
@@ -130,8 +132,24 @@ class FieldRenderer {
     this.currentPose = null;
   }
 
+  setFieldSetup(setup) {
+    if (!this.svg) return;
+    const key = fieldSetupKey(setup);
+    if (this.svg.dataset.fieldSetup === key) return;
+    for (const [model, placement] of Object.entries(DOCK_PLACEMENTS[key])) {
+      const group = this.svg.querySelector(`#dock-model-${model}`);
+      if (!group) continue;
+      group.setAttribute("transform", placement.transform);
+      const use = group.querySelector("use");
+      use.setAttribute("x", placement.x);
+      use.setAttribute("y", placement.y);
+    }
+    this.svg.dataset.fieldSetup = key;
+  }
+
   renderMission(missionLike) {
     const mission = normalizeMission(missionLike);
+    this.setFieldSetup(mission.fieldSetup);
     const frames = buildReplayFrames(mission);
     const finalPose = frames[frames.length - 1] || computeStartPoseCm(mission);
     this.clearDynamic();
@@ -141,12 +159,14 @@ class FieldRenderer {
 
   renderStartPosition(missionLike) {
     const mission = normalizeMission(missionLike);
+    this.setFieldSetup(mission.fieldSetup);
     this.clearDynamic();
     this.drawRobot(mission, computeStartPoseCm(mission));
   }
 
   renderFrameSequence(missionLike, frames, frameIndex) {
     const mission = normalizeMission(missionLike);
+    this.setFieldSetup(mission.fieldSetup);
     if (!Array.isArray(frames) || !frames.length) return;
 
     const safeIndex = Math.max(0, Math.min(frameIndex, frames.length - 1));
