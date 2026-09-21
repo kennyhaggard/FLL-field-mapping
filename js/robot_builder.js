@@ -10,7 +10,7 @@ import {
   loadTeamSession,
   saveRobotLibrary,
   stageRobotTransfer
-} from "./domain/storage.js?v=robot-color-controls";
+} from "./domain/storage.js?v=explicit-mission-save-1";
 import { RobotCanvas } from "./ui/robot_canvas.js?v=robot-color-controls";
 
 const dom = {

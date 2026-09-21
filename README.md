@@ -11,6 +11,7 @@ FLL Field Mapping Studio is a browser-based route planner for First LEGO League 
 - Replay a route directly on the field map
 - Save robot profiles locally in the browser
 - Share a mission through a URL payload
+- Download and import mission JSON files without a team connection
 - Sync missions and robots through hosted team endpoints
 
 ## Project Structure
@@ -54,16 +55,60 @@ npm test
 
 ## Mission Model
 
+### Saving and opening missions
+
+Missions are **not autosaved or restored from browser storage**. A fresh visit
+starts a new mission. Open a shared link, import a JSON file, or connect a team
+and explicitly choose **Load Mission**. Selecting a cloud entry does not load it.
+
+The saving bar identifies a new mission, demo, shared copy, file copy, or team
+mission. Edits show **Unsaved changes** until you save to the team or download
+the current mission. A shared link is a snapshot, not a live cloud document.
+Editing or replacing a shared copy removes its URL payload to avoid reopening
+the original over the current work. Cloud saves checkpoint the version sent;
+edits made while a save is in progress remain unsaved.
+
+Use **Download Mission** / **Import Mission** for file-based work. File imports
+accept mission JSON and old storage envelopes, with a 96 KB size limit and
+preview limits of 500 actions and 10 simulated minutes. Invalid imports leave
+the current mission unchanged. Apply or discard manual JSON edits before
+saving or sharing.
+
+The tool warns before replacing unsaved work and requests the browser's standard
+leave/reload warning. Browser warnings are best-effort and do not protect against
+crashes or forced termination; keep a downloaded file or team save.
+
+Old browser drafts are neither loaded nor deleted. If present, **Download old
+draft** exports a copy without changing the current mission. Display preferences,
+team connection information, local robot profiles, and robot handoff still use
+browser storage. Robot Builder does not autosave its in-progress edits.
+
+### Editing and the field preview
+
+The mission editor and field preview are separate snapshots. Editing actions,
+starting pose, robot dimensions, attachments, or colors does not redraw the
+field or change an existing replay. A banner identifies pending preview changes.
+**Start Mission** applies and runs the current editor contents without saving.
+A successful **Save to Team** or **Download Mission** also updates the preview.
+Failed saves do not update it, and slow saves cannot replace a newer started
+preview. Newer edits made during a save remain pending.
+
+**Replay Field**, Play, Reset, Clear Field, and the frame slider operate on the
+last applied snapshot. Loading/importing a different mission or choosing Reset Mission/Load Demo
+explicitly replaces both editor and preview. Field Setup and display visibility
+remain immediate controls. A robot drag adds pending steps and returns the robot
+to its original position; apply pending edits before dragging again.
+
 ### Field setup
 
-Field Setup assigns M13 (Keystone), M14 (Seeds), and M15 (House) to City,
-Farm, and Mine, listed bottom-to-top. Selecting an occupied model swaps the
+Field Setup assigns M13 (Keystone), M14 (Seeds), and M15 (House) to Mine
+(upper right), Farm (middle), and City (bottom), listed in that order. Selecting an occupied model swaps the
 two docks. The summary above the field stays visible when the panel is collapsed.
 The optional physical-field confirmation is local to the current page session;
 changing layouts clears it. It does not prevent running a mission.
 
 `fieldSetup: { city: "m15", farm: "m13", mine: "m14" }` travels with mission
-JSON, local drafts, shared links, and team mission payloads. Older missions use
+JSON files, shared links, and team mission payloads. Older missions use
 this default. Partial or duplicate assignments are repaired on import.
 
 The six `field_*.svg` source files preserve the calibrated placements, with

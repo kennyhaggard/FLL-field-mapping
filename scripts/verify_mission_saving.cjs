@@ -1,0 +1,201 @@
+// Optional browser checks: run a static server on port 8000, then run this file.
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
+const assert = require("node:assert/strict");
+const { readFile, mkdtemp } = require("node:fs/promises");
+const { tmpdir } = require("node:os");
+const { join } = require("node:path");
+
+(async () => {
+  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  const output = await mkdtemp(join(tmpdir(), "fll-mission-saving-"));
+  const errors = [];
+  const origin = "http://127.0.0.1:8000/";
+  const archived = JSON.stringify({ version: 3, mission: { name: "Old draft", actions: [] } });
+  try {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+    const page = await context.newPage();
+    let acceptDialog = true;
+    let unloads = 0;
+    page.on("pageerror", error => errors.push(error.message));
+    page.on("dialog", dialog => {
+      if (dialog.type() === "beforeunload") unloads += 1;
+      return acceptDialog ? dialog.accept() : dialog.dismiss();
+    });
+    await page.goto(origin);
+    await page.waitForSelector("#mission-field");
+    await page.evaluate(value => localStorage.setItem("fll:mission:draft:v3", value), archived);
+    await page.reload();
+    await page.waitForSelector("#mission-field");
+    assert.equal(await page.locator("#mission-name").inputValue(), "New Mission");
+    assert.equal(await page.locator("#archived-mission-notice").isVisible(), true);
+    await page.locator("#mission-name").fill("New work");
+    assert.equal(await page.locator("#mission-save-status").innerText(), "Unsaved changes");
+    assert.equal(await page.evaluate(() => localStorage.getItem("fll:mission:draft:v3")), archived);
+    const oldDownload = page.waitForEvent("download");
+    await page.locator("#download-archived-mission").click();
+    assert.equal(JSON.parse(await readFile(await (await oldDownload).path(), "utf8")).name, "Old draft");
+    assert.equal(await page.locator("#mission-name").inputValue(), "New work");
+    assert.equal(await page.locator("#mission-save-status").innerText(), "Unsaved changes");
+    console.log("PASS: old drafts stay untouched and are export-only; edits do not autosave");
+
+    acceptDialog = false;
+    const cancelledReload = page.waitForEvent("dialog");
+    await page.evaluate(() => setTimeout(() => location.reload(), 0));
+    await cancelledReload;
+    assert.equal(await page.locator("#mission-name").inputValue(), "New work");
+    assert.ok(unloads > 0);
+    acceptDialog = true;
+    await page.locator("#mission-model-opacity").fill("55");
+    await page.reload();
+    await page.waitForSelector("#mission-field");
+    assert.equal(await page.locator("#mission-name").inputValue(), "New Mission");
+    assert.equal(await page.locator("#mission-model-opacity").inputValue(), "55");
+    console.log("PASS: reload warns about unsaved work; accepting starts fresh, retaining display preferences");
+
+    await page.locator("#mission-name").fill("File round trip");
+    await page.locator("#dock-mine").selectOption("m13");
+    const expected = JSON.parse(await page.locator("#mission-json").inputValue());
+    const downloaded = page.waitForEvent("download");
+    await page.locator("#download-mission").click();
+    const file = await downloaded;
+    const bytes = await readFile(await file.path());
+    assert.deepEqual(JSON.parse(bytes), expected);
+    assert.equal(await page.locator("#mission-save-status").getAttribute("data-dirty"), "false");
+    const upload = { name: "mission.json", mimeType: "application/json", buffer: bytes };
+    await page.locator("#mission-name").fill("Keep this edit");
+    acceptDialog = false;
+    const cancelImport = page.waitForEvent("dialog");
+    await page.locator("#mission-file").setInputFiles(upload);
+    await cancelImport;
+    assert.equal(await page.locator("#mission-name").inputValue(), "Keep this edit");
+    acceptDialog = true;
+    await page.locator("#mission-file").setInputFiles(upload);
+    await page.waitForFunction(() => document.querySelector("#mission-name").value === "File round trip");
+    assert.deepEqual(JSON.parse(await page.locator("#mission-json").inputValue()), expected);
+    await page.locator("#mission-file").setInputFiles({ name: "bad.json", mimeType: "application/json", buffer: Buffer.from("not JSON") });
+    await page.waitForFunction(() => document.querySelector("#mission-file-status").textContent.includes("Could not import"));
+    assert.equal(await page.locator("#mission-name").inputValue(), "File round trip");
+    console.log("PASS: downloads and imports round-trip; cancellation and invalid files preserve work");
+
+    await page.locator("#mission-json").fill("unapplied JSON");
+    await page.locator("#download-mission").click();
+    assert.match(await page.locator("#mission-file-status").innerText(), /Apply or discard/);
+    await page.locator("#discard-json").click();
+    assert.equal(await page.locator("#mission-save-status").getAttribute("data-dirty"), "false");
+    const updated = { ...expected, name: "JSON applied" };
+    await page.locator("#mission-json").fill(JSON.stringify(updated));
+    await page.locator("#apply-json").click();
+    assert.equal(await page.locator("#mission-name").inputValue(), "JSON applied");
+    assert.equal(await page.locator("#mission-save-status").innerText(), "Unsaved changes");
+    const shared = `${origin}?mission=${encodeURIComponent(Buffer.from(JSON.stringify(expected)).toString("base64"))}`;
+    await page.goto(shared);
+    await page.waitForSelector("#mission-field");
+    assert.equal(await page.locator("#mission-source").innerText(), "Shared copy");
+    await page.locator("#mission-name").fill("Edited share");
+    await page.waitForURL(url => !url.searchParams.has("mission"));
+    assert.equal(new URL(page.url()).searchParams.has("mission"), false);
+    assert.equal(await page.locator("#mission-save-status").innerText(), "Unsaved changes");
+    await page.locator("#mission-name").fill(expected.name);
+    assert.equal(await page.locator("#mission-save-status").getAttribute("data-dirty"), "false");
+    await page.getByRole("button", { name: "Collapse Team Cloud", exact: true }).click();
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.screenshot({ path: join(output, "desktop.png") });
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.screenshot({ path: join(output, "mobile.png") });
+    console.log("PASS: JSON edits are protected, shared copies are labeled, edited share URLs are cleared, mobile fits");
+
+    const cloudContext = await browser.newContext();
+    await cloudContext.route("**/js/domain/runtime.js", route => route.fulfill({
+      contentType: "text/javascript",
+      body: 'export const detectRuntimeMode=()=>({kind:"hosted",allowsCloudSync:true,label:"Mock hosted",detail:"Mock only"});export const validateTeamPin=()=>true;'
+    }));
+    let loadCount = 0;
+    let saveCount = 0;
+    let failSave = false;
+    let releaseSave;
+    let holdSave = false;
+    await cloudContext.route("https://*.supabase.co/**", async route => {
+      const url = route.request().url();
+      let result = { ok: true };
+      if (url.endsWith("/list_missions")) result.missions = [{ name: "Team plan" }];
+      if (url.endsWith("/list_robots")) result.robots = [];
+      if (url.endsWith("/get_mission")) { loadCount++; result.mission = { name: "Team plan", actions: [] }; }
+      if (url.endsWith("/save_mission")) {
+        saveCount++;
+        if (holdSave) await new Promise(resolve => { releaseSave = resolve; });
+        if (failSave) result = { ok: false, error: "Test save failure" };
+      }
+      await route.fulfill({ contentType: "application/json", body: JSON.stringify(result) });
+    });
+    const cp = await cloudContext.newPage();
+    cp.on("pageerror", error => errors.push(error.message));
+    cp.on("dialog", dialog => acceptDialog ? dialog.accept() : dialog.dismiss());
+    await cp.goto(origin);
+    await cp.waitForSelector("#mission-field");
+    await cp.locator("#team-name").fill("Test team");
+    await cp.locator("#team-pin").fill("1234");
+    await cp.locator("#connect-team").click();
+    await cp.locator('#team-mission-select option[value="Team plan"]').waitFor({ state: "attached" });
+    await cp.locator("#mission-name").fill("Unsaved local work");
+    await cp.locator("#team-mission-select").selectOption("Team plan");
+    assert.equal(loadCount, 0);
+    acceptDialog = false;
+    await cp.locator("#load-team-mission").click();
+    assert.equal(loadCount, 0);
+    acceptDialog = true;
+    await cp.locator("#load-team-mission").click();
+    await cp.waitForFunction(() => document.querySelector("#mission-save-status").textContent === "Saved to team");
+    assert.equal(await cp.locator("#mission-name").inputValue(), "Team plan");
+    assert.equal(await cp.evaluate(() => localStorage.getItem("fll:mission:draft:v3")), null);
+    console.log("PASS: cloud selection does not load; explicit load warns and labels the saved source");
+
+    const fieldPose = () => cp.locator('[data-draggable-robot="1"]').getAttribute("transform");
+    const fieldPending = () => cp.locator("#field-preview-status").getAttribute("data-pending");
+    const loadedPose = await fieldPose();
+    await cp.locator("#start-x").fill("10");
+    assert.equal(await fieldPose(), loadedPose);
+    holdSave = true;
+    const saveStarted = cp.waitForRequest(request => request.url().endsWith("/save_mission"));
+    await cp.locator("#save-active-mission").click();
+    await saveStarted;
+    assert.ok(releaseSave);
+    await cp.locator("#start-y").fill("12");
+    releaseSave();
+    await cp.locator("#save-active-mission").waitFor({ state: "visible" });
+    await cp.waitForFunction(() => !document.querySelector("#save-active-mission").disabled);
+    assert.equal(await cp.locator("#mission-save-status").innerText(), "Unsaved changes");
+    const savedPose = await fieldPose();
+    assert.notEqual(savedPose, loadedPose, "successful save publishes the sent snapshot");
+    assert.equal(await fieldPending(), "true", "newer edits remain pending");
+    holdSave = false;
+    failSave = true;
+    await cp.locator("#save-active-mission").click();
+    await cp.waitForFunction(() => document.querySelector("#team-status").textContent.includes("Test save failure"));
+    assert.equal(await cp.locator("#mission-save-status").innerText(), "Unsaved changes");
+    assert.equal(await fieldPose(), savedPose, "failed save leaves the field alone");
+    failSave = false;
+    await cp.locator("#save-active-mission").click();
+    await cp.waitForFunction(() => document.querySelector("#mission-save-status").textContent === "Saved to team");
+    assert.equal(saveCount, 3);
+    assert.equal(await fieldPending(), "false");
+    assert.notEqual(await fieldPose(), savedPose);
+
+    await cp.locator("#start-x").fill("20");
+    holdSave = true;
+    const olderSaveStarted = cp.waitForRequest(request => request.url().endsWith("/save_mission"));
+    await cp.locator("#save-active-mission").click();
+    await olderSaveStarted;
+    await cp.locator("#start-x").fill("30");
+    await cp.locator("#start-mission").click();
+    const newerStartedPose = await fieldPose();
+    releaseSave();
+    await cp.waitForFunction(() => !document.querySelector("#save-active-mission").disabled);
+    assert.equal(await fieldPose(), newerStartedPose, "older save must not rewind a newer Start");
+    assert.equal(await fieldPending(), "false");
+    assert.equal(await cp.locator("#mission-save-status").innerText(), "Unsaved changes");
+    assert.deepEqual(errors, []);
+    console.log("PASS: successful saves publish their snapshot; failed saves preserve the field; slow saves cannot rewind newer Starts");
+    console.log(`Screenshots: ${output}`);
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

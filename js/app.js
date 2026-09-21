@@ -18,14 +18,15 @@ import { detectRuntimeMode, validateTeamPin } from "./domain/runtime.js";
 import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=dock-setup-1";
 import {
   consumeRobotTransfer,
-  loadMissionDraft,
+  readArchivedMissionDraft,
   loadRobotLibrary,
   loadTeamSession,
-  saveMissionDraft,
   saveRobotLibrary,
   saveTeamSession
-} from "./domain/storage.js?v=dock-setup-1";
-import { FieldRenderer } from "./ui/field_renderer.js?v=dock-setup-1";
+} from "./domain/storage.js?v=explicit-mission-save-1";
+import { createMissionDocument, hasMissionChanges, missionFingerprint, missionFilename, parseMissionFile, MAX_MISSION_FILE_BYTES } from "./domain/mission_document.js";
+import { FieldRenderer } from "./ui/field_renderer.js?v=staged-preview-1";
+import { createFieldSnapshot, hasPendingFieldChanges } from "./domain/mission_preview.js";
 import { DOCK_ORDER, FIELD_MODELS, fieldSetupKey, swapDockModel } from "./domain/field_setup.js";
 
 const WIREFRAME_OPACITY_STORAGE_KEY = "fll-field-wireframe-opacity";
@@ -42,6 +43,17 @@ const FIELD_BACKGROUND_STORAGE_KEY = "fll-field-background";
 const DEFAULT_FIELD_BACKGROUND = "overlay";
 
 const dom = {
+  fieldPreviewStatus: document.getElementById("field-preview-status"),
+  missionSource: document.getElementById("mission-source"),
+  missionSaveStatus: document.getElementById("mission-save-status"),
+  saveActiveMission: document.getElementById("save-active-mission"),
+  downloadMission: document.getElementById("download-mission"),
+  importMission: document.getElementById("import-mission"),
+  missionFile: document.getElementById("mission-file"),
+  missionFileStatus: document.getElementById("mission-file-status"),
+  archivedMissionNotice: document.getElementById("archived-mission-notice"),
+  downloadArchivedMission: document.getElementById("download-archived-mission"),
+  discardJson: document.getElementById("discard-json"),
   dockSelectors: [...document.querySelectorAll("[data-dock]")],
   fieldSetupSummary: document.getElementById("field-setup-summary"),
   fieldSetupNotice: document.getElementById("field-setup-notice"),
@@ -126,7 +138,16 @@ const renderer = new FieldRenderer(dom.fieldHost);
 
 const state = {
   fieldConfirmed: false,
-  mission: createDefaultMission(),
+  mission: createBlankMission(),
+  fieldMission: createFieldSnapshot(createBlankMission()),
+  fieldRevision: 0,
+  document: createMissionDocument(createBlankMission()),
+  documentId: 0,
+  missionRevision: 0,
+  jsonDirty: false,
+  lastJsonText: "",
+  archivedMission: null,
+  missionRequestPending: false,
   localRobots: [],
   teamSession: {
     name: "public",
@@ -384,8 +405,127 @@ function setReplayFrames(frames) {
     : "0 / 0";
 }
 
-function persistMission() {
-  saveMissionDraft(window.localStorage, state.mission);
+function hasUnsavedMission() {
+  return state.jsonDirty || hasMissionChanges(state.document, state.mission);
+}
+
+function syncMissionDocument() {
+  const source = state.document.source;
+  const labels = {
+    new: "New mission", demo: "Demo mission", shared: "Shared copy",
+    file: `File: ${source.name}`, cloud: `Team: ${source.team} · ${source.name}`
+  };
+  dom.missionSource.textContent = labels[source.kind] || "Mission";
+  const dirty = hasUnsavedMission();
+  dom.missionSaveStatus.dataset.dirty = String(dirty);
+  dom.missionSaveStatus.textContent = state.jsonDirty ? "Unapplied JSON edits"
+    : dirty ? "Unsaved changes"
+      : source.kind === "cloud" ? "Saved to team"
+        : source.kind === "file" ? "File copy · no unsaved changes"
+          : source.kind === "shared" ? "Not saved to a team"
+            : "Not saved";
+  dom.discardJson.hidden = !state.jsonDirty;
+  syncFieldPreviewStatus();
+}
+
+function syncFieldPreviewStatus() {
+  const pending = hasPendingFieldChanges(state.mission, state.fieldMission);
+  dom.fieldPreviewStatus.dataset.pending = String(pending || state.jsonDirty);
+  dom.fieldPreviewStatus.textContent = state.jsonDirty
+    ? "JSON edits are not applied. Apply or discard them, then save or Start Mission."
+    : pending
+      ? "Mission edits are waiting. Save or Start Mission to update the field."
+      : "Field shows the last loaded, saved, or started mission.";
+}
+
+function applyMissionToField(mission, { showStart = false } = {}) {
+  stopMissionRun();
+  resetReplayState();
+  state.fieldMission = createFieldSnapshot(mission, state.mission.fieldSetup);
+  state.fieldRevision += 1;
+  if (showStart) renderer.renderStartPosition(state.fieldMission);
+  else renderer.renderMission(state.fieldMission);
+  syncFieldPreviewStatus();
+}
+
+function setMissionFileStatus(message) {
+  dom.missionFileStatus.textContent = message;
+  dom.missionFileStatus.hidden = !message;
+}
+
+function confirmMissionReplacement(action) {
+  return !hasUnsavedMission() || confirm(`${action}? Unsaved mission changes will be discarded. Save to your team or download first to keep them.`);
+}
+
+function clearSharedMissionUrl() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("mission")) return;
+  url.searchParams.delete("mission");
+  window.history.replaceState(window.history.state, "", url);
+}
+
+function replaceMission(mission, source) {
+  state.documentId += 1;
+  state.document = createMissionDocument(mission, source);
+  state.jsonDirty = false;
+  state.fieldConfirmed = false;
+  clearSharedMissionUrl();
+  commitMission(mission);
+  applyMissionToField(state.mission);
+  setMissionFileStatus("");
+}
+
+function requireAppliedJson() {
+  if (!state.jsonDirty) return true;
+  setMissionFileStatus("Apply or discard your JSON edits before saving, sharing, or starting the mission.");
+  return false;
+}
+
+function downloadMissionFile(mission, filename) {
+  const url = URL.createObjectURL(new Blob([JSON.stringify(mission, null, 2)], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadCurrentMission() {
+  if (!requireAppliedJson()) return;
+  try {
+    const filename = missionFilename(state.mission.name);
+    downloadMissionFile(state.mission, filename);
+    state.document = createMissionDocument(state.mission, { kind: "file", name: filename });
+    applyMissionToField(state.mission);
+    clearSharedMissionUrl();
+    syncMissionDocument();
+    setMissionFileStatus(`Download requested: ${filename}. Keep the file; there is no browser backup.`);
+  } catch (error) {
+    setMissionFileStatus(`Could not download mission: ${error.message}`);
+  }
+}
+
+async function importMissionFile() {
+  const file = dom.missionFile.files?.[0];
+  dom.missionFile.value = "";
+  if (!file) return;
+  const revision = state.missionRevision;
+  const documentId = state.documentId;
+  try {
+    if (file.size > MAX_MISSION_FILE_BYTES) throw new Error("Mission files must be smaller than 96 KB.");
+    const mission = parseMissionFile(await file.text());
+    if (revision !== state.missionRevision || documentId !== state.documentId) {
+      setMissionFileStatus("The mission changed while reading the file. Import it again when ready.");
+      return;
+    }
+    if (!confirmMissionReplacement(`Import ${file.name}`)) return;
+    replaceMission(mission, { kind: "file", name: file.name });
+    setMissionFileStatus(`Imported ${file.name}. Future edits are not saved automatically.`);
+  } catch (error) {
+    setMissionFileStatus(`Could not import mission: ${error.message}`);
+  }
 }
 
 function persistTeamSession() {
@@ -516,7 +656,7 @@ function renderReplayFrame(index) {
   state.replay.index = safeIndex;
   dom.replaySlider.value = String(safeIndex);
   dom.replayCount.textContent = `${safeIndex} / ${Math.max(0, state.replay.frames.length - 1)}`;
-  renderer.renderFrameSequence(state.mission, state.replay.frames, safeIndex);
+  renderer.renderFrameSequence(state.fieldMission, state.replay.frames, safeIndex);
 }
 
 function isCompleteNumberText(value) {
@@ -545,7 +685,8 @@ function configureDecimalInput(input) {
 function syncFieldSetup() {
   const setup = state.mission.fieldSetup;
   dom.dockSelectors.forEach(select => { select.value = setup[select.dataset.dock]; });
-  dom.fieldSetupSummary.replaceChildren(...DOCK_ORDER.map((dock, index) => {
+  dom.fieldSetupSummary.replaceChildren(...dom.dockSelectors.map((select, index) => {
+    const dock = select.dataset.dock;
     const item = document.createElement("span");
     const model = document.createElement("strong");
     model.textContent = FIELD_MODELS[setup[dock]].name;
@@ -584,9 +725,12 @@ function syncMissionToInputs({
   dom.robotColor.value = mission.robotColor;
   if (!skipRobotName) dom.robotName.value = mission.robotName || "";
 
-  if (document.activeElement !== dom.missionJson) {
+  if (!state.jsonDirty && document.activeElement !== dom.missionJson) {
     dom.missionJson.value = JSON.stringify(mission, null, 2);
+    state.lastJsonText = dom.missionJson.value;
   }
+
+  syncMissionDocument();
 
   if (!skipAttachments) {
     renderAttachments();
@@ -597,13 +741,12 @@ function syncMissionToInputs({
 }
 
 function renderMission() {
-  renderer.renderMission(state.mission);
+  renderer.renderMission(state.fieldMission);
 }
 
 function commitMission(
   nextMission,
   {
-    preserveReplay = false,
     skipActions = false,
     skipAttachments = false,
     skipMissionName = false,
@@ -614,14 +757,16 @@ function commitMission(
     state.fieldConfirmed = false;
     dom.fieldSetupNotice.textContent = "Layout changed. Check your physical field before practicing.";
   }
-  state.mission = normalizeMission(nextMission);
-  persistMission();
-  if (!preserveReplay) {
-    stopMissionRun();
-    resetReplayState();
+  const normalized = normalizeMission(nextMission);
+  if (missionFingerprint(state.mission) !== missionFingerprint(normalized)) {
+    state.missionRevision += 1;
+    clearSharedMissionUrl();
   }
+  state.mission = normalized;
+  // Dock setup is immediate, but never rebuild the displayed route from edits.
+  state.fieldMission.fieldSetup = { ...normalized.fieldSetup };
+  renderer.setFieldSetup(state.fieldMission.fieldSetup);
   syncMissionToInputs({ skipActions, skipAttachments, skipMissionName, skipRobotName });
-  renderMission();
 }
 
 function updateMissionFromInputs() {
@@ -712,6 +857,7 @@ function handleRobotDrop({ headingDeg, turnDeg, distanceCm, startPose }) {
       { type: "move", value: roundedDistance }
     ]
   });
+  renderer.updateRobotTransform(startPose);
 }
 
 function createIconButton({ label, title, icon }) {
@@ -1220,7 +1366,7 @@ function applyTransferredRobotIfPresent() {
 function buildReplay() {
   stopMissionRun();
   stopReplay();
-  setReplayFrames(buildReplayFrames(state.mission, { fps: state.replay.fps }));
+  setReplayFrames(buildReplayFrames(state.fieldMission, { fps: state.replay.fps }));
   if (!state.replay.frames.length) {
     return;
   }
@@ -1263,11 +1409,12 @@ function resetReplay() {
 }
 
 function startMissionRun() {
-  if (state.run.active) return;
-  stopReplay();
-  state.run.frames = buildReplayFrames(state.mission, { fps: state.run.fps });
+  if (!requireAppliedJson()) return;
+  applyMissionToField(state.mission, { showStart: true });
+  state.run.frames = buildReplayFrames(state.fieldMission, { fps: state.run.fps });
   if (!state.run.frames.length) return;
   setReplayFrames(state.run.frames);
+  renderReplayFrame(0);
   state.run.active = true;
   state.run.startTime = performance.now();
   dom.stopMission.disabled = false;
@@ -1300,6 +1447,9 @@ function updateTeamControls() {
   dom.teamMissionSelect.disabled = !enabled;
   dom.loadTeamMission.disabled = !enabled;
   dom.saveTeamMission.disabled = !enabled;
+  dom.saveActiveMission.disabled = !enabled || state.missionRequestPending;
+  dom.loadTeamMission.disabled ||= state.missionRequestPending;
+  dom.saveTeamMission.disabled ||= state.missionRequestPending;
   dom.deleteTeamMission.disabled = !enabled;
   dom.teamRobotSelect.disabled = !enabled;
   dom.loadTeamRobot.disabled = !enabled;
@@ -1391,37 +1541,75 @@ async function refreshTeamData() {
 
 async function loadTeamMission() {
   const missionName = dom.teamMissionSelect.value;
-  if (!missionName) return;
+  if (!missionName || state.missionRequestPending) return;
+  if (!confirmMissionReplacement(`Load "${missionName}"`)) return;
+  const session = { ...state.teamSession };
+  const revision = state.missionRevision;
+  const documentId = state.documentId;
+  const jsonText = dom.missionJson.value;
+  state.missionRequestPending = true;
+  updateTeamControls();
 
   try {
-    const data = await cloud.getMission(state.teamSession, missionName);
+    const data = await cloud.getMission(session, missionName);
     if (!data?.ok || !data?.mission) {
       throw new Error(getCloudErrorMessage(data, "Mission not found."));
     }
-    commitMission(data.mission);
+    if (revision !== state.missionRevision || documentId !== state.documentId || jsonText !== dom.missionJson.value || session.name !== state.teamSession.name) {
+      setTeamStatus("The mission or team changed while loading. Load again when ready; your work was kept.");
+      return;
+    }
+    replaceMission(data.mission, { kind: "cloud", team: session.name, name: missionName });
     setTeamStatus(`Loaded mission "${missionName}".`);
   } catch (error) {
     setTeamStatus(`Could not load mission: ${error.message}`);
+  } finally {
+    state.missionRequestPending = false;
+    updateTeamControls();
   }
 }
 
 async function saveTeamMission() {
+  if (state.missionRequestPending || !requireAppliedJson()) return;
   const missionName = state.mission.name.trim();
   if (!missionName) {
     setTeamStatus("Mission name is required.");
     return;
   }
 
+  const session = { ...state.teamSession };
+  const snapshot = normalizeMission(state.mission);
+  const documentId = state.documentId;
+  const fieldRevision = state.fieldRevision;
+  const source = state.document.source;
+  const sameCloudMission = source.kind === "cloud" && source.team === session.name && source.name === missionName;
+  if (!sameCloudMission && state.teamData.missions.some(mission => mission.name === missionName)
+      && !confirm(`Replace the saved team mission "${missionName}" with this copy? Change the mission name first to save a separate copy.`)) return;
+  state.missionRequestPending = true;
+  updateTeamControls();
   try {
-    const result = await cloud.saveMission(state.teamSession, state.mission);
+    const result = await cloud.saveMission(session, snapshot);
     if (!result?.ok) {
       throw new Error(getCloudErrorMessage(result, "Save failed."));
     }
-    await refreshTeamData();
-    dom.teamMissionSelect.value = missionName;
-    setTeamStatus(`Saved mission "${missionName}".`);
+    if (documentId === state.documentId) {
+      // A slower save only checkpoints the snapshot sent, never newer edits.
+      state.document = createMissionDocument(snapshot, { kind: "cloud", team: session.name, name: missionName });
+      // Do not rewind a newer Start/Download while an older cloud save finishes.
+      if (fieldRevision === state.fieldRevision) applyMissionToField(snapshot);
+      clearSharedMissionUrl();
+      syncMissionDocument();
+    }
+    if (session.name === state.teamSession.name) {
+      await refreshTeamData();
+      dom.teamMissionSelect.value = missionName;
+      setTeamStatus(`Saved mission "${missionName}". Any newer edits remain unsaved.`);
+    }
   } catch (error) {
     setTeamStatus(`Could not save mission: ${error.message}`);
+  } finally {
+    state.missionRequestPending = false;
+    updateTeamControls();
   }
 }
 
@@ -1434,6 +1622,11 @@ async function deleteTeamMission() {
     const result = await cloud.deleteMission(state.teamSession, missionName);
     if (!result?.ok) {
       throw new Error(getCloudErrorMessage(result, "Delete failed."));
+    }
+    const source = state.document.source;
+    if (source.kind === "cloud" && source.team === state.teamSession.name && source.name === missionName) {
+      state.document = { source: { kind: "new" }, checkpoint: null };
+      syncMissionDocument();
     }
     await refreshTeamData();
     setTeamStatus(`Deleted mission "${missionName}".`);
@@ -1506,7 +1699,15 @@ function hydrateInitialState() {
   dom.teamPin.value = state.teamSession.pin || "";
 
   const missionFromUrl = readMissionFromQuery(window.location.search);
-  state.mission = missionFromUrl || loadMissionDraft(window.localStorage);
+  state.mission = missionFromUrl || createBlankMission();
+  state.fieldMission = createFieldSnapshot(state.mission);
+  state.document = createMissionDocument(state.mission, { kind: missionFromUrl ? "shared" : "new" });
+  state.archivedMission = readArchivedMissionDraft(window.localStorage);
+  dom.archivedMissionNotice.hidden = !state.archivedMission;
+  if (!missionFromUrl && new URLSearchParams(window.location.search).has("mission")) {
+    setMissionFileStatus("The shared mission could not be read. A new mission was opened instead.");
+    clearSharedMissionUrl();
+  }
   state.display.playbackSpeed = loadPlaybackSpeed();
   state.display.wireframeOpacity = loadBackgroundOpacity(
     WIREFRAME_OPACITY_STORAGE_KEY,
@@ -1525,6 +1726,31 @@ function hydrateInitialState() {
 }
 
 function attachEventHandlers() {
+  dom.downloadMission.addEventListener("click", downloadCurrentMission);
+  dom.importMission.addEventListener("click", () => dom.missionFile.click());
+  dom.missionFile.addEventListener("change", importMissionFile);
+  dom.saveActiveMission.addEventListener("click", saveTeamMission);
+  dom.downloadArchivedMission.addEventListener("click", () => {
+    if (!state.archivedMission) return;
+    downloadMissionFile(state.archivedMission, missionFilename(`${state.archivedMission.name}-old-draft`));
+    setMissionFileStatus("Old draft download requested. The current mission and old browser data were not changed.");
+  });
+  dom.missionJson.addEventListener("input", () => {
+    state.jsonDirty = dom.missionJson.value !== state.lastJsonText;
+    syncMissionDocument();
+  });
+  dom.discardJson.addEventListener("click", () => {
+    if (!confirm("Discard the unapplied JSON edits? The current field plan will be kept.")) return;
+    state.jsonDirty = false;
+    syncMissionToInputs({ skipActions: true, skipAttachments: true });
+    setJsonError("");
+    setMissionFileStatus("");
+  });
+  window.addEventListener("beforeunload", event => {
+    if (!hasUnsavedMission()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
   for (const select of dom.dockSelectors) {
     for (const [id, model] of Object.entries(FIELD_MODELS)) {
       const option = document.createElement("option");
@@ -1602,7 +1828,7 @@ function attachEventHandlers() {
       "Load the demo mission? This will replace all current mission settings, attachments, and actions."
     );
     if (!accepted) return;
-    commitMission(createDefaultMission());
+    replaceMission(createDefaultMission(), { kind: "demo" });
   });
 
   dom.resetMission.addEventListener("click", () => {
@@ -1610,7 +1836,7 @@ function attachEventHandlers() {
       "Reset this mission? This will clear all mission settings, attachments, and actions."
     );
     if (!accepted) return;
-    commitMission(createBlankMission());
+    replaceMission(createBlankMission(), { kind: "new" });
   });
 
   dom.globalMode.addEventListener("change", () => {
@@ -1667,13 +1893,17 @@ function attachEventHandlers() {
   dom.applyJson.addEventListener("click", () => {
     setJsonError("");
     try {
-      commitMission(JSON.parse(dom.missionJson.value));
+      const mission = parseMissionFile(dom.missionJson.value);
+      state.jsonDirty = false;
+      commitMission(mission);
+      setMissionFileStatus("");
     } catch (error) {
       setJsonError(`Invalid JSON: ${error.message}`);
     }
   });
 
   dom.copyLink.addEventListener("click", () => {
+    if (!requireAppliedJson()) return;
     const link = buildMissionShareLink(state.mission, window.location);
     navigator.clipboard.writeText(link).then(
       () => alert("Share link copied."),
@@ -1682,6 +1912,7 @@ function attachEventHandlers() {
   });
 
   dom.emailLink.addEventListener("click", () => {
+    if (!requireAppliedJson()) return;
     const link = buildMissionShareLink(state.mission, window.location);
     const subject = `FLL Mission: ${state.mission.name || "Untitled"}`;
     const body = [
@@ -1702,7 +1933,7 @@ function attachEventHandlers() {
   dom.clearField.addEventListener("click", () => {
     stopMissionRun();
     resetReplayState();
-    renderer.renderStartPosition(state.mission);
+    renderer.renderStartPosition(state.fieldMission);
   });
 
   dom.buildReplay.addEventListener("click", buildReplay);
@@ -1721,7 +1952,6 @@ function attachEventHandlers() {
 
   dom.connectTeam.addEventListener("click", connectTeam);
   dom.refreshTeam.addEventListener("click", refreshTeamData);
-  dom.teamMissionSelect.addEventListener("change", loadTeamMission);
   dom.loadTeamMission.addEventListener("click", loadTeamMission);
   dom.saveTeamMission.addEventListener("click", saveTeamMission);
   dom.deleteTeamMission.addEventListener("click", deleteTeamMission);
@@ -1743,6 +1973,10 @@ async function init() {
   attachEventHandlers();
   renderer.setRobotDragHandlers({
     onStart: () => {
+      if (state.jsonDirty || hasPendingFieldChanges(state.mission, state.fieldMission)) {
+        setMissionFileStatus("Save or Start Mission before adding more moves by dragging the robot.");
+        return false;
+      }
       stopMissionRun();
       stopReplay();
       updateReplayControls();

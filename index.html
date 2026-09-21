@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>FLL Field Mapping</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=dock-setup-1" />
+  <link rel="stylesheet" href="styles.css?v=staged-preview-1" />
 </head>
 <body>
   <header class="header">
@@ -26,6 +26,22 @@
       </div>
     </div>
   </header>
+
+  <section class="mission-document-bar" aria-label="Mission saving">
+    <div class="mission-document-info">
+      <strong id="mission-source">New mission</strong>
+      <span id="mission-save-status" role="status">Not saved</span>
+      <p class="notice">No automatic browser saving. Save to your team or download a file before leaving.</p>
+    </div>
+    <div class="button-row">
+      <button id="save-active-mission" class="btn-primary" disabled>Save to Team</button>
+      <button id="download-mission" class="btn-ghost">Download Mission</button>
+      <button id="import-mission" class="btn-ghost">Import Mission</button>
+      <input id="mission-file" type="file" accept=".json,application/json" hidden />
+    </div>
+    <p id="mission-file-status" class="notice" role="status" hidden></p>
+    <p id="archived-mission-notice" class="notice" hidden>An old browser draft was left untouched. <button id="download-archived-mission" class="btn-ghost">Download old draft</button></p>
+  </section>
 
   <main class="app-layout">
     <section>
@@ -80,11 +96,11 @@
 
       <div class="panel" id="field-setup-panel">
         <div class="section-title">Field Setup</div>
-        <p class="notice">Choose where each model sits. Docks are listed bottom to top on the field.</p>
+        <p class="notice">Choose where each model sits. Docks are listed from upper right to bottom on the field.</p>
         <div class="dock-selectors">
-          <label for="dock-city"><span><b>1</b> City <small>Bottom</small></span><select id="dock-city" data-dock="city"></select></label>
+          <label for="dock-mine"><span><b>1</b> Mine <small>Upper right</small></span><select id="dock-mine" data-dock="mine"></select></label>
           <label for="dock-farm"><span><b>2</b> Farm <small>Middle</small></span><select id="dock-farm" data-dock="farm"></select></label>
-          <label for="dock-mine"><span><b>3</b> Mine <small>Upper right</small></span><select id="dock-mine" data-dock="mine"></select></label>
+          <label for="dock-city"><span><b>3</b> City <small>Bottom</small></span><select id="dock-city" data-dock="city"></select></label>
         </div>
         <p class="notice" id="field-setup-notice" role="status">Choosing a model already in use swaps the two docks.</p>
         <label class="field-confirm"><input id="field-confirmed" type="checkbox" /> Field matches this plan</label>
@@ -239,10 +255,11 @@
 
       <div class="panel">
         <div class="section-title">Mission JSON</div>
-        <textarea id="mission-json"></textarea>
+        <textarea id="mission-json" aria-label="Mission JSON"></textarea>
         <p class="notice notice-error" id="json-error" style="display:none;"></p>
         <div class="button-row">
           <button class="btn-primary" id="apply-json">Apply JSON</button>
+          <button class="btn-ghost" id="discard-json" hidden>Discard JSON edits</button>
           <button class="btn-ghost" id="copy-link">Copy Share Link</button>
           <button class="btn-ghost" id="email-link">Email Link</button>
         </div>
@@ -251,6 +268,7 @@
 
     <section class="field-panel">
       <div class="panel field-wrap">
+        <p id="field-preview-status" class="notice field-preview-status" role="status">Field shows the last loaded, saved, or started mission.</p>
         <div class="field-setup-summary">
           <div><span class="field-setup-heading">Field setup <span id="field-check-status">• Check physical field</span></span><div id="field-setup-summary" aria-live="polite"></div></div>
           <button id="edit-field-setup" class="btn-ghost" type="button">Edit setup</button>
@@ -262,7 +280,7 @@
           <button class="btn-warn" id="stop-mission" disabled>Stop</button>
           <button class="btn-ghost" id="clear-field">Clear Field</button>
           <span class="divider" style="width:1px;height:28px;"></span>
-          <button class="btn-secondary" id="build-replay">Replay</button>
+          <button class="btn-secondary" id="build-replay" title="Replay the mission currently shown on the field. Start Mission applies pending edits.">Replay Field</button>
           <button class="btn-primary" id="play-replay" disabled>Play</button>
           <button class="btn-ghost" id="pause-replay" disabled>Pause</button>
           <button class="btn-ghost" id="reset-replay" disabled>Reset</button>
@@ -276,6 +294,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=dock-setup-1"></script>
+  <script type="module" src="js/app.js?v=staged-preview-1"></script>
 </body>
 </html>

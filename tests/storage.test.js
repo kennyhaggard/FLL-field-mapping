@@ -4,11 +4,10 @@ import assert from "node:assert/strict";
 import {
   consumeRobotTransfer,
   createMemoryStorage,
-  loadMissionDraft,
+  readArchivedMissionDraft,
   loadRobotLibrary,
   loadTeamSession,
   migrateLegacyStorage,
-  saveMissionDraft,
   saveRobotLibrary,
   saveTeamSession,
   stageRobotTransfer
@@ -25,9 +24,9 @@ test("legacy storage migrates into versioned keys", () => {
 
   migrateLegacyStorage(storage);
 
-  assert.ok(storage.getItem(STORAGE_KEYS.missionDraft));
-  assert.equal(loadMissionDraft(storage).name, "Legacy Mission");
-  assert.equal(loadMissionDraft(storage).headingMode, "relative");
+  assert.equal(storage.getItem(STORAGE_KEYS.missionDraft), null);
+  assert.equal(readArchivedMissionDraft(storage).name, "Legacy Mission");
+  assert.equal(readArchivedMissionDraft(storage).headingMode, "relative");
   assert.equal(loadRobotLibrary(storage)[0].name, "Legacy Bot");
   assert.equal(loadTeamSession(storage).name, "legacy");
   assert.equal(consumeRobotTransfer(storage).name, "Transfer Bot");
@@ -47,29 +46,32 @@ test("robot transfer is single-use", () => {
 test("saving versioned data returns normalized payloads", () => {
   const storage = createMemoryStorage();
 
-  saveMissionDraft(storage, { name: "Saved Mission", startAngle: 450 });
   saveRobotLibrary(storage, [{ name: "Alpha", robotWidthCm: 13 }]);
   saveTeamSession(storage, { name: "team-a", pin: "5555", connected: true, lastMode: "hosted" });
 
-  assert.equal(loadMissionDraft(storage).startAngle, 90);
   assert.equal(loadRobotLibrary(storage)[0].name, "Alpha");
   assert.equal(loadTeamSession(storage).connected, true);
 });
 
-test("mission storage preserves global heading mode and signed headings", () => {
-  const storage = createMemoryStorage();
-
-  saveMissionDraft(storage, {
+test("archived mission export reads existing data without writing or deleting it", () => {
+  const oldMission = {
     name: "Global Mission",
     headingMode: "global",
     startAngle: 270,
     actions: [{ type: "rotate", value: -90, alternateTurn: true }]
-  });
-
-  const mission = loadMissionDraft(storage);
+  };
+  const storage = createMemoryStorage({ [STORAGE_KEYS.missionDraft]: JSON.stringify({ version: 3, mission: oldMission }) });
+  const before = storage.dump();
+  const mission = readArchivedMissionDraft(storage);
+  assert.deepEqual(storage.dump(), before);
   assert.equal(mission.headingMode, "global");
   assert.equal(mission.startAngle, -90);
   assert.deepEqual(mission.actions, [
     { type: "rotate", value: -90, alternateTurn: true }
   ]);
+});
+
+test("no archived mission is invented when storage is empty or unavailable", () => {
+  assert.equal(readArchivedMissionDraft(createMemoryStorage()), null);
+  assert.equal(readArchivedMissionDraft({ getItem() { throw new Error("blocked"); } }), null);
 });

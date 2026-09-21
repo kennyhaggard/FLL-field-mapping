@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { DOCK_ORDER, DEFAULT_FIELD_SETUP, normalizeFieldSetup, fieldSetupKey, swapDockModel } from "../js/domain/field_setup.js";
 import { DOCK_PLACEMENTS } from "../js/domain/dock_placements.js";
 import { normalizeMission, applyRobotToMission } from "../js/domain/model.js";
-import { createMemoryStorage, saveMissionDraft, loadMissionDraft } from "../js/domain/storage.js";
+import { parseMissionFile } from "../js/domain/mission_document.js";
 import { buildMissionShareLink, readMissionFromQuery } from "../js/domain/share.js";
 import { createCloudClient } from "../js/domain/cloud.js";
 
@@ -38,13 +38,11 @@ test("every selection swaps exactly two docks without mutating the input", () =>
   }
 });
 
-test("all layouts survive draft, JSON, share link and robot replacement", () => {
+test("all layouts survive file import, JSON, share link and robot replacement", () => {
   for (const key of Object.keys(DOCK_PLACEMENTS)) {
     const fieldSetup = Object.fromEntries(DOCK_ORDER.map((dock, i) => [dock, key.split("_")[i]]));
     const mission = normalizeMission({ name: "Team 🌱", fieldSetup, fieldConfirmed: true });
-    const storage = createMemoryStorage();
-    saveMissionDraft(storage, mission);
-    assert.deepEqual(loadMissionDraft(storage).fieldSetup, fieldSetup);
+    assert.deepEqual(parseMissionFile(JSON.stringify(mission)).fieldSetup, fieldSetup);
     const jsonMission = normalizeMission(JSON.parse(JSON.stringify(mission)));
     assert.deepEqual(jsonMission.fieldSetup, fieldSetup);
     const link = buildMissionShareLink(mission, { origin: "https://example.test", pathname: "/index.html" });

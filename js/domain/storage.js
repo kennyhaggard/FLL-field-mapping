@@ -4,7 +4,6 @@ import {
   STORAGE_VERSION
 } from "./constants.js";
 import {
-  createDefaultMission,
   normalizeMission,
   normalizeRobot
 } from "./model.js?v=dock-setup-1";
@@ -63,18 +62,6 @@ function createMemoryStorage(seed = {}) {
 }
 
 function migrateLegacyStorage(storage) {
-  const nextMission = readJson(storage, STORAGE_KEYS.missionDraft);
-  if (!nextMission) {
-    const legacyMission = readJson(storage, LEGACY_STORAGE_KEYS.missionDraft);
-    if (legacyMission) {
-      writeJson(
-        storage,
-        STORAGE_KEYS.missionDraft,
-        createEnvelope("mission", normalizeMission(legacyMission))
-      );
-    }
-  }
-
   const nextRobots = readJson(storage, STORAGE_KEYS.robotLibrary);
   if (!nextRobots) {
     const legacyRobots = readJson(storage, LEGACY_STORAGE_KEYS.robotLibrary);
@@ -117,18 +104,12 @@ function migrateLegacyStorage(storage) {
   }
 }
 
-function loadMissionDraft(storage) {
-  migrateLegacyStorage(storage);
-  const payload = readJson(storage, STORAGE_KEYS.missionDraft);
-  return payload?.mission ? normalizeMission(payload.mission) : createDefaultMission();
-}
-
-function saveMissionDraft(storage, missionLike) {
-  return writeJson(
-    storage,
-    STORAGE_KEYS.missionDraft,
-    createEnvelope("mission", normalizeMission(missionLike))
-  );
+// Read-only escape hatch for work saved before mission autosave was retired.
+// Never migrate, delete, or automatically open this data.
+function readArchivedMissionDraft(storage) {
+  const raw = readJson(storage, STORAGE_KEYS.missionDraft)?.mission
+    ?? readJson(storage, LEGACY_STORAGE_KEYS.missionDraft);
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? normalizeMission(raw) : null;
 }
 
 function loadRobotLibrary(storage) {
@@ -196,11 +177,10 @@ export {
   clearTeamSession,
   consumeRobotTransfer,
   createMemoryStorage,
-  loadMissionDraft,
+  readArchivedMissionDraft,
   loadRobotLibrary,
   loadTeamSession,
   migrateLegacyStorage,
-  saveMissionDraft,
   saveRobotLibrary,
   saveTeamSession,
   stageRobotTransfer

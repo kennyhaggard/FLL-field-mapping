@@ -782,8 +782,8 @@ class FieldRenderer {
       const pointerStart = this.eventToFieldPoint(event);
       if (!pointerStart) return;
 
+      if (this.onRobotDragStart?.() === false) return;
       event.preventDefault();
-      this.onRobotDragStart?.();
       group.setPointerCapture(event.pointerId);
       group.setAttribute("data-dragging", "1");
 
@@ -829,7 +829,7 @@ class FieldRenderer {
         if (result?.distanceCm > 0.05) {
           this.onRobotDrop(result);
         } else {
-          this.renderMission(mission);
+          this.updateRobotTransform(startPose);
         }
       };
 

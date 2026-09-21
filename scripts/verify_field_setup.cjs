@@ -11,6 +11,7 @@ const { join } = require("node:path");
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const errors = [];
+    page.on("dialog", dialog => dialog.accept());
     page.on("pageerror", error => errors.push(error.message));
     page.on("response", response => {
       if (response.url().startsWith("http://127.0.0.1:8000") && response.status() >= 400) errors.push(`${response.status()} ${response.url()}`);
@@ -19,8 +20,11 @@ const { join } = require("node:path");
     await page.waitForSelector('#mission-field[data-field-setup]');
     await page.getByRole("button", { name: "Collapse Team Cloud", exact: true }).click();
     assert.equal(await page.locator("#mission-field").getAttribute("data-field-setup"), "m15_m13_m14");
+    assert.deepEqual(await page.locator("[data-dock]").evaluateAll(elements => elements.map(el => el.dataset.dock)), ["mine", "farm", "city"]);
+    assert.deepEqual(await page.locator("#field-setup-summary > span").allTextContents(), ["1 Mine: Seeds", "2 Farm: Keystone", "3 City: House"]);
     await page.screenshot({ path: join(output, "desktop.png") });
     console.log("PASS: page loads and setup controls render");
+    await page.locator("#load-demo").click();
 
     const { DOCK_PLACEMENTS } = await import("../js/domain/dock_placements.js");
     const docks = ["city", "farm", "mine"];
@@ -49,17 +53,16 @@ const { join } = require("node:path");
     assert.equal(await page.locator("#field-confirmed").isChecked(), false);
     await page.locator("#field-confirmed").check();
     const savedKey = await page.locator("#mission-field").getAttribute("data-field-setup");
-    await page.reload();
-    await page.waitForSelector('#mission-field[data-field-setup]');
-    assert.equal(await page.locator("#mission-field").getAttribute("data-field-setup"), savedKey);
-    assert.equal(await page.locator("#field-confirmed").isChecked(), false);
-    console.log("PASS: drafts persist; physical confirmation resets on change and reload");
-
     const link = await page.evaluate(async () => {
       const { buildMissionShareLink } = await import("./js/domain/share.js?v=dock-setup-1");
       return buildMissionShareLink(JSON.parse(document.querySelector("#mission-json").value));
     });
-    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForSelector('#mission-field[data-field-setup]');
+    assert.equal(await page.locator("#mission-field").getAttribute("data-field-setup"), "m15_m13_m14");
+    assert.equal(await page.locator("#field-confirmed").isChecked(), false);
+    assert.equal(await page.evaluate(() => localStorage.getItem("fll:mission:draft:v3")), null);
+    console.log("PASS: reload starts fresh without a browser draft; physical confirmation resets");
     await page.goto(link);
     await page.waitForSelector('#mission-field[data-field-setup]');
     assert.equal(await page.locator("#mission-field").getAttribute("data-field-setup"), savedKey);
@@ -80,7 +83,7 @@ const { join } = require("node:path");
     await page.getByRole("button", { name: "Collapse Field Setup", exact: true }).click();
     await page.locator("#edit-field-setup").click();
     assert.equal(await page.getByRole("button", { name: "Collapse Field Setup", exact: true }).getAttribute("aria-expanded"), "true");
-    assert.equal(await page.locator("#dock-city").evaluate(el => document.activeElement === el), true);
+    assert.equal(await page.locator("#dock-mine").evaluate(el => document.activeElement === el), true);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator("#field-setup-panel").scrollIntoViewIfNeeded();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "No mobile horizontal overflow");
