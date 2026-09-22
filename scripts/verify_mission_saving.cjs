@@ -77,6 +77,7 @@ const { join } = require("node:path");
     assert.equal(await page.locator("#mission-name").inputValue(), "File round trip");
     console.log("PASS: downloads and imports round-trip; cancellation and invalid files preserve work");
 
+    await page.getByRole("button", { name: "Expand Mission JSON", exact: true }).click();
     await page.locator("#mission-json").fill("unapplied JSON");
     await page.locator("#download-mission").click();
     assert.match(await page.locator("#mission-file-status").innerText(), /Apply or discard/);

@@ -1,4 +1,4 @@
-import { normalizeMission } from "./model.js?v=dock-setup-1";
+import { validateMission } from "./model.js?v=student-workflow-1";
 
 function encodeBase64Utf8(text) {
   if (typeof Buffer !== "undefined") {
@@ -24,7 +24,7 @@ function decodeBase64Utf8(encoded) {
 }
 
 function buildMissionShareLink(missionLike, locationLike = globalThis.location) {
-  const mission = normalizeMission(missionLike);
+  const mission = validateMission(missionLike);
   const payload = encodeBase64Utf8(JSON.stringify(mission));
   const origin = locationLike?.origin || "";
   const pathname = locationLike?.pathname || "";
@@ -35,9 +35,10 @@ function readMissionFromQuery(search = "") {
   const params = new URLSearchParams(search || "");
   const encoded = params.get("mission");
   if (!encoded) return null;
+  if (encoded.length > 128_000) return null;
 
   try {
-    return normalizeMission(JSON.parse(decodeBase64Utf8(encoded)));
+    return validateMission(JSON.parse(decodeBase64Utf8(encoded)));
   } catch (error) {
     return null;
   }

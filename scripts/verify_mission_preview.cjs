@@ -21,11 +21,13 @@ const { join } = require("node:path");
     const pending = () => page.locator("#field-preview-status").getAttribute("data-pending");
     const draft = async () => JSON.parse(await page.locator("#mission-json").inputValue());
     const applyJson = async mission => {
+      if (!(await page.locator("#mission-json").isVisible())) await page.getByRole("button", { name: "Expand Mission JSON", exact: true }).click();
       await page.locator("#mission-json").fill(JSON.stringify(mission));
       await page.locator("#apply-json").click();
     };
     await page.goto("http://127.0.0.1:8000/");
     await robot.waitFor();
+    assert.equal(await page.locator("#mission-json").isVisible(), false);
     await page.getByRole("button", { name: "Collapse Team Cloud", exact: true }).click();
     await page.locator("#load-demo").click();
     const original = await snapshot();

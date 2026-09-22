@@ -517,13 +517,62 @@ function poseToTracePointCm(poseLike, missionLike) {
   };
 }
 
+// Enforced at the animation boundary as well as every mission entry point.
+function validateMission(missionLike) {
+  const raw = missionLike || {};
+  if ((raw.actions?.length || 0) > 500 || (raw.attachments?.length || 0) > 100 ||
+      (raw.robot?.attachments?.length || 0) > 100) {
+    throw new Error("This mission is too large. Use at most 500 actions and 100 attachments per mission.");
+  }
+  const mission = normalizeMission(raw);
+  const dimensions = [mission.startX, mission.startY, mission.robotWidthCm, mission.robotLengthCm, mission.offsetY,
+    ...mission.attachments.flatMap(attachment => [attachment.widthCm, attachment.lengthCm, attachment.positionCm])];
+  if (dimensions.some(value => !Number.isFinite(value) || Math.abs(value) > 10_000)) {
+    throw new Error("Robot dimensions and positions must be within 10,000 cm.");
+  }
+  if (new TextEncoder().encode(JSON.stringify(mission)).length > 96_000) {
+    throw new Error("Mission content must be smaller than 96 KB.");
+  }
+  let heading = missionStartHeadingDeg(mission);
+  let seconds = 0;
+  for (const action of mission.actions) {
+    if (action.type === "move") seconds += Math.abs(action.value) / DEFAULT_REPLAY_OPTIONS.moveSpeedCmPerSec;
+    if (action.type === "pause") seconds += Math.max(0, action.value);
+    if (action.type === "rotate") {
+      const delta = rotationDeltaDeg(heading, action.value, mission.headingMode, mission.globalZeroDirection, action.alternateTurn);
+      seconds += Math.abs(delta) / DEFAULT_REPLAY_OPTIONS.rotateSpeedDegPerSec;
+      heading = normalizeAngle(heading + delta);
+    }
+  }
+  if (!Number.isFinite(seconds) || seconds > 600) {
+    throw new Error("This mission is too large to preview. Keep simulated movement within 10 minutes.");
+  }
+  return mission;
+}
+
 function buildReplayFrames(missionLike, options = {}) {
-  const mission = normalizeMission(missionLike);
+  const mission = validateMission(missionLike);
   const replayOptions = { ...DEFAULT_REPLAY_OPTIONS, ...options };
   const fps = Math.max(1, safeNum(replayOptions.fps, DEFAULT_REPLAY_OPTIONS.fps));
   const moveSpeed = Math.max(0.01, safeNum(replayOptions.moveSpeedCmPerSec, DEFAULT_REPLAY_OPTIONS.moveSpeedCmPerSec));
   const rotateSpeed = Math.max(0.01, safeNum(replayOptions.rotateSpeedDegPerSec, DEFAULT_REPLAY_OPTIONS.rotateSpeedDegPerSec));
   const dtMs = 1000 / fps;
+
+  // Custom speeds/fps must not bypass the allocation bound.
+  let budgetHeading = missionStartHeadingDeg(mission);
+  const frameBudget = mission.actions.reduce((total, action) => {
+    const delta = action.type === "rotate"
+      ? rotationDeltaDeg(budgetHeading, action.value, mission.headingMode, mission.globalZeroDirection, action.alternateTurn) : 0;
+    budgetHeading = normalizeAngle(budgetHeading + delta);
+    return total + Math.max(1, Math.ceil(
+      (action.type === "move" ? Math.abs(action.value) / moveSpeed
+        : action.type === "rotate" ? Math.abs(delta) / rotateSpeed
+          : action.type === "pause" ? Math.max(0, action.value) : 0) * fps
+    ));
+  }, 1);
+  if (!Number.isFinite(frameBudget) || frameBudget > 40_000) {
+    throw new Error("This preview would create too many animation frames. Shorten the mission or use normal preview settings.");
+  }
 
   const frames = [];
   let current = {
@@ -535,6 +584,7 @@ function buildReplayFrames(missionLike, options = {}) {
   frames.push({ ...current });
 
   mission.actions.forEach((action, actionIndex) => {
+    current = { ...current, actionIndex };
     if (action.type === "change-attachment") {
       current = {
         ...current,
@@ -609,6 +659,7 @@ function buildReplayFrames(missionLike, options = {}) {
 }
 
 export {
+  validateMission,
   applyRobotToMission,
   buildReplayFrames,
   clamp,

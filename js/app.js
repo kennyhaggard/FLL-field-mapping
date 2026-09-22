@@ -12,10 +12,11 @@ import {
   normalizeMission,
   normalizeRobot,
   rotationDeltaDeg,
-  safeNum
-} from "./domain/model.js?v=dock-setup-1";
+  safeNum,
+  validateMission
+} from "./domain/model.js?v=student-workflow-1";
 import { detectRuntimeMode, validateTeamPin } from "./domain/runtime.js";
-import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=dock-setup-1";
+import { buildMissionShareLink, readMissionFromQuery } from "./domain/share.js?v=student-workflow-1";
 import {
   consumeRobotTransfer,
   readArchivedMissionDraft,
@@ -24,9 +25,11 @@ import {
   saveRobotLibrary,
   saveTeamSession
 } from "./domain/storage.js?v=explicit-mission-save-1";
-import { createMissionDocument, hasMissionChanges, missionFingerprint, missionFilename, parseMissionFile, MAX_MISSION_FILE_BYTES } from "./domain/mission_document.js";
-import { FieldRenderer } from "./ui/field_renderer.js?v=staged-preview-1";
+import { createMissionDocument, hasMissionChanges, missionFingerprint, missionFilename, parseMissionFile, MAX_MISSION_FILE_BYTES } from "./domain/mission_document.js?v=student-workflow-1";
+import { FieldRenderer } from "./ui/field_renderer.js?v=student-workflow-1";
 import { createFieldSnapshot, hasPendingFieldChanges } from "./domain/mission_preview.js";
+import { createMissionHistory } from "./domain/mission_history.js";
+import { createPlaybackClock } from "./domain/playback_clock.js";
 import { DOCK_ORDER, FIELD_MODELS, fieldSetupKey, swapDockModel } from "./domain/field_setup.js";
 
 const WIREFRAME_OPACITY_STORAGE_KEY = "fll-field-wireframe-opacity";
@@ -43,6 +46,11 @@ const FIELD_BACKGROUND_STORAGE_KEY = "fll-field-background";
 const DEFAULT_FIELD_BACKGROUND = "overlay";
 
 const dom = {
+  undo: document.getElementById("undo-mission"),
+  redo: document.getElementById("redo-mission"),
+  missionValidation: document.getElementById("mission-validation"),
+  playbackSteps: document.getElementById("playback-steps"),
+  playbackStep: document.getElementById("playback-step"),
   fieldPreviewStatus: document.getElementById("field-preview-status"),
   missionSource: document.getElementById("mission-source"),
   missionSaveStatus: document.getElementById("mission-save-status"),
@@ -135,12 +143,14 @@ const dom = {
 const runtime = detectRuntimeMode(window.location);
 const cloud = createCloudClient({ runtime });
 const renderer = new FieldRenderer(dom.fieldHost);
+const history = createMissionHistory();
 
 const state = {
   fieldConfirmed: false,
   mission: createBlankMission(),
   fieldMission: createFieldSnapshot(createBlankMission()),
   fieldRevision: 0,
+  activeStep: null,
   document: createMissionDocument(createBlankMission()),
   documentId: 0,
   missionRevision: 0,
@@ -217,6 +227,7 @@ function setupCollapsiblePanels() {
 
     header.append(title, toggle);
     panel.append(header, body);
+    if (panel.dataset.collapsed === "true") toggle.click();
   });
 }
 
@@ -346,6 +357,9 @@ function savePlaybackSpeed(value) {
 
 function applyPlaybackSpeed(value, { persist = false } = {}) {
   const speed = normalizePlaybackSpeed(value);
+  const now = performance.now();
+  if (state.run.active) state.run.clock?.setSpeed(now, speed / 100);
+  if (state.replay.playing) state.replay.clock?.setSpeed(now, speed / 100);
   state.display.playbackSpeed = speed;
   dom.playbackSpeed.value = String(speed);
   dom.playbackSpeedValue.value = `${speed}%`;
@@ -392,6 +406,7 @@ function resetReplayState() {
   dom.replaySlider.max = "0";
   updateReplayControls();
   dom.replayCount.textContent = "0 / 0";
+  highlightPlaybackStep(null);
 }
 
 function setReplayFrames(frames) {
@@ -426,6 +441,8 @@ function syncMissionDocument() {
             : "Not saved";
   dom.discardJson.hidden = !state.jsonDirty;
   syncFieldPreviewStatus();
+  dom.undo.disabled = !history.canUndo || state.jsonDirty;
+  dom.redo.disabled = !history.canRedo || state.jsonDirty;
 }
 
 function syncFieldPreviewStatus() {
@@ -436,15 +453,63 @@ function syncFieldPreviewStatus() {
     : pending
       ? "Mission edits are waiting. Save or Start Mission to update the field."
       : "Field shows the last loaded, saved, or started mission.";
+  syncEditorHighlight();
+}
+
+function describeAction(action, mission) {
+  if (action.type === "change-attachment") {
+    const selected = action.attachmentIndexes === "all" ? mission.attachments.map((_, index) => index) : action.attachmentIndexes;
+    return `Attachments: ${selected.length ? selected.map(index => mission.attachments[index]?.description || `#${index + 1}`).join(", ") : "none"}`;
+  }
+  if (action.type === "move") return `Move ${action.value} cm`;
+  if (action.type === "pause") return `Pause ${action.value} s`;
+  return `Rotate${mission.headingMode === "global" ? " to" : ""} ${action.value}°${action.alternateTurn ? " (alternate turn)" : ""}`;
+}
+
+function renderPlaybackSteps() {
+  dom.playbackSteps.replaceChildren(...state.fieldMission.actions.map((action, index) => {
+    const item = document.createElement("li");
+    item.dataset.playbackAction = String(index);
+    item.textContent = describeAction(action, state.fieldMission);
+    return item;
+  }));
+  highlightPlaybackStep(null);
+}
+
+function syncEditorHighlight() {
+  const matches = !state.jsonDirty && !hasPendingFieldChanges(state.mission, state.fieldMission);
+  for (const row of dom.actionList.children) {
+    const active = matches && Number(row.dataset.actionIndex) === state.activeStep;
+    row.classList.toggle("is-current-step", active);
+    if (active) row.setAttribute("aria-current", "step");
+    else row.removeAttribute("aria-current");
+  }
+}
+
+function highlightPlaybackStep(index) {
+  state.activeStep = Number.isInteger(index) ? index : null;
+  for (const item of dom.playbackSteps.children) {
+    const active = Number(item.dataset.playbackAction) === state.activeStep;
+    item.classList.toggle("is-current-step", active);
+    if (active) item.setAttribute("aria-current", "step");
+    else item.removeAttribute("aria-current");
+  }
+  const action = state.fieldMission.actions[state.activeStep];
+  dom.playbackStep.textContent = action
+    ? `Step ${state.activeStep + 1} of ${state.fieldMission.actions.length}: ${describeAction(action, state.fieldMission)}`
+    : "At start · No step running";
+  syncEditorHighlight();
 }
 
 function applyMissionToField(mission, { showStart = false } = {}) {
+  const validated = validateMission(mission);
   stopMissionRun();
   resetReplayState();
-  state.fieldMission = createFieldSnapshot(mission, state.mission.fieldSetup);
+  state.fieldMission = createFieldSnapshot(validated, state.mission.fieldSetup);
   state.fieldRevision += 1;
   if (showStart) renderer.renderStartPosition(state.fieldMission);
   else renderer.renderMission(state.fieldMission);
+  renderPlaybackSteps();
   syncFieldPreviewStatus();
 }
 
@@ -465,12 +530,14 @@ function clearSharedMissionUrl() {
 }
 
 function replaceMission(mission, source) {
+  mission = validateMission(mission);
   state.documentId += 1;
   state.document = createMissionDocument(mission, source);
   state.jsonDirty = false;
   state.fieldConfirmed = false;
   clearSharedMissionUrl();
-  commitMission(mission);
+  history.clear();
+  commitMission(mission, { recordHistory: false });
   applyMissionToField(state.mission);
   setMissionFileStatus("");
 }
@@ -657,6 +724,8 @@ function renderReplayFrame(index) {
   dom.replaySlider.value = String(safeIndex);
   dom.replayCount.textContent = `${safeIndex} / ${Math.max(0, state.replay.frames.length - 1)}`;
   renderer.renderFrameSequence(state.fieldMission, state.replay.frames, safeIndex);
+  const step = state.replay.frames[safeIndex].actionIndex ?? null;
+  if (step !== state.activeStep) highlightPlaybackStep(step);
 }
 
 function isCompleteNumberText(value) {
@@ -737,7 +806,7 @@ function syncMissionToInputs({
   }
   if (!skipActions) {
     renderActions();
-  }
+  } else syncActionDirections();
 }
 
 function renderMission() {
@@ -750,15 +819,29 @@ function commitMission(
     skipActions = false,
     skipAttachments = false,
     skipMissionName = false,
-    skipRobotName = false
+    skipRobotName = false,
+    recordHistory = true
   } = {}
 ) {
+  let normalized;
+  try {
+    normalized = validateMission(nextMission);
+  } catch (error) {
+    dom.missionValidation.hidden = false;
+    dom.missionValidation.textContent = `Change not applied: ${error.message} Your previous mission was kept.`;
+    // Restore only the edited field, without destroying neighboring controls.
+    if (document.activeElement instanceof HTMLInputElement) document.activeElement.setAttribute("aria-invalid", "true");
+    return false;
+  }
+  dom.missionValidation.hidden = true;
+  document.querySelectorAll('[aria-invalid="true"]').forEach(input => input.removeAttribute("aria-invalid"));
   if (fieldSetupKey(state.mission.fieldSetup) !== fieldSetupKey(nextMission?.fieldSetup)) {
     state.fieldConfirmed = false;
     dom.fieldSetupNotice.textContent = "Layout changed. Check your physical field before practicing.";
   }
-  const normalized = normalizeMission(nextMission);
   if (missionFingerprint(state.mission) !== missionFingerprint(normalized)) {
+    if (recordHistory) history.record(state.mission, normalized,
+      document.activeElement?.matches('input:not([type="checkbox"]), textarea') ? document.activeElement : null);
     state.missionRevision += 1;
     clearSharedMissionUrl();
   }
@@ -767,6 +850,13 @@ function commitMission(
   state.fieldMission.fieldSetup = { ...normalized.fieldSetup };
   renderer.setFieldSetup(state.fieldMission.fieldSetup);
   syncMissionToInputs({ skipActions, skipAttachments, skipMissionName, skipRobotName });
+  return true;
+}
+
+function restoreHistory(direction) {
+  if (!requireAppliedJson()) return;
+  const mission = history[direction](state.mission);
+  if (mission) commitMission(mission, { recordHistory: false });
 }
 
 function updateMissionFromInputs() {
@@ -1117,7 +1207,8 @@ function renderActions() {
         commitMission({ ...state.mission, actions }, { skipActions: true });
       });
       valueInput.addEventListener("blur", () => {
-        renderActions();
+        valueInput.value = String(state.mission.actions[index]?.value ?? 0);
+        valueInput.removeAttribute("aria-invalid");
       });
 
       valueField = document.createElement("div");
@@ -1197,6 +1288,26 @@ function renderActions() {
     );
     dom.actionList.appendChild(row);
   });
+  syncEditorHighlight();
+}
+
+function syncActionDirections() {
+  let heading = missionStartHeadingDeg(state.mission);
+  state.mission.actions.forEach((action, index) => {
+    if (action.type !== "rotate") return;
+    const delta = rotationDeltaDeg(heading, action.value, state.mission.headingMode, state.mission.globalZeroDirection, action.alternateTurn);
+    heading = normalizeAngle(heading + delta);
+    const button = dom.actionList.querySelector(`[data-action-index="${index}"] .action-turn-direction`);
+    if (!button) return;
+    const clockwise = delta <= 0;
+    const current = Math.abs(delta) === 0 ? "Shortest path: no turn"
+      : `${action.alternateTurn ? "Alternate" : "Shortest"} path: ${clockwise ? "clockwise" : "counterclockwise"} ${Math.abs(delta).toFixed(1)}°`;
+    const next = action.alternateTurn ? "Use the shortest path" : `Use the ${clockwise ? "counterclockwise" : "clockwise"} path`;
+    button.textContent = clockwise ? "↻" : "↺";
+    button.dataset.alternate = String(action.alternateTurn === true);
+    button.setAttribute("aria-label", `${current}. ${next}.`);
+    button.title = `${current}. Click to ${next.toLowerCase()}.`;
+  });
 }
 
 function renderAttachments() {
@@ -1225,8 +1336,7 @@ function renderAttachments() {
       });
     });
     description.addEventListener("blur", () => {
-      renderAttachments();
-      renderActions();
+      description.value = state.mission.attachments[index]?.description || "";
     });
     descriptionField.append(descriptionLabel, description);
 
@@ -1258,7 +1368,7 @@ function renderAttachments() {
       });
     });
     width.addEventListener("blur", () => {
-      renderAttachments();
+      width.value = String(state.mission.attachments[index]?.widthCm ?? 0);
     });
     const widthField = createLabeledNumberField({ label: "Width", input: width });
 
@@ -1276,7 +1386,7 @@ function renderAttachments() {
       });
     });
     length.addEventListener("blur", () => {
-      renderAttachments();
+      length.value = String(state.mission.attachments[index]?.lengthCm ?? 0);
     });
     const lengthField = createLabeledNumberField({ label: "Length", input: length });
 
@@ -1294,7 +1404,7 @@ function renderAttachments() {
       });
     });
     position.addEventListener("blur", () => {
-      renderAttachments();
+      position.value = String(state.mission.attachments[index]?.positionCm ?? 0);
     });
     const positionField = createLabeledNumberField({ label: "Position", input: position });
 
@@ -1377,15 +1487,13 @@ function playReplay() {
   if (!state.replay.frames.length || state.replay.playing) return;
   stopMissionRun();
   state.replay.playing = true;
-  const startedAt = performance.now();
-  const startIndex = state.replay.index;
+  state.replay.clock = createPlaybackClock(performance.now(), state.replay.index / state.replay.fps, state.display.playbackSpeed / 100);
 
   const step = (now) => {
     if (!state.replay.playing) return;
-    const elapsedMs = now - startedAt;
     const index = Math.min(
       state.replay.frames.length - 1,
-      startIndex + Math.floor((elapsedMs / 1000) * state.replay.fps * (state.display.playbackSpeed / 100))
+      Math.floor(state.replay.clock.read(now) * state.replay.fps)
     );
     renderReplayFrame(index);
     if (index >= state.replay.frames.length - 1) {
@@ -1402,6 +1510,7 @@ function playReplay() {
 }
 
 function resetReplay() {
+  stopMissionRun();
   stopReplay();
   if (!state.replay.frames.length) return;
   renderReplayFrame(0);
@@ -1416,7 +1525,7 @@ function startMissionRun() {
   setReplayFrames(state.run.frames);
   renderReplayFrame(0);
   state.run.active = true;
-  state.run.startTime = performance.now();
+  state.run.clock = createPlaybackClock(performance.now(), 0, state.display.playbackSpeed / 100);
   dom.stopMission.disabled = false;
 
   const step = (now) => {
@@ -1424,7 +1533,7 @@ function startMissionRun() {
     const index = Math.min(
       state.run.frames.length - 1,
       Math.floor(
-        ((now - state.run.startTime) / 1000) * state.run.fps * (state.display.playbackSpeed / 100)
+        state.run.clock.read(now) * state.run.fps
       )
     );
     renderReplayFrame(index);
@@ -1726,6 +1835,16 @@ function hydrateInitialState() {
 }
 
 function attachEventHandlers() {
+  dom.undo.addEventListener("click", () => restoreHistory("undo"));
+  dom.redo.addEventListener("click", () => restoreHistory("redo"));
+  document.addEventListener("focusout", () => history.endGroup());
+  document.addEventListener("keydown", event => {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    const key = event.key.toLowerCase();
+    if (key !== "z" && key !== "y") return;
+    event.preventDefault();
+    restoreHistory(key === "y" || event.shiftKey ? "redo" : "undo");
+  });
   dom.downloadMission.addEventListener("click", downloadCurrentMission);
   dom.importMission.addEventListener("click", () => dom.missionFile.click());
   dom.missionFile.addEventListener("change", importMissionFile);
@@ -1833,7 +1952,7 @@ function attachEventHandlers() {
 
   dom.resetMission.addEventListener("click", () => {
     const accepted = confirm(
-      "Reset this mission? This will clear all mission settings, attachments, and actions."
+      "Start a new blank mission? This clears this editor and its undo history, including settings, attachments, and steps. Save or download first to keep your work."
     );
     if (!accepted) return;
     replaceMission(createBlankMission(), { kind: "new" });
@@ -1999,6 +2118,7 @@ async function init() {
   if (!loaded) return;
 
   renderMission();
+  renderPlaybackSteps();
   resetReplayState();
 
   if (state.teamSession.connected && runtime.allowsCloudSync) {

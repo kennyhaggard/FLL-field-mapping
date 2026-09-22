@@ -1255,3 +1255,14 @@ body[data-lesson-id] .header p {
     grid-template-columns: 1fr;
   }
 }
+.workflow-guide { margin: 0 0 10px; line-height: 1.5; }
+.editor-history { margin-bottom: 12px; }
+.editor-history .notice { flex: 1; min-width: 160px; }
+.playback-step { margin: 8px 0 12px; font-weight: 600; font-size: 14px; }
+.is-current-step { background: #e6f3ff !important; outline: 2px solid #0066b3; outline-offset: -2px; }
+.applied-steps { margin-top: 14px; }
+.applied-steps summary { cursor: pointer; font-weight: 600; }
+.applied-steps ol { max-height: 220px; overflow: auto; padding: 4px 4px 4px 32px; }
+.applied-steps li { padding: 7px 8px; border-radius: 5px; overflow-wrap: anywhere; }
+.share-controls { margin-top: 12px; }
+[aria-invalid="true"] { outline: 2px solid #b42318; }

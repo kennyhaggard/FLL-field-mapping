@@ -93,11 +93,38 @@ A successful **Save to Team** or **Download Mission** also updates the preview.
 Failed saves do not update it, and slow saves cannot replace a newer started
 preview. Newer edits made during a save remain pending.
 
-**Replay Field**, Play, Reset, Clear Field, and the frame slider operate on the
-last applied snapshot. Loading/importing a different mission or choosing Reset Mission/Load Demo
+**Replay Field**, Play, Rewind Replay, Return Robot to Start, and the frame slider operate on the
+last applied snapshot. Loading/importing a different mission or choosing New Blank Mission/Load Demo
 explicitly replaces both editor and preview. Field Setup and display visibility
 remain immediate controls. A robot drag adds pending steps and returns the robot
 to its original position; apply pending edits before dragging again.
+
+Undo/Redo keeps up to 100 edit checkpoints in memory only. Changes during one
+field-focus session are grouped. Undo does not redraw the route or undo a saved
+file/cloud write; loading or creating a mission starts a fresh history. Keyboard
+shortcuts outside text fields are Ctrl/Command-Z and Ctrl/Command-Shift-Z (or
+Ctrl-Y). Text fields retain their native editing shortcuts. Apply or discard raw
+JSON before using mission history.
+
+The current playback step and expandable applied-steps list describe the field
+snapshot. Editor rows are highlighted only while the draft matches that snapshot.
+Rewind Replay stops animation and retains replay frames; Return Robot to Start
+also clears the trail without deleting steps. New Blank Mission clears the editor
+after confirmation. Advanced Mission JSON starts collapsed; sharing is available
+beside the field controls.
+
+Mission validation is shared by editing, file/JSON import, shared links, cloud
+replacement, and animation generation: at most 500 actions, 100 attachments,
+96 KB of normalized content, and 10 minutes of default simulated movement.
+Animation allocation is capped at 40,000 frames even with custom replay options.
+Rejected editor changes keep the previous valid mission and show a warning.
+
+Replay rendering indexes action boundaries and pause poses once per frame array,
+reduces straight movement to endpoints, reuses corridor SVG nodes, and skips
+unchanged geometry during pauses. The optional `scripts/verify_student_workflow.cjs`
+check covers undo, click handling, validation, playback, highlighting, responsive
+layout, and a full-versus-compacted corridor geometry benchmark. Run it with a
+static server on port 8000 and Playwright installed (or `PLAYWRIGHT_MODULE` set).
 
 ### Field setup
 

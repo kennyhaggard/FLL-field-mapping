@@ -1,5 +1,4 @@
-import { normalizeMission } from "./model.js?v=dock-setup-1";
-import { DEFAULT_REPLAY_OPTIONS } from "./constants.js";
+import { normalizeMission, validateMission } from "./model.js?v=student-workflow-1";
 
 export const MAX_MISSION_FILE_BYTES = 96_000;
 
@@ -29,15 +28,5 @@ export function parseMissionFile(text) {
   if (!source || typeof source !== "object" || Array.isArray(source) || !Array.isArray(source.actions)) {
     throw new Error("Choose a mission JSON file containing an actions list.");
   }
-  const mission = normalizeMission(source);
-  // Bound newly imported files before the renderer allocates animation frames.
-  const seconds = mission.actions.reduce((total, action) => total + (
-    action.type === "move" ? Math.abs(action.value) / DEFAULT_REPLAY_OPTIONS.moveSpeedCmPerSec
-      : action.type === "rotate" ? (mission.headingMode === "global" ? 360 : Math.abs(action.value)) / DEFAULT_REPLAY_OPTIONS.rotateSpeedDegPerSec
-        : action.type === "pause" ? Math.max(0, action.value) : 0
-  ), 0);
-  if (mission.actions.length > 500 || !Number.isFinite(seconds) || seconds > 600) {
-    throw new Error("This mission is too large to preview. Use at most 500 actions and 10 minutes of simulated movement.");
-  }
-  return mission;
+  return validateMission(source);
 }

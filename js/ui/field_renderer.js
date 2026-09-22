@@ -10,7 +10,8 @@ import {
   getAttachmentRectCm,
   normalizeMission,
   poseToTracePointCm
-} from "../domain/model.js?v=dock-setup-1";
+} from "../domain/model.js?v=student-workflow-1";
+import { createReplayGeometry } from "../domain/replay_geometry.js";
 
 function colorWithAlpha(hexColor, alpha) {
   const match = String(hexColor || "").match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
@@ -33,6 +34,9 @@ class FieldRenderer {
     this.currentPose = null;
     this.onRobotDragStart = null;
     this.onRobotDrop = null;
+    this.geometryCache = new WeakMap();
+    this.lastTraceKey = null;
+    this.lastPauseKey = null;
   }
 
   setRobotDragHandlers({ onStart, onDrop } = {}) {
@@ -130,6 +134,8 @@ class FieldRenderer {
     this.robotEl = null;
     this.traceEl = null;
     this.currentPose = null;
+    this.lastTraceKey = null;
+    this.lastPauseKey = null;
   }
 
   setFieldSetup(setup) {
@@ -165,8 +171,15 @@ class FieldRenderer {
   }
 
   renderFrameSequence(missionLike, frames, frameIndex) {
-    const mission = normalizeMission(missionLike);
-    this.setFieldSetup(mission.fieldSetup);
+    if (this.frameMissionSource !== missionLike) {
+      this.frameMissionSource = missionLike;
+      this.frameMission = normalizeMission(missionLike);
+      this.lastTraceKey = null;
+      this.lastPauseKey = null;
+    }
+    const mission = this.frameMission;
+    // Dock setup can change independently of the immutable route snapshot.
+    this.setFieldSetup(missionLike.fieldSetup);
     if (!Array.isArray(frames) || !frames.length) return;
 
     const safeIndex = Math.max(0, Math.min(frameIndex, frames.length - 1));
@@ -289,7 +302,6 @@ class FieldRenderer {
   }
 
   renderTraceCorridor(mission, frames, frameIndex, trace) {
-    this.svg.querySelector('[data-replay-corridor="1"]')?.remove();
     const safeIndex = typeof frameIndex === "number" ? frameIndex : frames.length - 1;
     const segments = [];
 
@@ -349,7 +361,10 @@ class FieldRenderer {
       });
     }
 
-    if (!segments.length) return;
+    if (!segments.length) {
+      this.svg.querySelector('[data-replay-corridor="1"]')?.remove();
+      return;
+    }
     const pointDistance = (first, second) => Math.hypot(first.x - second.x, first.y - second.y);
     for (let index = 1; index < segments.length; index += 1) {
       const previous = segments[index - 1];
@@ -506,6 +521,14 @@ class FieldRenderer {
       });
     });
 
+    const existing = this.svg.querySelector('[data-replay-corridor="1"]');
+    if (existing) {
+      existing.querySelector('[data-replay-corridor-fill]').setAttribute("d", fillSegments.join(" "));
+      existing.querySelector('[data-replay-corridor-fill]').setAttribute("fill", mission.traceColor);
+      existing.querySelector('[data-replay-corridor-edges]').setAttribute("d", edgeSegments.flat().join(" "));
+      existing.querySelector('[data-replay-corridor-edges]').setAttribute("stroke", mission.traceColor);
+      return;
+    }
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
     group.setAttribute("data-dynamic", "1");
     group.setAttribute("data-replay-corridor", "1");
@@ -540,8 +563,24 @@ class FieldRenderer {
     trace.setAttribute("stroke-dasharray", "");
     trace.setAttribute("data-active-trace", "1");
     trace.setAttribute("data-training-trace", "");
-    this.renderTraceCorridor(mission, frames, frameIndex, trace);
-    this.setTracePoints(trace, mission, frames, frameIndex);
+    const index = Math.max(0, Math.min(frameIndex ?? frames.length - 1, frames.length - 1));
+    const geometry = this.getReplayGeometry(frames);
+    const pose = frames[index];
+    if (!pose) return;
+    const point = poseToTracePointCm(pose, mission);
+    const key = JSON.stringify([pose.actionIndex, point.x, point.y, pose.visibleAttachmentIndexes]);
+    if (this.lastTraceFrames === frames && this.lastTraceMission === mission && this.lastTraceKey === key) return;
+    this.lastTraceFrames = frames;
+    this.lastTraceMission = mission;
+    this.lastTraceKey = key;
+    const compact = geometry.prefix(index);
+    this.renderTraceCorridor(mission, compact, compact.length - 1, trace);
+    this.setTracePoints(trace, mission, compact, compact.length - 1);
+  }
+
+  getReplayGeometry(frames) {
+    if (!this.geometryCache.has(frames)) this.geometryCache.set(frames, createReplayGeometry(frames));
+    return this.geometryCache.get(frames);
   }
 
   setTracePoints(trace, mission, frames, frameIndex) {
@@ -580,22 +619,14 @@ class FieldRenderer {
 
   renderPauseOutlines(mission, frames, frameIndex) {
     if (!this.svg) return;
-
-    Array.from(this.svg.querySelectorAll('[data-pause-outline="1"]')).forEach((node) => node.remove());
-
     const safeIndex = typeof frameIndex === "number" ? frameIndex : frames.length - 1;
-    const pausePoses = new Map();
-    for (let index = 0; index <= safeIndex; index += 1) {
-      const frame = frames[index];
-      if (!Number.isInteger(frame?.pauseActionIndex)) continue;
-      if (!pausePoses.has(frame.pauseActionIndex)) {
-        pausePoses.set(frame.pauseActionIndex, frame);
-      }
-    }
-
-    pausePoses.forEach((pose) => {
-      this.drawRobotOutline(mission, pose, "#7d3c98");
-    });
+    const pauses = this.getReplayGeometry(frames).pauses.filter(pause => pause.index <= safeIndex);
+    if (this.lastPauseFrames === frames && this.lastPauseMission === mission && this.lastPauseKey === pauses.length) return;
+    this.lastPauseFrames = frames;
+    this.lastPauseMission = mission;
+    this.lastPauseKey = pauses.length;
+    Array.from(this.svg.querySelectorAll('[data-pause-outline="1"]')).forEach(node => node.remove());
+    pauses.forEach(({ pose }) => this.drawRobotOutline(mission, pose, "#7d3c98"));
   }
 
   drawRobotOutline(mission, pose, color) {

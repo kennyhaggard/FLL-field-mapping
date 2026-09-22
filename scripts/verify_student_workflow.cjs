@@ -1,0 +1,111 @@
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
+const assert = require("node:assert/strict");
+const { mkdtemp } = require("node:fs/promises");
+const { tmpdir } = require("node:os");
+const { join } = require("node:path");
+
+(async () => {
+  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  const output = await mkdtemp(join(tmpdir(), "fll-student-workflow-"));
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    page.on("dialog", dialog => dialog.accept());
+    await page.goto("http://127.0.0.1:8000/");
+    await page.waitForSelector('[data-draggable-robot="1"]');
+    const draft = async () => JSON.parse(await page.locator("#mission-json").inputValue());
+    const pose = () => page.locator('[data-draggable-robot="1"]').getAttribute("transform");
+    assert.equal(await page.locator("#mission-json").isVisible(), false);
+    await page.locator("#load-demo").click();
+    const initial = await draft();
+    const originalPose = await pose();
+    const input = page.locator("#action-list .action-value-field input").first();
+    await input.fill("12");
+    await page.getByRole("button", { name: "Delete action 1", exact: true }).click();
+    assert.equal((await draft()).actions.length, initial.actions.length - 1);
+    await page.locator("#undo-mission").click();
+    assert.equal((await draft()).actions[0].value, 12);
+    await page.locator("#undo-mission").click();
+    assert.deepEqual((await draft()).actions, initial.actions);
+    await page.locator("#redo-mission").click();
+    assert.equal((await draft()).actions[0].value, 12);
+    assert.equal(await pose(), originalPose);
+    await page.locator("#undo-mission").click();
+    await page.locator("#add-pause").click();
+    assert.equal(await page.locator("#redo-mission").isEnabled(), false);
+    await page.locator("#undo-mission").click();
+    assert.equal(await page.locator("#field-preview-status").getAttribute("data-pending"), "false");
+    console.log("PASS: one-click delete after editing; grouped undo/redo and branching leave the field untouched");
+
+    await input.fill("999999999");
+    assert.equal((await draft()).actions[0].value, initial.actions[0].value);
+    assert.equal(await page.locator("#mission-validation").isVisible(), true);
+    await input.blur();
+    assert.equal(await input.inputValue(), String(initial.actions[0].value));
+    await page.getByRole("button", { name: "Expand Mission JSON", exact: true }).click();
+    await page.locator("#mission-json").fill(JSON.stringify({ ...initial, actions: [{ type: "pause", value: 8 }, { type: "move", value: 20 }] }));
+    await page.locator("#apply-json").click();
+    await page.locator("#start-mission").click();
+    await page.waitForFunction(() => Number(document.querySelector("#replay-slider").value) > 10);
+    assert.match(await page.locator("#playback-step").innerText(), /Step 1 of 2: Pause 8 s/);
+    assert.equal(await page.locator('#action-list [aria-current="step"]').count(), 1);
+    const continuity = await page.evaluate(() => {
+      const frame = document.querySelector("#replay-slider");
+      const before = Number(frame.value);
+      const speed = document.querySelector("#playback-speed");
+      speed.value = "10"; speed.dispatchEvent(new Event("input", { bubbles: true }));
+      return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve({ before, after: Number(frame.value) }))));
+    });
+    assert.ok(continuity.after >= continuity.before && continuity.after <= continuity.before + 8, JSON.stringify(continuity));
+    await page.locator("#action-list .action-value-field input").first().fill("5");
+    assert.equal(await page.locator('#action-list [aria-current="step"]').count(), 0);
+    assert.match(await page.locator("#playback-step").innerText(), /Pause 8 s/);
+    await page.locator(".applied-steps summary").click();
+    assert.match(await page.locator("#playback-steps").innerText(), /Pause 8 s/);
+    await page.locator("#reset-replay").click();
+    assert.equal(await page.locator("#stop-mission").isEnabled(), false);
+    assert.equal(await page.locator("#replay-slider").inputValue(), "0");
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.equal(await page.locator("#replay-slider").inputValue(), "0");
+    console.log("PASS: speed changes are continuous; rewind stops the run; highlights follow applied steps, not pending edits");
+
+    const benchmark = await page.evaluate(async () => {
+      const { FieldRenderer } = await import("./js/ui/field_renderer.js?v=student-workflow-1");
+      const { buildReplayFrames, validateMission } = await import("./js/domain/model.js?v=student-workflow-1");
+      const { createReplayGeometry } = await import("./js/domain/replay_geometry.js");
+      const mission = validateMission({ actions: Array.from({ length: 20 }, (_, index) => ({ type: index % 2 ? "rotate" : "move", value: index % 2 ? 90 : 200 })) });
+      const frames = buildReplayFrames(mission);
+      const compact = createReplayGeometry(frames).prefix(frames.length - 1);
+      const renderer = new FieldRenderer(null);
+      renderer.svg = document.querySelector("#mission-field").cloneNode(true);
+      renderer.clearDynamic();
+      const trace = renderer.ensureTrace(mission.traceColor);
+      const measure = samples => {
+        const start = performance.now();
+        for (let i = 0; i < 5; i++) renderer.renderTraceCorridor(mission, samples, samples.length - 1, trace);
+        return performance.now() - start;
+      };
+      const fullMs = measure(frames);
+      const fullPath = renderer.svg.querySelector('[data-replay-corridor-fill]').getAttribute("d");
+      const compactMs = measure(compact);
+      const compactPath = renderer.svg.querySelector('[data-replay-corridor-fill]').getAttribute("d");
+      const numbers = value => value.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi).map(Number);
+      const full = numbers(fullPath), reduced = numbers(compactPath);
+      return { frames: frames.length, compact: compact.length, fullMs, compactMs,
+        sameGeometry: full.length === reduced.length && full.every((number, index) => Math.abs(number - reduced[index]) < 0.001) };
+    });
+    assert.equal(benchmark.sameGeometry, true);
+    assert.ok(benchmark.compact < benchmark.frames / 10);
+    console.log(`PASS: corridor geometry preserved; benchmark ${JSON.stringify(benchmark)}`);
+    await page.getByRole("button", { name: "Collapse Team Cloud", exact: true }).click();
+    await page.locator("#field-preview-status").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(output, "desktop.png") });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("#field-preview-status").scrollIntoViewIfNeeded();
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.screenshot({ path: join(output, "mobile.png") });
+    assert.deepEqual(errors, []);
+    console.log(`PASS: no browser errors; desktop/mobile fit. Screenshots: ${output}`);
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

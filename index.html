@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>FLL Field Mapping</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=staged-preview-1" />
+  <link rel="stylesheet" href="styles.css?v=student-workflow-1" />
 </head>
 <body>
   <header class="header">
@@ -45,6 +45,13 @@
 
   <main class="app-layout">
     <section>
+      <p class="notice workflow-guide">Edit your steps → Start Mission → Review the run → Save to Team or Download.</p>
+      <div class="button-row editor-history" aria-label="Mission edit history">
+        <button id="undo-mission" class="btn-ghost" disabled title="Undo mission edit (Ctrl/⌘ Z outside text fields)">Undo</button>
+        <button id="redo-mission" class="btn-ghost" disabled title="Redo mission edit (Ctrl/⌘ Shift Z outside text fields)">Redo</button>
+        <span class="notice">Edits stay here until you save or start.</span>
+      </div>
+      <p id="mission-validation" class="notice notice-error" role="alert" hidden></p>
       <div class="panel">
         <div class="section-title">Team Cloud</div>
         <div class="mode-banner">
@@ -180,7 +187,7 @@
         </div>
         <div class="button-row" style="margin-top:12px;">
           <button class="btn-secondary" id="load-demo">Load Demo Mission</button>
-          <button class="btn-ghost" id="reset-mission">Reset Mission</button>
+          <button class="btn-ghost" id="reset-mission" title="Clear the editor and begin a new mission">New Blank Mission…</button>
         </div>
       </div>
 
@@ -253,15 +260,14 @@
         <div class="action-list" id="action-list" style="margin-top:10px;"></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" data-collapsed="true">
         <div class="section-title">Mission JSON</div>
+        <p class="notice">Advanced editing. Apply JSON updates the editor, not the field.</p>
         <textarea id="mission-json" aria-label="Mission JSON"></textarea>
         <p class="notice notice-error" id="json-error" style="display:none;"></p>
         <div class="button-row">
           <button class="btn-primary" id="apply-json">Apply JSON</button>
           <button class="btn-ghost" id="discard-json" hidden>Discard JSON edits</button>
-          <button class="btn-ghost" id="copy-link">Copy Share Link</button>
-          <button class="btn-ghost" id="email-link">Email Link</button>
         </div>
       </div>
     </section>
@@ -269,6 +275,7 @@
     <section class="field-panel">
       <div class="panel field-wrap">
         <p id="field-preview-status" class="notice field-preview-status" role="status">Field shows the last loaded, saved, or started mission.</p>
+        <p id="playback-step" class="playback-step" role="status">At start · No step running</p>
         <div class="field-setup-summary">
           <div><span class="field-setup-heading">Field setup <span id="field-check-status">• Check physical field</span></span><div id="field-setup-summary" aria-live="polite"></div></div>
           <button id="edit-field-setup" class="btn-ghost" type="button">Edit setup</button>
@@ -278,22 +285,32 @@
         <div class="field-controls">
           <button class="btn-primary" id="start-mission">Start Mission</button>
           <button class="btn-warn" id="stop-mission" disabled>Stop</button>
-          <button class="btn-ghost" id="clear-field">Clear Field</button>
+          <button class="btn-ghost" id="clear-field" title="Return the displayed robot to its start and clear the trail. Your mission steps are kept.">Return Robot to Start</button>
           <span class="divider" style="width:1px;height:28px;"></span>
           <button class="btn-secondary" id="build-replay" title="Replay the mission currently shown on the field. Start Mission applies pending edits.">Replay Field</button>
           <button class="btn-primary" id="play-replay" disabled>Play</button>
           <button class="btn-ghost" id="pause-replay" disabled>Pause</button>
-          <button class="btn-ghost" id="reset-replay" disabled>Reset</button>
+          <button class="btn-ghost" id="reset-replay" title="Stop playback and rewind the applied mission. Keep its replay frames." disabled>Rewind Replay</button>
           <label style="flex:1; min-width:200px;">
             <span class="status">Frame</span>
             <input id="replay-slider" type="range" min="0" max="0" value="0" />
           </label>
           <span class="status" id="replay-count">0 / 0</span>
         </div>
+        <details class="applied-steps">
+          <summary>Steps on the field (applied mission)</summary>
+          <p class="notice">This list follows the run. Pending editor changes appear here after Save or Start.</p>
+          <ol id="playback-steps"></ol>
+        </details>
+        <div class="button-row share-controls">
+          <button class="btn-ghost" id="copy-link">Copy Share Link</button>
+          <button class="btn-ghost" id="email-link">Email Link</button>
+          <span class="notice">Shares the editor’s current mission; does not save it.</span>
+        </div>
       </div>
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=staged-preview-1"></script>
+  <script type="module" src="js/app.js?v=student-workflow-1"></script>
 </body>
 </html>
